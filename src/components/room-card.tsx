@@ -1,9 +1,13 @@
+"use client";
 
 import Image from "next/image";
-import { Users, PhilippinePeso, ArrowRight, Eye } from "lucide-react";
+import { Users, ArrowRight, Eye } from "lucide-react";
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
+import { useState } from "react";
+
+const FALLBACK_ROOM_IMAGE = "https://images.unsplash.com/photo-1596394516093-501ba68a0ba6?w=600&q=80";
 
 interface RoomCardProps {
   room: {
@@ -19,16 +23,18 @@ interface RoomCardProps {
 
 export function RoomCard({ room }: RoomCardProps) {
   const rate = room.pricePerPerson ?? room.price ?? 0;
-  
+  const [imgSrc, setImgSrc] = useState(room.imageUrl || FALLBACK_ROOM_IMAGE);
+
   return (
     <Card className="overflow-hidden group hover:shadow-lg transition-all duration-300 border-none bg-card/50 backdrop-blur">
       <div className="relative h-56 w-full overflow-hidden">
         <Image
-          src={room.imageUrl || "https://picsum.photos/seed/room/600/400"}
+          src={imgSrc}
           alt={room.name || "Cottage image"}
           fill
           className="object-cover transition-transform duration-500 group-hover:scale-105"
           sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+          onError={() => setImgSrc(FALLBACK_ROOM_IMAGE)}
         />
         <div className="absolute top-4 right-4 bg-primary text-primary-foreground px-3 py-1 rounded-full text-sm font-semibold">
           ₱{rate.toLocaleString()} / person

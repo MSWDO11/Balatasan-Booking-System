@@ -15,7 +15,9 @@ import Image from "next/image";
 import { PlaceHolderImages } from "@/lib/placeholder-images";
 import { useUser, useFirestore, useDoc, useMemoFirebase, addDocumentNonBlocking } from "@/firebase";
 import { doc, collection } from "firebase/firestore";
-import { useState, use } from "react";
+import { useState, use, useCallback } from "react";
+
+const FALLBACK_ROOM_IMAGE = "https://images.unsplash.com/photo-1596394516093-501ba68a0ba6?w=600&q=80";
 import { useRouter } from "next/navigation";
 import { useToast } from "@/hooks/use-toast";
 import { format, addDays, differenceInDays } from "date-fns";
@@ -31,6 +33,7 @@ export default function RoomDetailsPage({ params }: { params: Promise<{ id: stri
   const [checkIn, setCheckIn] = useState<Date | undefined>(new Date());
   const [checkOut, setCheckOut] = useState<Date | undefined>(addDays(new Date(), 1));
   const [guests, setGuests] = useState("1");
+  const [roomImgSrc, setRoomImgSrc] = useState<string | null>(null);
 
   const roomRef = useMemoFirebase(() => firestore ? doc(firestore, "rooms", id) : null, [firestore, id]);
   const { data: room, isLoading: isRoomLoading } = useDoc(roomRef);
@@ -121,10 +124,11 @@ export default function RoomDetailsPage({ params }: { params: Promise<{ id: stri
             <div className="lg:col-span-2 space-y-8">
               <div className="relative h-[400px] md:h-[500px] rounded-3xl overflow-hidden shadow-2xl">
                 <Image
-                  src={room.imageUrl || PlaceHolderImages.find(img => img.id === "beachfront-villa")?.imageUrl || ""}
+                  src={roomImgSrc ?? (room.imageUrl || FALLBACK_ROOM_IMAGE)}
                   alt={room.name || "Cottage image"}
                   fill
                   className="object-cover"
+                  onError={() => setRoomImgSrc(FALLBACK_ROOM_IMAGE)}
                 />
               </div>
 

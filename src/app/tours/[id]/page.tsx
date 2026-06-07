@@ -15,6 +15,8 @@ import { PlaceHolderImages } from "@/lib/placeholder-images";
 import { useUser, useFirestore, useDoc, useMemoFirebase, addDocumentNonBlocking } from "@/firebase";
 import { doc, collection } from "firebase/firestore";
 import { useState, use } from "react";
+
+const FALLBACK_TOUR_IMAGE = "https://images.unsplash.com/photo-1544551763-46a013bb70d5?w=600&q=80";
 import { useRouter } from "next/navigation";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
@@ -31,6 +33,7 @@ export default function TourDetailsPage({ params }: { params: Promise<{ id: stri
   const [date, setDate] = useState<Date | undefined>(new Date());
   const [guests, setGuests] = useState("1");
   const [durationMinutes, setDurationMinutes] = useState("15");
+  const [tourImgSrc, setTourImgSrc] = useState<string | null>(null);
 
   const tourRef = useMemoFirebase(() => firestore ? doc(firestore, "tours", id) : null, [firestore, id]);
   const { data: tour, isLoading: isTourLoading } = useDoc(tourRef);
@@ -133,10 +136,11 @@ export default function TourDetailsPage({ params }: { params: Promise<{ id: stri
             <div className="lg:col-span-2 space-y-8">
               <div className="relative h-[400px] md:h-[500px] rounded-3xl overflow-hidden shadow-2xl">
                 <Image
-                  src={tour.imageUrl || PlaceHolderImages.find(img => img.id === "island-hopping")?.imageUrl || ""}
+                  src={tourImgSrc ?? (tour.imageUrl || FALLBACK_TOUR_IMAGE)}
                   alt={(tour.name || tour.title) ?? "Tour image"}
                   fill
                   className="object-cover"
+                  onError={() => setTourImgSrc(FALLBACK_TOUR_IMAGE)}
                 />
               </div>
 

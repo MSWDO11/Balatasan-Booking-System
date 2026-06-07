@@ -1,4 +1,3 @@
-
 "use client";
 
 import Image from "next/image";
@@ -7,6 +6,9 @@ import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card"
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import Link from "next/link";
+import { useState } from "react";
+
+const FALLBACK_TOUR_IMAGE = "https://images.unsplash.com/photo-1544551763-46a013bb70d5?w=600&q=80";
 
 interface TourCardProps {
   tour: {
@@ -23,11 +25,12 @@ interface TourCardProps {
 
 export function TourCard({ tour }: TourCardProps) {
   const displayTitle = tour.title || tour.name || "Tour Experience";
-  
+  const [imgSrc, setImgSrc] = useState(tour.imageUrl || FALLBACK_TOUR_IMAGE);
+
   // Specific logic for Jet Ski and Flying Fish
   const isFlyingFish = displayTitle.toLowerCase().includes("flying fish");
   const isJetSki = displayTitle.toLowerCase().includes("jet ski");
-  
+
   const defaultRate = isJetSki ? 150 : (isFlyingFish ? 500 : 1000);
   const rate = tour.pricePerPerson ?? tour.price ?? defaultRate;
   const unitLabel = isJetSki ? "min" : "pax";
@@ -36,11 +39,12 @@ export function TourCard({ tour }: TourCardProps) {
     <Card className="overflow-hidden group hover:shadow-lg transition-all duration-300 border-none bg-white rounded-2xl">
       <div className="relative h-48 w-full overflow-hidden">
         <Image
-          src={tour.imageUrl || "https://picsum.photos/seed/tour/600/400"}
+          src={imgSrc}
           alt={displayTitle}
           fill
           className="object-cover transition-transform duration-500 group-hover:scale-105"
           sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+          onError={() => setImgSrc(FALLBACK_TOUR_IMAGE)}
         />
         <Badge className="absolute top-4 left-4 bg-[#6FDDC2] text-[#006D6B] hover:bg-[#6FDDC2]/90 border-none font-semibold px-3 py-1 rounded-full">
           Adventure
@@ -66,8 +70,8 @@ export function TourCard({ tour }: TourCardProps) {
       </CardContent>
       <CardFooter className="pb-6">
         <Link href={`/tours/${tour.id}`} className="w-full">
-          <Button 
-            variant="outline" 
+          <Button
+            variant="outline"
             className="w-full gap-2 border-[#12AFAB]/20 hover:border-[#12AFAB]/50 hover:bg-[#12AFAB]/5 rounded-xl h-12 text-slate-700 font-medium"
           >
             <Eye className="h-4 w-4" />
