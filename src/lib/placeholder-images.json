@@ -3,26 +3,32 @@
     {
       "id": "hero-beach",
       "description": "Stunning view of Balatasan beach",
-      "imageUrl": "https://lakbay-v3.poggerss.com/places/130/gallery/20251210075220_184a449c.jpg",
+      "imageUrl": "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=1920&q=80",
       "imageHint": "balatasan beach"
     },
     {
       "id": "floating-cottage",
       "description": "Traditional floating cottage on crystal clear water",
-      "imageUrl": "https://picsum.photos/seed/floating-cottage/600/400",
+      "imageUrl": "https://images.unsplash.com/photo-1571896349842-33c89424de2d?w=600&q=80",
       "imageHint": "floating cottage"
     },
     {
       "id": "island-hopping",
       "description": "Tour boat visiting pristine islands",
-      "imageUrl": "https://picsum.photos/seed/island-hopping/600/400",
+      "imageUrl": "https://images.unsplash.com/photo-1544551763-46a013bb70d5?w=600&q=80",
       "imageHint": "island hopping"
     },
     {
       "id": "water-activity",
       "description": "Kayaking and snorkeling in turquoise waters",
-      "imageUrl": "https://picsum.photos/seed/water-activity/600/400",
+      "imageUrl": "https://images.unsplash.com/photo-1530541834187-2f74f5d4a4d6?w=600&q=80",
       "imageHint": "water sports"
+    },
+    {
+      "id": "beachfront-villa",
+      "description": "Beachfront cottage with ocean view",
+      "imageUrl": "https://images.unsplash.com/photo-1596394516093-501ba68a0ba6?w=600&q=80",
+      "imageHint": "beachfront cottage"
     }
   ]
 }
