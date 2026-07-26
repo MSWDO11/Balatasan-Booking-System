@@ -52,12 +52,12 @@ export default function AdminInventoryPage() {
   const handleUpdateIslandImages = async () => {
     if (!firestore) return;
     const imageMap: Record<string, string> = {
-      "Aslom": "https://travelorientalmindoro.ph/Content/img/uploads/83c5a007-b150-430f-b9c4-c5a7549a7f13_thumb.jpg",
-      "Sibalat": "https://travelorientalmindoro.ph/Content/img/uploads/83c5a007-b150-430f-b9c4-c5a7549a7f13_thumb.jpg",
-      "Target": "https://travelorientalmindoro.ph/Content/img/uploads/33b63d38-739b-4b7f-b8c4-ca744970c5cf.jpg",
-      "Buyayao": "https://travelorientalmindoro.ph/Content/img/uploads/aaeb2388-f485-4799-8db1-c31162b102a8_thumb.jpg",
-      "Suguicay": "https://travelorientalmindoro.ph/Content/img/uploads/0ccf5666-41a4-4efc-b51c-abcb142057e7.jpg",
-      "Silad": "https://travelorientalmindoro.ph/Content/img/uploads/04468cee-9e1b-469f-a21c-90fef8360379.jpg",
+      "Aslom": "https://images.unsplash.com/photo-1559128010-7c1ad6e1b6a5?w=600&q=80",
+      "Sibalat": "https://images.unsplash.com/photo-1559128010-7c1ad6e1b6a5?w=600&q=80",
+      "Target": "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?w=600&q=80",
+      "Buyayao": "https://images.unsplash.com/photo-1473116763249-2faaef81ccda?w=600&q=80",
+      "Suguicay": "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=600&q=80",
+      "Silad": "https://images.unsplash.com/photo-1519046904884-53103b34b206?w=600&q=80",
     };
 
     const islandTours = tours?.filter(t => t.category === "island-hopping") || [];

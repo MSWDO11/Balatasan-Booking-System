@@ -8,7 +8,27 @@ import { Badge } from "@/components/ui/badge";
 import Link from "next/link";
 import { useState } from "react";
 
-const FALLBACK_TOUR_IMAGE = "https://images.unsplash.com/photo-1544551763-46a013bb70d5?w=600&q=80";
+// Distinct fallback images per island/tour type
+const ISLAND_FALLBACKS: Record<string, string> = {
+  "aslom":    "https://images.unsplash.com/photo-1559128010-7c1ad6e1b6a5?w=600&q=80",
+  "sibalat":  "https://images.unsplash.com/photo-1559128010-7c1ad6e1b6a5?w=600&q=80",
+  "target":   "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?w=600&q=80",
+  "buyayao":  "https://images.unsplash.com/photo-1473116763249-2faaef81ccda?w=600&q=80",
+  "suguicay": "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=600&q=80",
+  "silad":    "https://images.unsplash.com/photo-1519046904884-53103b34b206?w=600&q=80",
+  "jet ski":  "https://images.unsplash.com/photo-1605281317010-fe5ffe798166?w=600&q=80",
+  "flying fish": "https://images.unsplash.com/photo-1530541834187-2f74f5d4a4d6?w=600&q=80",
+};
+
+const DEFAULT_FALLBACK = "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=600&q=80";
+
+function getFallback(title: string): string {
+  const lower = title.toLowerCase();
+  for (const [key, url] of Object.entries(ISLAND_FALLBACKS)) {
+    if (lower.includes(key)) return url;
+  }
+  return DEFAULT_FALLBACK;
+}
 
 interface TourCardProps {
   tour: {
@@ -25,9 +45,9 @@ interface TourCardProps {
 
 export function TourCard({ tour }: TourCardProps) {
   const displayTitle = tour.title || tour.name || "Tour Experience";
-  const [imgSrc, setImgSrc] = useState(tour.imageUrl || FALLBACK_TOUR_IMAGE);
+  const fallback = getFallback(displayTitle);
+  const [imgSrc, setImgSrc] = useState(tour.imageUrl || fallback);
 
-  // Specific logic for Jet Ski and Flying Fish
   const isFlyingFish = displayTitle.toLowerCase().includes("flying fish");
   const isJetSki = displayTitle.toLowerCase().includes("jet ski");
 
@@ -44,7 +64,7 @@ export function TourCard({ tour }: TourCardProps) {
           fill
           className="object-cover transition-transform duration-500 group-hover:scale-105"
           sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-          onError={() => setImgSrc(FALLBACK_TOUR_IMAGE)}
+          onError={() => setImgSrc(fallback)}
         />
         <Badge className="absolute top-4 left-4 bg-[#6FDDC2] text-[#006D6B] hover:bg-[#6FDDC2]/90 border-none font-semibold px-3 py-1 rounded-full">
           Adventure
