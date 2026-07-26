@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import { Clock, ArrowRight, Eye, Timer } from "lucide-react";
-import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
+import { CardContent, CardFooter, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import Link from "next/link";
@@ -46,7 +46,6 @@ interface TourCardProps {
 export function TourCard({ tour }: TourCardProps) {
   const displayTitle = tour.title || tour.name || "Tour Experience";
   const fallback = getFallback(displayTitle);
-  // Use Firestore imageUrl first — fallback only if empty or on error
   const [imgSrc, setImgSrc] = useState(tour.imageUrl || fallback);
 
   const isFlyingFish = displayTitle.toLowerCase().includes("flying fish");
@@ -57,8 +56,13 @@ export function TourCard({ tour }: TourCardProps) {
   const unitLabel = isJetSki ? "min" : "pax";
 
   return (
-    <Card className="overflow-hidden group hover:shadow-lg transition-all duration-300 border-none bg-white rounded-2xl">
-      <div className="relative h-48 w-full overflow-hidden">
+    <div
+      className="card-liquid group bg-white shadow-md hover:shadow-xl transition-all duration-500 border border-primary/10"
+    >
+      <div
+        className="relative h-48 w-full overflow-hidden"
+        style={{ borderRadius: "24px 36px 0 0 / 32px 28px 0 0" }}
+      >
         <Image
           src={imgSrc}
           alt={displayTitle}
@@ -68,13 +72,19 @@ export function TourCard({ tour }: TourCardProps) {
           onError={() => setImgSrc(fallback)}
           unoptimized={imgSrc.startsWith("data:")}
         />
-        <Badge className="absolute top-4 left-4 bg-[#6FDDC2] text-[#006D6B] hover:bg-[#6FDDC2]/90 border-none font-semibold px-3 py-1 rounded-full">
+        <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent" />
+        <Badge
+          className="absolute top-4 left-4 bg-[#6FDDC2] text-[#006D6B] hover:bg-[#6FDDC2]/90 border-none font-semibold px-3 py-1 shadow"
+          style={{ borderRadius: "40% 60% 60% 40% / 60% 30% 70% 40%" }}
+        >
           Adventure
         </Badge>
       </div>
+
       <CardHeader className="pt-6 pb-2">
         <h3 className="font-headline text-2xl font-bold text-slate-900">{displayTitle}</h3>
       </CardHeader>
+
       <CardContent className="space-y-4">
         <p className="text-[#12AFAB] text-sm line-clamp-2">
           {tour.description}
@@ -86,15 +96,22 @@ export function TourCard({ tour }: TourCardProps) {
           </div>
           <div className="font-bold text-[#12AFAB] flex items-center gap-1">
             <span className="text-lg">₱</span>
-            <span>{rate.toLocaleString()} <span className="text-xs text-slate-400 font-normal">/ {unitLabel}</span></span>
+            <span>
+              {rate.toLocaleString()}{" "}
+              <span className="text-xs text-slate-400 font-normal">/ {unitLabel}</span>
+            </span>
           </div>
         </div>
       </CardContent>
+
       <CardFooter className="pb-6">
         <Link href={`/tours/${tour.id}`} className="w-full">
           <Button
-            variant="outline"
-            className="w-full gap-2 border-[#12AFAB]/20 hover:border-[#12AFDC]/50 hover:bg-[#12AFAB]/5 rounded-xl h-12 text-slate-700 font-medium"
+            variant="liquid-outline"
+            className="w-full gap-2 h-12 text-slate-700 font-medium hover:text-[#12AFAB]"
+            style={{
+              borderRadius: "40% 60% 60% 40% / 60% 30% 70% 40%",
+            }}
           >
             <Eye className="h-4 w-4" />
             Details
@@ -102,6 +119,6 @@ export function TourCard({ tour }: TourCardProps) {
           </Button>
         </Link>
       </CardFooter>
-    </Card>
+    </div>
   );
 }

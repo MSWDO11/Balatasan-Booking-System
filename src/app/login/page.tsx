@@ -1,16 +1,19 @@
+
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Navbar } from "@/components/navbar";
 import { Footer } from "@/components/footer";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
-import { Waves, Mail, Lock, Loader2, UserPlus, LogIn, Eye, EyeOff, AlertCircle } from "lucide-react";
-import { useAuth, useUser } from "@/firebase";
-import { signInWithEmailAndPassword, createUserWithEmailAndPassword } from "firebase/auth";
+import { Waves, Mail, Lock, Loader2, UserPlus, LogIn, Eye, EyeOff } from "lucide-react";
+import { useAuth } from "@/firebase";
+import { initiateEmailSignIn, initiateEmailSignUp } from "@/firebase/non-blocking-login";
 import { useRouter } from "next/navigation";
+import { useUser } from "@/firebase";
+import { useEffect } from "react";
 
 export default function LoginPage() {
   const [isSignUp, setIsSignUp] = useState(false);
@@ -18,7 +21,6 @@ export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const [errorMsg, setErrorMsg] = useState("");
   const auth = useAuth();
   const { user } = useUser();
   const router = useRouter();
@@ -29,32 +31,14 @@ export default function LoginPage() {
     }
   }, [user, router]);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
-    setErrorMsg("");
-
-    try {
-      if (isSignUp) {
-        await createUserWithEmailAndPassword(auth, email, password);
-      } else {
-        await signInWithEmailAndPassword(auth, email, password);
-      }
-      // onAuthStateChanged will trigger redirect via useEffect above
-    } catch (error: any) {
-      const code = error?.code || "";
-      if (code === "auth/user-not-found" || code === "auth/wrong-password" || code === "auth/invalid-credential") {
-        setErrorMsg("Invalid email or password.");
-      } else if (code === "auth/email-already-in-use") {
-        setErrorMsg("This email is already registered. Try signing in.");
-      } else if (code === "auth/weak-password") {
-        setErrorMsg("Password must be at least 6 characters.");
-      } else if (code === "auth/invalid-email") {
-        setErrorMsg("Please enter a valid email address.");
-      } else {
-        setErrorMsg("Something went wrong. Please try again.");
-      }
-      setIsLoading(false);
+    
+    if (isSignUp) {
+      initiateEmailSignUp(auth, email, password);
+    } else {
+      initiateEmailSignIn(auth, email, password);
     }
   };
 
@@ -88,7 +72,7 @@ export default function LoginPage() {
                     placeholder="name@example.com" 
                     className="pl-10" 
                     value={email}
-                    onChange={(e) => { setEmail(e.target.value); setErrorMsg(""); }}
+                    onChange={(e) => setEmail(e.target.value)}
                     required
                   />
                 </div>
@@ -103,7 +87,7 @@ export default function LoginPage() {
                     placeholder="••••••••" 
                     className="pl-10 pr-10" 
                     value={password}
-                    onChange={(e) => { setPassword(e.target.value); setErrorMsg(""); }}
+                    onChange={(e) => setPassword(e.target.value)}
                     required
                   />
                   <button
@@ -115,15 +99,13 @@ export default function LoginPage() {
                   </button>
                 </div>
               </div>
-
-              {errorMsg && (
-                <div className="flex items-center gap-2 text-sm text-destructive bg-destructive/10 px-3 py-2 rounded-lg">
-                  <AlertCircle className="h-4 w-4 shrink-0" />
-                  {errorMsg}
-                </div>
-              )}
-
-              <Button className="w-full h-11" type="submit" disabled={isLoading}>
+              <Button
+                className="w-full h-11"
+                type="submit"
+                disabled={isLoading}
+                variant="liquid"
+                style={{ borderRadius: "60% 40% 30% 70% / 60% 30% 70% 40%", height: "2.75rem" }}
+              >
                 {isLoading ? (
                   <Loader2 className="h-4 w-4 animate-spin" />
                 ) : isSignUp ? (
@@ -140,14 +122,15 @@ export default function LoginPage() {
                 <span className="w-full border-t" />
               </div>
               <div className="relative flex justify-center text-xs uppercase">
-                <span className="bg-card px-2 text-muted-foreground">Or</span>
+                <span className="bg-card px-2 text-muted-foreground">Or continue with</span>
               </div>
             </div>
             <Button 
-              variant="outline" 
-              className="w-full" 
-              onClick={() => { setIsSignUp(!isSignUp); setErrorMsg(""); }}
+              variant="liquid-outline" 
+              className="w-full text-[#12AFAB]" 
+              onClick={() => setIsSignUp(!isSignUp)}
               disabled={isLoading}
+              style={{ borderRadius: "40% 60% 60% 40% / 60% 30% 70% 40%", height: "2.75rem" }}
             >
               {isSignUp ? "Already have an account? Sign In" : "New to Balatasan? Create an account"}
             </Button>
