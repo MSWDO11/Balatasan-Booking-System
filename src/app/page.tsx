@@ -122,24 +122,12 @@ export default function Home() {
 
               <div className="pt-12 flex flex-col sm:flex-row items-center justify-center gap-6">
                 <Link href="/accommodations">
-                  {/* Liquid filled button */}
-                  <button
-                    className="btn-liquid text-lg px-10 py-4 shadow-2xl"
-                    style={{
-                      borderRadius: "60% 40% 30% 70% / 60% 30% 70% 40%",
-                    }}
-                  >
+                  <button className="btn-liquid text-lg px-10 py-4 shadow-2xl">
                     Book a Cottage
                   </button>
                 </Link>
                 <Link href="/tours">
-                  {/* Liquid outline button */}
-                  <button
-                    className="btn-liquid-outline text-lg px-10 py-4 text-white border-white/50"
-                    style={{
-                      borderRadius: "40% 60% 60% 40% / 60% 30% 70% 40%",
-                    }}
-                  >
+                  <button className="btn-liquid-outline text-lg px-10 py-4 text-white border-white/50">
                     Start Adventure
                   </button>
                 </Link>
