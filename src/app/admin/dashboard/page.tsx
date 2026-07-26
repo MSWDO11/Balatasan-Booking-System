@@ -253,8 +253,32 @@ export default function AdminDashboard() {
           <div className="flex gap-2">
              <button
                type="button"
-               onClick={handleExportCSV}
-               className="px-5 py-2.5 rounded-full bg-white border border-slate-200 text-slate-600 font-semibold shadow-sm hover:bg-slate-50 transition-colors text-sm"
+               onClick={() => {
+                 const exportData = bookings.length ? bookings : (rawBookings ?? []);
+                 if (!exportData.length) {
+                   toast({ title: "No bookings", description: "No bookings to export yet." });
+                   return;
+                 }
+                 const headers = ["Ref ID","Guest Name","Contact","Item","Start Date","End Date","Guests","Status","Total Price","Created At"];
+                 const rows = (exportData as any[]).map(b => [
+                   String(b.id ?? "").slice(0,8).toUpperCase(),
+                   String(b.guestName ?? ""),
+                   String(b.contactNumber ?? ""),
+                   String(b.itemName ?? ""),
+                   String(b.startDate ?? ""),
+                   String(b.endDate ?? ""),
+                   String(b.guestCount ?? ""),
+                   String(b.status ?? ""),
+                   String(b.totalPrice ?? 0),
+                   b.createdAt ? new Date(b.createdAt).toLocaleDateString() : "",
+                 ]);
+                 const csv = [headers,...rows].map(r=>r.map((v:any)=>`"${String(v).replace(/"/g,'""')}"`).join(",")).join("\r\n");
+                 const w = window.open("","_blank");
+                 if(w){ w.document.write(`<pre>${csv}</pre>`); w.document.close(); }
+                 else { alert("Allow popups then try again"); }
+                 toast({ title: "Exported!", description: `${exportData.length} bookings opened in new tab.` });
+               }}
+               className="px-5 py-2.5 rounded-full bg-white border border-slate-200 text-slate-600 font-semibold shadow-sm hover:bg-slate-50 transition-colors text-sm cursor-pointer"
              >
                Export Data
              </button>
