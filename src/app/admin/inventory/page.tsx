@@ -40,7 +40,7 @@ export default function AdminInventoryPage() {
     pricePerPerson: "",
     description: "",
     keyFeatures: "",
-    imageUrl: "https://picsum.photos/seed/resort/600/400"
+    imageUrl: "https://images.unsplash.com/photo-1596394516093-501ba68a0ba6?w=600&q=80"
   });
 
   const roomsQuery = useMemoFirebase(() => firestore ? collection(firestore, "rooms") : null, [firestore]);
@@ -86,7 +86,7 @@ export default function AdminInventoryPage() {
           pricePerPerson: 500, 
           capacity: "3",
           duration: "15 Minutes",
-          imageUrl: "https://www.merryinflatables.com/products/water-crazy-ufo-towable-boat-inflatable-flying-disco-boat/014-6.png",
+          imageUrl: "https://images.unsplash.com/photo-1530541834187-2f74f5d4a4d6?w=600&q=80",
           description: "A high-speed adrenaline rush on the water. Max 3 people.",
           keyFeatures: ["High Speed", "Life Vest Included"]
         },
@@ -97,7 +97,7 @@ export default function AdminInventoryPage() {
           pricePerPerson: 150, 
           capacity: "2",
           duration: "Per Minute",
-          imageUrl: "https://www.coltonyacht.com/uploads/202129532/p202107291129533355416.jpg",
+          imageUrl: "https://images.unsplash.com/photo-1605281317010-fe5ffe798166?w=600&q=80",
           description: "Experience the thrill of the open sea on our high-performance Jet Skis. Priced at 150 per minute.",
           keyFeatures: ["High Speed", "Solo or Double"]
         },
@@ -108,7 +108,7 @@ export default function AdminInventoryPage() {
           pricePerPerson: 1000, 
           capacity: "10",
           duration: "Full Day",
-          imageUrl: "https://lakbay-v3.poggerss.com/places/111/gallery/20251210065541_76f0db3b.jpg",
+          imageUrl: "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=600&q=80",
           description: "Explore Aslom Islet in Bulalacao, known for its stunning white sand and turquoise waters.",
           keyFeatures: ["White Sand", "Snorkeling", "Lunch Included"]
         }
@@ -150,7 +150,7 @@ export default function AdminInventoryPage() {
     }
 
     toast({ title: "Saved", description: "Item has been saved to the catalog." });
-    setFormData({ id: "", name: "", capacity: "", pricePerPerson: "", description: "", keyFeatures: "", imageUrl: "https://picsum.photos/seed/resort/600/400" });
+    setFormData({ id: "", name: "", capacity: "", pricePerPerson: "", description: "", keyFeatures: "", imageUrl: "https://images.unsplash.com/photo-1596394516093-501ba68a0ba6?w=600&q=80" });
   };
 
   const handleDelete = (id: string) => {
