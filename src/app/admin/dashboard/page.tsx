@@ -95,6 +95,35 @@ export default function AdminDashboard() {
     });
   };
 
+  const handleExportCSV = () => {
+    if (!bookings.length) {
+      toast({ title: "No data", description: "There are no bookings to export." });
+      return;
+    }
+    const headers = ["Ref ID", "Guest Name", "Contact", "Item", "Start Date", "End Date", "Guests", "Status", "Total Price", "Created At"];
+    const rows = bookings.map(b => [
+      b.id?.slice(0, 8).toUpperCase() ?? "",
+      b.guestName ?? "",
+      b.contactNumber ?? "",
+      b.itemName ?? "",
+      b.startDate ?? "",
+      b.endDate ?? "",
+      b.guestCount ?? "",
+      b.status ?? "",
+      b.totalPrice ?? 0,
+      b.createdAt ? new Date(b.createdAt).toLocaleDateString() : "",
+    ]);
+    const csv = [headers, ...rows].map(row => row.map(v => `"${v}"`).join(",")).join("\n");
+    const blob = new Blob([csv], { type: "text/csv" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `balatasan-bookings-${new Date().toISOString().slice(0, 10)}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+    toast({ title: "Exported!", description: `${bookings.length} bookings exported as CSV.` });
+  };
+
   const handleInitializeAdmin = () => {
     if (!firestore || !user) return;
     setIsInitializing(true);
@@ -213,7 +242,7 @@ export default function AdminDashboard() {
             <p className="text-slate-500 font-medium">Manage reservations and monitor resort growth.</p>
           </div>
           <div className="flex gap-2">
-             <Button variant="outline" className="rounded-full bg-white border-slate-200 text-slate-600 font-semibold shadow-sm">
+             <Button variant="outline" className="rounded-full bg-white border-slate-200 text-slate-600 font-semibold shadow-sm" onClick={handleExportCSV}>
                 Export Data
              </Button>
           </div>
