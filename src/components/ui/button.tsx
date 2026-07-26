@@ -27,7 +27,7 @@ const buttonVariants = cva(
           "bg-destructive/80 text-white border-destructive/40 shadow-[0_4px_16px_rgba(239,68,68,0.35),inset_0_1px_0_rgba(255,255,255,0.2)] hover:bg-destructive/90",
         // Outline — transparent glass pill
         outline:
-          "bg-white/10 text-foreground border-white/40 shadow-[0_2px_12px_rgba(0,0,0,0.08),inset_0_1px_0_rgba(255,255,255,0.3)] hover:bg-white/20 hover:border-white/60",
+          "bg-primary/5 text-primary border-primary/30 shadow-[0_2px_12px_rgba(18,175,171,0.1),inset_0_1px_0_rgba(255,255,255,0.6)] hover:bg-primary/10 hover:border-primary/50",
         // Secondary — light glass pill
         secondary:
           "bg-secondary/70 text-secondary-foreground border-secondary/50 shadow-[inset_0_1px_0_rgba(255,255,255,0.4)] hover:bg-secondary/90",
