@@ -99,21 +99,22 @@ export default function LoginPage() {
                   </button>
                 </div>
               </div>
-              <Button
-                className="w-full h-11"
-                type="submit"
-                disabled={isLoading}
-                variant="liquid"
-                style={{ borderRadius: "60% 40% 30% 70% / 60% 30% 70% 40%", height: "2.75rem" }}
-              >
-                {isLoading ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                ) : isSignUp ? (
-                  <span className="flex items-center gap-2"><UserPlus className="h-4 w-4" /> Sign Up</span>
-                ) : (
-                  <span className="flex items-center gap-2"><LogIn className="h-4 w-4" /> Sign In</span>
-                )}
-              </Button>
+              <div className="flex justify-center pt-2">
+                <Button
+                  type="submit"
+                  disabled={isLoading}
+                  size="lg"
+                  className="px-12"
+                >
+                  {isLoading ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : isSignUp ? (
+                    <span className="flex items-center gap-2"><UserPlus className="h-4 w-4" /> Sign Up</span>
+                  ) : (
+                    <span className="flex items-center gap-2"><LogIn className="h-4 w-4" /> Sign In</span>
+                  )}
+                </Button>
+              </div>
             </form>
           </CardContent>
           <CardFooter className="flex flex-col space-y-4">
@@ -125,15 +126,17 @@ export default function LoginPage() {
                 <span className="bg-card px-2 text-muted-foreground">Or continue with</span>
               </div>
             </div>
-            <Button 
-              variant="liquid-outline" 
-              className="w-full text-[#12AFAB]" 
-              onClick={() => setIsSignUp(!isSignUp)}
-              disabled={isLoading}
-              style={{ borderRadius: "40% 60% 60% 40% / 60% 30% 70% 40%", height: "2.75rem" }}
-            >
-              {isSignUp ? "Already have an account? Sign In" : "New to Balatasan? Create an account"}
-            </Button>
+            <div className="flex justify-center">
+              <Button 
+                variant="outline" 
+                size="lg"
+                className="px-8"
+                onClick={() => { setIsSignUp(!isSignUp); setErrorMsg(""); }}
+                disabled={isLoading}
+              >
+                {isSignUp ? "Already have an account? Sign In" : "New to Balatasan? Create an account"}
+              </Button>
+            </div>
           </CardFooter>
         </Card>
       </main>
