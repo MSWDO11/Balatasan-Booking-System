@@ -13,7 +13,7 @@ const ISLAND_FALLBACKS: Record<string, string> = {
   "aslom":    "https://images.unsplash.com/photo-1559128010-7c1ad6e1b6a5?w=600&q=80",
   "sibalat":  "https://images.unsplash.com/photo-1559128010-7c1ad6e1b6a5?w=600&q=80",
   "target":   "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?w=600&q=80",
-  "buyayao":  "https://travelorientalmindoro.ph/Content/img/uploads/aaeb2388-f485-4799-8db1-c31162b102a8_thumb.jpg",
+  "buyayao":  "https://www.travelorientalmindoro.ph/uploads/places/191/gallery/20260210020518_79c5f8cb.jpg",
   "suguicay": "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=600&q=80",
   "silad":    "https://images.unsplash.com/photo-1519046904884-53103b34b206?w=600&q=80",
   "jet ski":  "https://images.unsplash.com/photo-1605281317010-fe5ffe798166?w=600&q=80",
