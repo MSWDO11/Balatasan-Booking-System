@@ -251,9 +251,13 @@ export default function AdminDashboard() {
             <p className="text-slate-500 font-medium">Manage reservations and monitor resort growth.</p>
           </div>
           <div className="flex gap-2">
-             <Button variant="outline" className="rounded-full bg-white border-slate-200 text-slate-600 font-semibold shadow-sm" onClick={handleExportCSV}>
-                Export Data
-             </Button>
+             <button
+               type="button"
+               onClick={handleExportCSV}
+               className="px-5 py-2.5 rounded-full bg-white border border-slate-200 text-slate-600 font-semibold shadow-sm hover:bg-slate-50 transition-colors text-sm"
+             >
+               Export Data
+             </button>
           </div>
         </div>
 
