@@ -1,4 +1,3 @@
-
 'use client';
 
 import { Navbar } from "@/components/navbar";
@@ -6,21 +5,20 @@ import { Footer } from "@/components/footer";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
-import { Calendar as CalendarIcon, Users, Wind, Wifi, Coffee, MapPin, Star, Loader2, CreditCard, ShieldCheck } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Users, Wind, Wifi, Coffee, MapPin, Star, Loader2, CreditCard, ShieldCheck, Tag, TrendingDown } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import Image from "next/image";
-import { PlaceHolderImages } from "@/lib/placeholder-images";
 import { useUser, useFirestore, useDoc, useMemoFirebase, addDocumentNonBlocking } from "@/firebase";
 import { doc, collection } from "firebase/firestore";
-import { useState, use, useCallback } from "react";
-
-const FALLBACK_ROOM_IMAGE = "https://images.unsplash.com/photo-1596394516093-501ba68a0ba6?w=600&q=80";
+import { useState, use } from "react";
 import { useRouter } from "next/navigation";
 import { useToast } from "@/hooks/use-toast";
 import { format, addDays, differenceInDays } from "date-fns";
+import { calculatePrice } from "@/lib/pricing";
 
 export default function RoomDetailsPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
@@ -33,7 +31,7 @@ export default function RoomDetailsPage({ params }: { params: Promise<{ id: stri
   const [checkIn, setCheckIn] = useState<Date | undefined>(new Date());
   const [checkOut, setCheckOut] = useState<Date | undefined>(addDays(new Date(), 1));
   const [guests, setGuests] = useState("1");
-  const [roomImgSrc, setRoomImgSrc] = useState<string | null>(null);
+  const [imgSrc, setImgSrc] = useState<string | null>(null);
 
   const roomRef = useMemoFirebase(() => firestore ? doc(firestore, "rooms", id) : null, [firestore, id]);
   const { data: room, isLoading: isRoomLoading } = useDoc(roomRef);
@@ -41,79 +39,61 @@ export default function RoomDetailsPage({ params }: { params: Promise<{ id: stri
   const nights = checkIn && checkOut ? Math.max(0, differenceInDays(checkOut, checkIn)) : 0;
   const guestCount = parseInt(guests);
   const maxCapacity = room?.capacity ? parseInt(room.capacity.toString()) : 10;
-  
-  // Calculate total price: Per person per night
   const ratePerPerson = room?.pricePerPerson || room?.price || 0;
-  const totalPrice = ratePerPerson * guestCount * (nights || 1);
+
+  const pricing = calculatePrice({
+    baseRate: ratePerPerson,
+    guestCount,
+    nights: Math.max(nights, 1),
+    date: checkIn,
+  });
 
   const handleBookNow = () => {
-    if (!user) {
-      router.push("/login");
-      return;
-    }
-
+    if (!user) { router.push("/login"); return; }
     if (!room || !firestore || !checkIn || !checkOut || nights <= 0) {
-      toast({
-        variant: "destructive",
-        title: "Invalid Booking",
-        description: "Please ensure your check-out date is after your check-in date.",
-      });
+      toast({ variant: "destructive", title: "Invalid Booking", description: "Check-out must be after check-in." });
       return;
     }
-
     setIsBooking(true);
-    
     const bookingData = {
       userId: user.uid,
       itemId: room.id,
       itemName: room.name,
+      itemType: "room",
       startDate: format(checkIn, "yyyy-MM-dd"),
       endDate: format(checkOut, "yyyy-MM-dd"),
       status: "Pending Payment",
-      totalPrice: totalPrice,
-      guestCount: guestCount,
+      totalPrice: pricing.finalPrice,
+      originalPrice: pricing.basePrice,
+      guestCount,
       guestName: user.displayName || user.email?.split('@')[0] || "Guest",
       contactNumber: "Not provided",
-      createdAt: new Date().toISOString()
+      seasonApplied: pricing.seasonInfo?.label || null,
+      groupDiscountApplied: pricing.groupDiscountInfo?.label || null,
+      createdAt: new Date().toISOString(),
     };
-
-    const bookingsRef = collection(firestore, "users", user.uid, "bookings");
-    
-    addDocumentNonBlocking(bookingsRef, bookingData)
+    addDocumentNonBlocking(collection(firestore, "users", user.uid, "bookings"), bookingData)
       .then(() => {
-        toast({
-          title: "Booking Requested!",
-          description: "Please check 'My Bookings' for payment instructions to confirm your stay.",
-        });
+        toast({ title: "Booking Requested!", description: "Check 'My Bookings' for payment instructions." });
         router.push("/my-bookings");
       })
       .finally(() => setIsBooking(false));
   };
 
-  if (isRoomLoading) {
-    return (
-      <div className="flex min-h-screen flex-col">
-        <Navbar />
-        <main className="flex-grow flex items-center justify-center">
-          <Loader2 className="h-8 w-8 animate-spin text-primary" />
-        </main>
-        <Footer />
-      </div>
-    );
-  }
+  if (isRoomLoading) return (
+    <div className="flex min-h-screen flex-col"><Navbar />
+      <main className="flex-grow flex items-center justify-center"><Loader2 className="h-8 w-8 animate-spin text-primary" /></main>
+    <Footer /></div>
+  );
 
-  if (!room) {
-    return (
-      <div className="flex min-h-screen flex-col">
-        <Navbar />
-        <main className="flex-grow flex flex-col items-center justify-center space-y-4">
-          <h2 className="text-2xl font-bold">Cottage not found</h2>
-          <Button onClick={() => router.push("/accommodations")}>Back to Cottages</Button>
-        </main>
-        <Footer />
-      </div>
-    );
-  }
+  if (!room) return (
+    <div className="flex min-h-screen flex-col"><Navbar />
+      <main className="flex-grow flex flex-col items-center justify-center space-y-4">
+        <h2 className="text-2xl font-bold">Cottage not found</h2>
+        <Button onClick={() => router.push("/accommodations")}>Back to Cottages</Button>
+      </main>
+    <Footer /></div>
+  );
 
   return (
     <div className="flex min-h-screen flex-col">
@@ -124,72 +104,81 @@ export default function RoomDetailsPage({ params }: { params: Promise<{ id: stri
             <div className="lg:col-span-2 space-y-8">
               <div className="relative h-[400px] md:h-[500px] rounded-3xl overflow-hidden shadow-2xl">
                 <Image
-                  src={roomImgSrc ?? (room.imageUrl || FALLBACK_ROOM_IMAGE)}
-                  alt={room.name || "Cottage image"}
-                  fill
-                  className="object-cover"
-                  onError={() => setRoomImgSrc(FALLBACK_ROOM_IMAGE)}
+                  src={imgSrc ?? (room.imageUrl || "https://images.unsplash.com/photo-1596394516093-501ba68a0ba6?w=800&q=80")}
+                  alt={room.name || "Cottage"}
+                  fill className="object-cover"
+                  onError={() => setImgSrc("https://images.unsplash.com/photo-1596394516093-501ba68a0ba6?w=800&q=80")}
+                  unoptimized={room.imageUrl?.startsWith("data:")}
                 />
               </div>
-
               <div className="space-y-6">
                 <div className="flex flex-wrap justify-between items-start gap-4">
                   <div className="space-y-1">
                     <h1 className="text-4xl font-headline font-bold text-primary">{room.name}</h1>
                     <div className="flex items-center gap-2 text-muted-foreground">
-                      <MapPin className="h-4 w-4" />
-                      <span>Balatasan, Bulalacao</span>
+                      <MapPin className="h-4 w-4" /><span>Balatasan, Bulalacao</span>
                     </div>
                   </div>
                   <div className="flex items-center gap-1 bg-accent/10 text-accent-foreground px-3 py-1.5 rounded-full font-bold">
-                    <Star className="h-4 w-4 fill-current" />
-                    <span>4.9 (New)</span>
+                    <Star className="h-4 w-4 fill-current" /><span>4.9 (New)</span>
                   </div>
                 </div>
-
                 <div className="flex gap-6 py-4 border-y">
-                  <div className="flex flex-col items-center gap-1 text-center">
-                    <Users className="h-6 w-6 text-primary" />
-                    <span className="text-xs font-medium">Max {maxCapacity} Guests</span>
-                  </div>
-                  <div className="flex flex-col items-center gap-1 text-center">
-                    <Wind className="h-6 w-6 text-primary" />
-                    <span className="text-xs font-medium">AC</span>
-                  </div>
-                  <div className="flex flex-col items-center gap-1 text-center">
-                    <Wifi className="h-6 w-6 text-primary" />
-                    <span className="text-xs font-medium">Free WiFi</span>
-                  </div>
-                  <div className="flex flex-col items-center gap-1 text-center">
-                    <Coffee className="h-6 w-6 text-primary" />
-                    <span className="text-xs font-medium">Breakfast</span>
-                  </div>
+                  {[{ icon: Users, label: `Max ${maxCapacity} Guests` }, { icon: Wind, label: "AC" }, { icon: Wifi, label: "Free WiFi" }, { icon: Coffee, label: "Breakfast" }].map(({ icon: Icon, label }) => (
+                    <div key={label} className="flex flex-col items-center gap-1 text-center">
+                      <Icon className="h-6 w-6 text-primary" />
+                      <span className="text-xs font-medium">{label}</span>
+                    </div>
+                  ))}
                 </div>
-
                 <div className="space-y-4">
                   <h3 className="text-2xl font-headline font-bold">Description</h3>
-                  <p className="text-muted-foreground leading-relaxed text-lg">
-                    {room.description}
-                  </p>
+                  <p className="text-muted-foreground leading-relaxed text-lg">{room.description}</p>
+                </div>
+
+                {/* Package Deals Info */}
+                <div className="p-5 bg-primary/5 rounded-2xl border border-primary/15 space-y-3">
+                  <div className="flex items-center gap-2 font-bold text-primary text-sm">
+                    <Tag className="h-4 w-4" /> Available Package Deals
+                  </div>
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                      <Badge className="bg-primary/10 text-primary border-none text-xs">Save 10%</Badge>
+                      <span>Staycation Bundle — Book cottage + island hopping tour</span>
+                    </div>
+                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                      <Badge className="bg-primary/10 text-primary border-none text-xs">Save 15%</Badge>
+                      <span>Adventure Package — Book cottage + 2 water activities</span>
+                    </div>
+                  </div>
+                  <p className="text-xs text-muted-foreground">Contact us after booking to apply package discounts.</p>
                 </div>
 
                 <Alert className="bg-primary/5 border-primary/20">
                   <CreditCard className="h-4 w-4 text-primary" />
                   <AlertTitle className="text-primary font-bold">Payment Information</AlertTitle>
                   <AlertDescription className="text-sm text-muted-foreground">
-                    To finalize your booking, a 50% downpayment is required via G-Cash or Bank Transfer. Our team will contact you with account details once you click "Reserve & Pay Later".
+                    50% downpayment via G-Cash: <strong>0912-345-6789</strong>. Upload receipt in My Bookings to confirm.
                   </AlertDescription>
                 </Alert>
               </div>
             </div>
 
             <div className="lg:col-span-1">
-              <Card className="sticky top-24 border-none shadow-2xl bg-white/50 backdrop-blur">
+              <Card className="sticky top-24 border-none shadow-2xl">
                 <CardContent className="p-8 space-y-6">
                   <div className="flex justify-between items-baseline">
-                    <span className="text-3xl font-bold text-primary">₱{(ratePerPerson).toLocaleString()}</span>
+                    <span className="text-3xl font-bold text-primary">₱{ratePerPerson.toLocaleString()}</span>
                     <span className="text-muted-foreground font-medium">/ person / night</span>
                   </div>
+
+                  {/* Seasonal badge */}
+                  {pricing.seasonInfo && (
+                    <div className={`flex items-center gap-2 px-3 py-2 rounded-xl border text-xs font-semibold ${pricing.seasonInfo.color}`}>
+                      <Tag className="h-3.5 w-3.5" />
+                      {pricing.seasonInfo.label} — {pricing.seasonInfo.multiplier > 1 ? `+${Math.round((pricing.seasonInfo.multiplier - 1) * 100)}%` : `-${Math.round((1 - pricing.seasonInfo.multiplier) * 100)}%`} rate applies
+                    </div>
+                  )}
 
                   <Separator />
 
@@ -203,10 +192,9 @@ export default function RoomDetailsPage({ params }: { params: Promise<{ id: stri
                           </button>
                         </PopoverTrigger>
                         <PopoverContent className="w-auto p-0" align="start">
-                          <Calendar mode="single" selected={checkIn} onSelect={setCheckIn} initialFocus disabled={(date) => date < new Date()} />
+                          <Calendar mode="single" selected={checkIn} onSelect={setCheckIn} initialFocus disabled={(d) => d < new Date()} />
                         </PopoverContent>
                       </Popover>
-                      
                       <Popover>
                         <PopoverTrigger asChild>
                           <button className="p-3 text-left hover:bg-accent/5 transition-colors">
@@ -215,57 +203,67 @@ export default function RoomDetailsPage({ params }: { params: Promise<{ id: stri
                           </button>
                         </PopoverTrigger>
                         <PopoverContent className="w-auto p-0" align="start">
-                          <Calendar mode="single" selected={checkOut} onSelect={setCheckOut} initialFocus disabled={(date) => (checkIn ? date <= checkIn : date < new Date())} />
+                          <Calendar mode="single" selected={checkOut} onSelect={setCheckOut} initialFocus disabled={(d) => (checkIn ? d <= checkIn : d < new Date())} />
                         </PopoverContent>
                       </Popover>
                     </div>
 
-                    <div className="space-y-2">
-                      <label className="text-[10px] uppercase font-bold text-muted-foreground flex items-center gap-1 ml-1 mb-1">
-                        How many guests
-                      </label>
-                      <Select value={guests} onValueChange={setGuests}>
-                        <SelectTrigger className="w-full h-12 font-semibold rounded-2xl bg-background/50 border-2 border-primary focus:ring-primary focus:border-primary px-4">
-                          <SelectValue placeholder="1" />
-                        </SelectTrigger>
-                        <SelectContent className="rounded-xl border-primary/10 shadow-xl">
-                          {Array.from({ length: maxCapacity }, (_, i) => i + 1).map((num) => (
-                            <SelectItem 
-                              key={num} 
-                              value={num.toString()} 
-                              className="focus:bg-primary focus:text-white rounded-md m-1 py-2 cursor-pointer transition-colors"
-                            >
-                              {num}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
+                    <Select value={guests} onValueChange={setGuests}>
+                      <SelectTrigger className="w-full h-12 font-semibold">
+                        <SelectValue placeholder="Guests" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {Array.from({ length: maxCapacity }, (_, i) => i + 1).map((num) => (
+                          <SelectItem key={num} value={num.toString()}>{num} {num === 1 ? "guest" : "guests"}{num >= 10 ? " 🎉" : ""}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+
+                    {/* Group discount badge */}
+                    {pricing.groupDiscountInfo && (
+                      <div className="flex items-center gap-2 px-3 py-2 bg-green-50 border border-green-200 rounded-xl text-xs font-semibold text-green-700">
+                        <TrendingDown className="h-3.5 w-3.5" />
+                        {pricing.groupDiscountInfo.label}
+                      </div>
+                    )}
                   </div>
 
-                  <Button 
-                    className="w-full h-14 text-lg font-bold shadow-lg shadow-primary/20 rounded-xl transition-all hover:scale-[1.02] active:scale-[0.98]"
-                    disabled={isBooking || nights <= 0}
-                    onClick={handleBookNow}
-                  >
+                  <Button className="w-full" size="lg" disabled={isBooking || nights <= 0} onClick={handleBookNow}>
                     {isBooking ? <Loader2 className="h-5 w-5 animate-spin" /> : "Reserve & Pay Later"}
                   </Button>
 
-                  <div className="space-y-3 pt-4">
-                    <div className="flex justify-between text-sm">
-                      <span className="text-muted-foreground">
-                        ₱{ratePerPerson.toLocaleString()} × {guestCount} {guestCount === 1 ? 'guest' : 'guests'} × {nights} {nights === 1 ? 'night' : 'nights'}
-                      </span>
-                      <span className="font-semibold">₱{totalPrice.toLocaleString()}</span>
+                  <div className="space-y-2 pt-2 text-sm">
+                    <div className="flex justify-between text-muted-foreground">
+                      <span>Base: ₱{ratePerPerson.toLocaleString()} × {guestCount} × {Math.max(nights,1)}n</span>
+                      <span>₱{pricing.basePrice.toLocaleString()}</span>
                     </div>
+                    {pricing.seasonInfo && (
+                      <div className="flex justify-between text-muted-foreground">
+                        <span>{pricing.seasonInfo.label}</span>
+                        <span className={pricing.seasonInfo.multiplier > 1 ? "text-orange-600" : "text-green-600"}>
+                          {pricing.seasonInfo.multiplier > 1 ? "+" : ""}₱{(pricing.afterSeasonal - pricing.basePrice).toLocaleString()}
+                        </span>
+                      </div>
+                    )}
+                    {pricing.groupDiscountInfo && (
+                      <div className="flex justify-between text-green-600 font-medium">
+                        <span>Group discount ({pricing.groupDiscountInfo.discountPercent}%)</span>
+                        <span>-₱{(pricing.afterSeasonal - pricing.finalPrice).toLocaleString()}</span>
+                      </div>
+                    )}
                     <Separator />
                     <div className="flex justify-between text-lg font-bold">
                       <span>Total</span>
-                      <span className="text-primary font-bold">₱{totalPrice.toLocaleString()}</span>
+                      <span className="text-primary">₱{pricing.finalPrice.toLocaleString()}</span>
                     </div>
+                    {pricing.savings > 0 && (
+                      <div className="text-center text-xs text-green-600 font-semibold">
+                        🎉 You save ₱{pricing.savings.toLocaleString()}!
+                      </div>
+                    )}
                   </div>
 
-                  <div className="flex items-center justify-center gap-2 pt-2 text-[10px] text-muted-foreground">
+                  <div className="flex items-center justify-center gap-2 text-[10px] text-muted-foreground">
                     <ShieldCheck className="h-3 w-3 text-primary" />
                     Secure Booking • No Cancellation Fee
                   </div>

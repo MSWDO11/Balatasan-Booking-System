@@ -15,12 +15,14 @@ import { PlaceHolderImages } from "@/lib/placeholder-images";
 import { useUser, useFirestore, useDoc, useMemoFirebase, addDocumentNonBlocking } from "@/firebase";
 import { doc, collection } from "firebase/firestore";
 import { useState, use } from "react";
-
-const FALLBACK_TOUR_IMAGE = "https://images.unsplash.com/photo-1544551763-46a013bb70d5?w=600&q=80";
 import { useRouter } from "next/navigation";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
+import { calculatePrice } from "@/lib/pricing";
+import { Tag, TrendingDown } from "lucide-react";
+
+import { calculatePrice } from "@/lib/pricing";
 
 export default function TourDetailsPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
@@ -42,18 +44,19 @@ export default function TourDetailsPage({ params }: { params: Promise<{ id: stri
   const isFlyingFish = displayTitle.toLowerCase().includes("flying fish");
   const isJetSki = displayTitle.toLowerCase().includes("jet ski");
   
-  // Specific pricing logic
-  // Jet Ski is 150/min. Flying Fish is 500/person. Others default to 1000/person.
   const individualRate = tour?.pricePerPerson ?? (isJetSki ? 150 : (isFlyingFish ? 500 : 1000));
-  
   const guestCount = parseInt(guests);
   const minutes = parseInt(durationMinutes);
-  
-  // Jet Ski is per minute, others are per person
-  const totalPrice = isJetSki ? (individualRate * minutes) : (individualRate * guestCount);
-
-  // Dynamic capacity
   const maxCapacity = tour?.capacity ? parseInt(tour.capacity.toString()) : (isFlyingFish ? 3 : (isJetSki ? 2 : 10));
+
+  const pricing = calculatePrice({
+    baseRate: individualRate,
+    guestCount,
+    nights: 1,
+    date,
+    isPerMinute: isJetSki,
+    minutes,
+  });
 
   const handleBookTour = () => {
     if (!user) {
@@ -76,14 +79,18 @@ export default function TourDetailsPage({ params }: { params: Promise<{ id: stri
       userId: user.uid,
       itemId: tour.id,
       itemName: tour.name || tour.title,
+      itemType: "tour",
       startDate: format(date, "yyyy-MM-dd"),
       endDate: format(date, "yyyy-MM-dd"),
       status: "Pending Payment",
-      totalPrice: totalPrice,
+      totalPrice: pricing.finalPrice,
+      originalPrice: pricing.basePrice,
       guestCount: guestCount,
       duration: isJetSki ? `${minutes} Minutes` : (tour.duration || "Custom"),
       guestName: user.displayName || user.email?.split('@')[0] || "Guest",
       contactNumber: "Not provided",
+      seasonApplied: pricing.seasonInfo?.label || null,
+      groupDiscountApplied: pricing.groupDiscountInfo?.label || null,
       createdAt: new Date().toISOString()
     };
 
@@ -136,11 +143,10 @@ export default function TourDetailsPage({ params }: { params: Promise<{ id: stri
             <div className="lg:col-span-2 space-y-8">
               <div className="relative h-[400px] md:h-[500px] rounded-3xl overflow-hidden shadow-2xl">
                 <Image
-                  src={tourImgSrc ?? (tour.imageUrl || FALLBACK_TOUR_IMAGE)}
+                  src={tour.imageUrl || PlaceHolderImages.find(img => img.id === "island-hopping")?.imageUrl || ""}
                   alt={(tour.name || tour.title) ?? "Tour image"}
                   fill
                   className="object-cover"
-                  onError={() => setTourImgSrc(FALLBACK_TOUR_IMAGE)}
                 />
               </div>
 
@@ -276,28 +282,60 @@ export default function TourDetailsPage({ params }: { params: Promise<{ id: stri
                   </div>
 
                   <Button 
-                    className="w-full h-14 text-lg font-bold shadow-lg shadow-primary/20 rounded-xl transition-all hover:scale-[1.02] active:scale-[0.98]"
+                    className="w-full" size="lg"
                     disabled={isBooking}
                     onClick={handleBookTour}
                   >
                     {isBooking ? <Loader2 className="h-5 w-5 animate-spin" /> : "Book Adventure"}
                   </Button>
 
+                  {pricing.seasonInfo && (
+                    <div className={`flex items-center gap-2 px-3 py-2 rounded-xl border text-xs font-semibold ${pricing.seasonInfo.color}`}>
+                      <Tag className="h-3.5 w-3.5" />
+                      {pricing.seasonInfo.label} rate applies
+                    </div>
+                  )}
+                  {pricing.groupDiscountInfo && (
+                    <div className="flex items-center gap-2 px-3 py-2 bg-green-50 border border-green-200 rounded-xl text-xs font-semibold text-green-700">
+                      <TrendingDown className="h-3.5 w-3.5" />
+                      {pricing.groupDiscountInfo.label}
+                    </div>
+                  )}
+
                   <div className="space-y-3 pt-4">
-                    <div className="flex justify-between text-sm">
-                      <span className="text-muted-foreground">
-                        {isJetSki 
-                          ? `₱${individualRate.toLocaleString()} × ${minutes} minutes`
+                    <div className="flex justify-between text-sm text-muted-foreground">
+                      <span>
+                        {isJetSki
+                          ? `₱${individualRate.toLocaleString()} × ${minutes} min`
                           : `₱${individualRate.toLocaleString()} × ${guestCount} ${guestCount === 1 ? 'person' : 'people'}`
                         }
                       </span>
-                      <span className="font-semibold">₱{totalPrice.toLocaleString()}</span>
+                      <span>₱{pricing.basePrice.toLocaleString()}</span>
                     </div>
+                    {pricing.seasonInfo && (
+                      <div className="flex justify-between text-sm text-muted-foreground">
+                        <span>{pricing.seasonInfo.label}</span>
+                        <span className={pricing.seasonInfo.multiplier > 1 ? "text-orange-600" : "text-green-600"}>
+                          {pricing.seasonInfo.multiplier > 1 ? "+" : ""}₱{(pricing.afterSeasonal - pricing.basePrice).toLocaleString()}
+                        </span>
+                      </div>
+                    )}
+                    {pricing.groupDiscountInfo && (
+                      <div className="flex justify-between text-sm text-green-600 font-medium">
+                        <span>Group discount ({pricing.groupDiscountInfo.discountPercent}%)</span>
+                        <span>-₱{(pricing.afterSeasonal - pricing.finalPrice).toLocaleString()}</span>
+                      </div>
+                    )}
                     <Separator />
                     <div className="flex justify-between text-lg font-bold">
                       <span>Total</span>
-                      <span className="text-primary font-bold">₱{totalPrice.toLocaleString()}</span>
+                      <span className="text-primary font-bold">₱{pricing.finalPrice.toLocaleString()}</span>
                     </div>
+                    {pricing.savings > 0 && (
+                      <div className="text-center text-xs text-green-600 font-semibold">
+                        🎉 You save ₱{pricing.savings.toLocaleString()}!
+                      </div>
+                    )}
                   </div>
 
                   <div className="bg-accent/10 p-4 rounded-xl space-y-2 border border-accent/20">
