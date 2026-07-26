@@ -55,7 +55,7 @@ export default function AdminInventoryPage() {
       "Aslom": "https://images.unsplash.com/photo-1559128010-7c1ad6e1b6a5?w=600&q=80",
       "Sibalat": "https://images.unsplash.com/photo-1559128010-7c1ad6e1b6a5?w=600&q=80",
       "Target": "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?w=600&q=80",
-      "Buyayao": "https://images.unsplash.com/photo-1473116763249-2faaef81ccda?w=600&q=80",
+      "Buyayao": "https://travelorientalmindoro.ph/Content/img/uploads/aaeb2388-f485-4799-8db1-c31162b102a8_thumb.jpg",
       "Suguicay": "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=600&q=80",
       "Silad": "https://images.unsplash.com/photo-1519046904884-53103b34b206?w=600&q=80",
     };
