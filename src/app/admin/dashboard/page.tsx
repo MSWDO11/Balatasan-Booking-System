@@ -121,14 +121,16 @@ export default function AdminDashboard() {
       .map(row => row.map((v: string) => `"${v.replace(/"/g, '""')}"`).join(","))
       .join("\r\n");
 
-    // Use data URI — works universally without popup blockers
-    const dataUri = "data:text/csv;charset=utf-8,\uFEFF" + encodeURIComponent(csvContent);
-    const link = document.createElement("a");
-    link.href = dataUri;
-    link.download = `balatasan-bookings-${new Date().toISOString().slice(0, 10)}.csv`;
-    link.click();
-
-    toast({ title: "✅ Exported!", description: `${exportData.length} booking(s) exported.` });
+    // Open in new tab — always works regardless of browser security
+    const newTab = window.open();
+    if (newTab) {
+      newTab.document.write(`<pre style="font-family:monospace;font-size:13px;white-space:pre-wrap;padding:20px;">${csvContent.replace(/</g, "&lt;")}</pre>`);
+      newTab.document.title = `Bookings Export - ${new Date().toLocaleDateString()}`;
+      newTab.document.close();
+      toast({ title: "✅ Exported!", description: `${exportData.length} booking(s) opened in new tab. Use Ctrl+S to save as CSV.` });
+    } else {
+      toast({ variant: "destructive", title: "Blocked", description: "Allow popups for this site to export data." });
+    }
   };
 
   const handleInitializeAdmin = () => {
