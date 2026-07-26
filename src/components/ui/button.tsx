@@ -1,41 +1,56 @@
 import * as React from "react"
 import { Slot } from "@radix-ui/react-slot"
 import { cva, type VariantProps } from "class-variance-authority"
-
 import { cn } from "@/lib/utils"
 
 const buttonVariants = cva(
-  "inline-flex items-center justify-center gap-2 whitespace-nowrap text-sm font-medium ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0",
+  // Base: pill shape, glass effect, smooth transitions
+  [
+    "inline-flex items-center justify-center gap-2 whitespace-nowrap font-semibold",
+    "rounded-full", // pill shape like iOS
+    "backdrop-blur-md",
+    "border border-white/30",
+    "transition-all duration-300 ease-out",
+    "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
+    "disabled:pointer-events-none disabled:opacity-50",
+    "[&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0",
+    "hover:-translate-y-0.5 hover:scale-[1.02] active:scale-[0.97] active:translate-y-0",
+  ].join(" "),
   {
     variants: {
       variant: {
+        // Primary — teal glass pill
         default:
-          "bg-primary text-primary-foreground hover:bg-primary/90 rounded-md transition-colors",
+          "bg-primary/80 text-white border-primary/40 shadow-[0_4px_20px_rgba(18,175,171,0.4),inset_0_1px_0_rgba(255,255,255,0.25)] hover:bg-primary/90 hover:shadow-[0_8px_32px_rgba(18,175,171,0.55),inset_0_1px_0_rgba(255,255,255,0.3)]",
+        // Destructive — red glass pill
         destructive:
-          "bg-destructive text-destructive-foreground hover:bg-destructive/90 rounded-md transition-colors",
+          "bg-destructive/80 text-white border-destructive/40 shadow-[0_4px_16px_rgba(239,68,68,0.35),inset_0_1px_0_rgba(255,255,255,0.2)] hover:bg-destructive/90",
+        // Outline — transparent glass pill
         outline:
-          "border border-input bg-background hover:bg-accent hover:text-accent-foreground rounded-md transition-colors",
+          "bg-white/10 text-foreground border-white/40 shadow-[0_2px_12px_rgba(0,0,0,0.08),inset_0_1px_0_rgba(255,255,255,0.3)] hover:bg-white/20 hover:border-white/60",
+        // Secondary — light glass pill
         secondary:
-          "bg-secondary text-secondary-foreground hover:bg-secondary/80 rounded-md transition-colors",
-        ghost: "hover:bg-accent hover:text-accent-foreground rounded-md transition-colors",
-        link: "text-primary underline-offset-4 hover:underline rounded-md",
-        /** Organic filled blob button */
+          "bg-secondary/70 text-secondary-foreground border-secondary/50 shadow-[inset_0_1px_0_rgba(255,255,255,0.4)] hover:bg-secondary/90",
+        // Ghost — very subtle
+        ghost:
+          "bg-transparent border-transparent shadow-none hover:bg-white/15 hover:border-white/20",
+        // Link
+        link:
+          "bg-transparent border-transparent shadow-none text-primary underline-offset-4 hover:underline hover:translate-y-0 hover:scale-100",
+        // Legacy liquid variants (kept for compatibility)
         liquid:
-          "btn-liquid text-primary-foreground shadow-md",
-        /** Organic outline blob button */
+          "bg-primary/80 text-white border-primary/40 shadow-[0_4px_20px_rgba(18,175,171,0.4),inset_0_1px_0_rgba(255,255,255,0.25)] hover:bg-primary/90",
         "liquid-outline":
-          "btn-liquid-outline",
-        /** Small nav-sized organic button */
+          "bg-white/10 text-white border-white/45 shadow-[0_4px_20px_rgba(0,0,0,0.1),inset_0_1px_0_rgba(255,255,255,0.2)] hover:bg-white/22",
         "liquid-nav":
-          "btn-liquid-nav",
+          "bg-primary/10 text-primary border-primary/25 shadow-[inset_0_1px_0_rgba(255,255,255,0.4)] hover:bg-primary/18",
       },
       size: {
-        default: "h-10 px-4 py-2",
-        sm: "h-9 px-3",
-        lg: "h-11 px-8",
+        default: "h-10 px-5 py-2 text-sm",
+        sm: "h-8 px-4 py-1.5 text-xs",
+        lg: "h-12 px-8 py-3 text-base",
         icon: "h-10 w-10",
-        /** No forced height — let padding breathe for liquid buttons */
-        fluid: "px-8 py-4",
+        fluid: "px-8 py-4 text-base",
       },
     },
     defaultVariants: {
