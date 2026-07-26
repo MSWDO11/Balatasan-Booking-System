@@ -113,15 +113,18 @@ export default function AdminDashboard() {
       b.totalPrice ?? 0,
       b.createdAt ? new Date(b.createdAt).toLocaleDateString() : "",
     ]);
-    const csv = [headers, ...rows].map(row => row.map(v => `"${v}"`).join(",")).join("\n");
-    const blob = new Blob([csv], { type: "text/csv" });
+    const csv = [headers, ...rows].map(row => row.map(v => `"${String(v).replace(/"/g, '""')}"`).join(",")).join("\r\n");
+    const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8;" });
     const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `balatasan-bookings-${new Date().toISOString().slice(0, 10)}.csv`;
-    a.click();
+    const link = document.createElement("a");
+    link.setAttribute("href", url);
+    link.setAttribute("download", `balatasan-bookings-${new Date().toISOString().slice(0, 10)}.csv`);
+    link.style.visibility = "hidden";
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
     URL.revokeObjectURL(url);
-    toast({ title: "Exported!", description: `${bookings.length} bookings exported as CSV.` });
+    toast({ title: "Exported!", description: `${bookings.length} booking(s) exported as CSV.` });
   };
 
   const handleInitializeAdmin = () => {
