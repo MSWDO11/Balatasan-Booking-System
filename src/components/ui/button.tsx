@@ -19,9 +19,9 @@ const buttonVariants = cva(
   {
     variants: {
       variant: {
-        // Primary — teal glass pill
+        // Primary — solid teal pill
         default:
-          "bg-primary/80 text-white border-primary/40 shadow-[0_4px_20px_rgba(18,175,171,0.4),inset_0_1px_0_rgba(255,255,255,0.25)] hover:bg-primary/90 hover:shadow-[0_8px_32px_rgba(18,175,171,0.55),inset_0_1px_0_rgba(255,255,255,0.3)]",
+          "bg-primary text-white border-primary/60 shadow-[0_4px_20px_rgba(18,175,171,0.4),inset_0_1px_0_rgba(255,255,255,0.25)] hover:bg-primary/90 hover:shadow-[0_8px_32px_rgba(18,175,171,0.55)]",
         // Destructive — red glass pill
         destructive:
           "bg-destructive/80 text-white border-destructive/40 shadow-[0_4px_16px_rgba(239,68,68,0.35),inset_0_1px_0_rgba(255,255,255,0.2)] hover:bg-destructive/90",
@@ -39,7 +39,7 @@ const buttonVariants = cva(
           "bg-transparent border-transparent shadow-none text-primary underline-offset-4 hover:underline hover:translate-y-0 hover:scale-100",
         // Legacy liquid variants (kept for compatibility)
         liquid:
-          "bg-primary/80 text-white border-primary/40 shadow-[0_4px_20px_rgba(18,175,171,0.4),inset_0_1px_0_rgba(255,255,255,0.25)] hover:bg-primary/90",
+          "bg-primary text-white border-primary/60 shadow-[0_4px_20px_rgba(18,175,171,0.4),inset_0_1px_0_rgba(255,255,255,0.25)] hover:bg-primary/90",
         "liquid-outline":
           "bg-white/10 text-white border-white/45 shadow-[0_4px_20px_rgba(0,0,0,0.1),inset_0_1px_0_rgba(255,255,255,0.2)] hover:bg-white/22",
         "liquid-nav":
