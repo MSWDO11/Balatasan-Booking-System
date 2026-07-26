@@ -280,21 +280,23 @@ export default function AdminInventoryPage() {
     <div className="flex min-h-screen flex-col bg-secondary/10">
       <Navbar />
       <main className="flex-grow container mx-auto py-10 px-4">
-        <div className="flex justify-between items-center mb-8">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 gap-4">
           <div>
             <h1 className="text-3xl font-headline font-bold text-primary">Inventory Management</h1>
             <p className="text-muted-foreground">Define your rates (per person or per minute) and set maximum guest capacity.</p>
           </div>
-          <div className="flex gap-3">
-            <Button variant="outline" className="gap-2" onClick={handleUpdateIslandImages}>
+          <div className="flex flex-wrap gap-2">
+            <Button variant="outline" size="sm" className="gap-2" onClick={handleUpdateIslandImages}>
               <Eye className="h-4 w-4" />
-              Update Island Images
+              <span className="hidden sm:inline">Update Island Images</span>
+              <span className="sm:hidden">Update Images</span>
             </Button>
-            <Button variant="outline" className="gap-2" onClick={handleSeedData} disabled={isSeeding}>
+            <Button variant="outline" size="sm" className="gap-2" onClick={handleSeedData} disabled={isSeeding}>
               <Database className="h-4 w-4" />
-              Seed Demo Data
+              <span className="hidden sm:inline">Seed Demo Data</span>
+              <span className="sm:hidden">Seed</span>
             </Button>
-            <Button className="gap-2" onClick={handleSave}>
+            <Button size="sm" className="gap-2" onClick={handleSave}>
               <Save className="h-4 w-4" />
               {formData.id ? "Update Item" : "Save New Item"}
             </Button>
@@ -338,7 +340,7 @@ export default function AdminInventoryPage() {
                     </div>
                   </div>
                   
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <label className="text-sm font-medium">Maximum Guests Allowed</label>
                       <Input 
@@ -348,15 +350,17 @@ export default function AdminInventoryPage() {
                         onChange={e => setFormData({...formData, capacity: e.target.value})}
                       />
                     </div>
-                    <div className="space-y-2">
-                      <label className="text-sm font-medium">Image URL</label>
-                      <div className="flex gap-2">
+                  </div>
+                    <div className="space-y-2 col-span-2">
+                      <label className="text-sm font-medium">Image</label>
+                      <div className="flex flex-col sm:flex-row gap-2">
                         <Input 
-                          placeholder="https://... or upload below" 
+                          placeholder="Paste image URL or upload a file →" 
                           value={formData.imageUrl}
                           onChange={e => setFormData({...formData, imageUrl: e.target.value})}
+                          className="flex-1"
                         />
-                        <div className="relative">
+                        <div className="shrink-0">
                           <input
                             type="file"
                             accept="image/*"
@@ -367,18 +371,23 @@ export default function AdminInventoryPage() {
                           />
                           <label
                             htmlFor="image-upload"
-                            className={`inline-flex items-center gap-2 px-3 py-2 rounded-md border border-input bg-background text-sm font-medium cursor-pointer hover:bg-accent transition-colors whitespace-nowrap ${isUploading ? 'opacity-50 cursor-not-allowed' : ''}`}
+                            className={`flex items-center justify-center gap-2 w-full sm:w-auto h-10 px-4 rounded-md border border-input bg-background text-sm font-medium cursor-pointer hover:bg-accent transition-colors ${isUploading ? 'opacity-50 cursor-not-allowed pointer-events-none' : ''}`}
                           >
                             {isUploading ? (
-                              <><Loader2 className="h-4 w-4 animate-spin" /> {uploadProgress}%</>
+                              <><Loader2 className="h-4 w-4 animate-spin" /><span>{uploadProgress}% uploading...</span></>
                             ) : (
-                              <><Upload className="h-4 w-4" /> Upload</>
+                              <><Upload className="h-4 w-4" /><span>Upload Photo</span></>
                             )}
                           </label>
                         </div>
                       </div>
+                      {isUploading && (
+                        <div className="w-full bg-slate-100 rounded-full h-1.5">
+                          <div className="bg-primary h-1.5 rounded-full transition-all" style={{ width: `${uploadProgress}%` }} />
+                        </div>
+                      )}
                       {formData.imageUrl && formData.imageUrl.startsWith("https://firebasestorage") && (
-                        <p className="text-xs text-emerald-600 font-medium">✓ Firebase Storage image set</p>
+                        <p className="text-xs text-emerald-600 font-medium">✓ Firebase Storage image ready</p>
                       )}
                     </div>
                   </div>
