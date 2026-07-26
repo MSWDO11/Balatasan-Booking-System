@@ -104,15 +104,9 @@ export function TourCard({ tour }: TourCardProps) {
         </div>
       </CardContent>
 
-      <CardFooter className="pb-6">
-        <Link href={`/tours/${tour.id}`} className="w-full">
-          <Button
-            variant="liquid-outline"
-            className="w-full gap-2 h-12 text-slate-700 font-medium hover:text-[#12AFAB]"
-            style={{
-              borderRadius: "40% 60% 60% 40% / 60% 30% 70% 40%",
-            }}
-          >
+      <CardFooter className="pb-6 flex justify-center">
+        <Link href={`/tours/${tour.id}`}>
+          <Button variant="outline" size="lg" className="gap-2 px-8">
             <Eye className="h-4 w-4" />
             Details
             <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />

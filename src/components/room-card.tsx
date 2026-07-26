@@ -29,10 +29,7 @@ export function RoomCard({ room }: RoomCardProps) {
     <div
       className="card-liquid group bg-white/70 backdrop-blur border border-primary/10 shadow-md hover:shadow-xl transition-all duration-500"
     >
-      <div
-        className="relative h-56 w-full overflow-hidden"
-        style={{ borderRadius: "24px 36px 0 0 / 32px 28px 0 0" }}
-      >
+      <div className="relative h-56 w-full overflow-hidden rounded-t-3xl">
         <Image
           src={imgSrc}
           alt={room.name || "Cottage image"}
@@ -43,10 +40,7 @@ export function RoomCard({ room }: RoomCardProps) {
           unoptimized={imgSrc.startsWith("data:")}
         />
         <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent" />
-        <div
-          className="absolute top-4 right-4 bg-primary text-primary-foreground px-3 py-1 text-sm font-semibold shadow-lg"
-          style={{ borderRadius: "50% 30% 60% 40% / 40% 60% 30% 50%" }}
-        >
+        <div className="absolute top-4 right-4 bg-primary text-primary-foreground px-3 py-1 text-sm font-semibold shadow-lg rounded-full">
           ₱{rate.toLocaleString()} / person
         </div>
       </div>
@@ -67,16 +61,9 @@ export function RoomCard({ room }: RoomCardProps) {
         </div>
       </CardContent>
 
-      <CardFooter className="pb-6">
-        <Link href={`/accommodations/${room.id}`} className="w-full">
-          <Button
-            variant="liquid"
-            className="w-full gap-2 text-base"
-            style={{
-              borderRadius: "60% 40% 30% 70% / 60% 30% 70% 40%",
-              padding: "0.65rem 1.5rem",
-            }}
-          >
+      <CardFooter className="pb-6 flex justify-center">
+        <Link href={`/accommodations/${room.id}`}>
+          <Button variant="default" size="lg" className="gap-2 px-8">
             <Eye className="h-4 w-4" />
             View Details
             <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
