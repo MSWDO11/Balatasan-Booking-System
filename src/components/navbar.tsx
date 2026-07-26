@@ -88,12 +88,14 @@ export function Navbar() {
 
             {user && (
               <div className="flex items-center gap-3">
-                <Link href="/my-bookings">
-                  <Button variant="ghost" size="sm" className="gap-2 font-bold text-slate-600 hover:bg-primary/5 hover:text-primary rounded-full px-4">
-                    <ShoppingBag className="h-4 w-4" />
-                    My Bookings
-                  </Button>
-                </Link>
+                {!hasAdminAccess && (
+                  <Link href="/my-bookings">
+                    <Button variant="ghost" size="sm" className="gap-2 font-bold text-slate-600 hover:bg-primary/5 hover:text-primary rounded-full px-4">
+                      <ShoppingBag className="h-4 w-4" />
+                      My Bookings
+                    </Button>
+                  </Link>
+                )}
 
                 {hasAdminAccess && (
                   <DropdownMenu>
@@ -176,12 +178,14 @@ export function Navbar() {
           )}
           {user && (
             <div className="pt-4 border-t border-slate-50 space-y-3">
-              <Link href="/my-bookings" onClick={() => setIsOpen(false)}>
-                <Button variant="ghost" className="w-full justify-start gap-3 font-bold text-slate-600 rounded-xl">
-                  <ShoppingBag className="h-5 w-5 text-primary" />
-                  My Bookings
-                </Button>
-              </Link>
+              {!hasAdminAccess && (
+                <Link href="/my-bookings" onClick={() => setIsOpen(false)}>
+                  <Button variant="ghost" className="w-full justify-start gap-3 font-bold text-slate-600 rounded-xl">
+                    <ShoppingBag className="h-5 w-5 text-primary" />
+                    My Bookings
+                  </Button>
+                </Link>
+              )}
               {hasAdminAccess && (
                 <div className="bg-slate-50 rounded-2xl p-2 space-y-1">
                   <Link href="/admin/dashboard" onClick={() => setIsOpen(false)}>
