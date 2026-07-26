@@ -80,12 +80,9 @@ export function Navbar() {
           <div className="flex items-center gap-4">
             {!user && !isUserLoading && (
               <Link href="/login">
-                <button
-                  className="btn-liquid-nav"
-                  style={{ borderRadius: "50% 30% 60% 40% / 40% 60% 30% 50%" }}
-                >
+                <Button size="sm" className="px-6 font-bold">
                   Sign In
-                </button>
+                </Button>
               </Link>
             )}
 
@@ -101,7 +98,7 @@ export function Navbar() {
                 {hasAdminAccess && (
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
-                      <Button variant="outline" size="sm" className="gap-2 border-primary/20 text-primary rounded-full px-4 font-bold bg-white shadow-sm hover:bg-primary/5">
+                      <Button variant="outline" size="sm" className="gap-2 px-4 font-bold">
                         Admin <ChevronDown className="h-3.5 w-3.5" />
                       </Button>
                     </DropdownMenuTrigger>
@@ -180,7 +177,7 @@ export function Navbar() {
           {user && (
             <div className="pt-4 border-t border-slate-50 space-y-3">
               <Link href="/my-bookings" onClick={() => setIsOpen(false)}>
-                <Button variant="ghost" className="w-full justify-start gap-3 font-bold text-slate-600 rounded-xl">
+                <Button variant="ghost" className="w-full justify-start gap-3 font-bold text-slate-600">
                   <ShoppingBag className="h-5 w-5 text-primary" />
                   My Bookings
                 </Button>
@@ -188,13 +185,13 @@ export function Navbar() {
               {hasAdminAccess && (
                 <div className="bg-slate-50 rounded-2xl p-2 space-y-1">
                   <Link href="/admin/dashboard" onClick={() => setIsOpen(false)}>
-                    <Button variant="ghost" className="w-full justify-start gap-3 font-bold text-slate-600 rounded-xl">
+                    <Button variant="ghost" className="w-full justify-start gap-3 font-bold text-slate-600">
                       <LayoutDashboard className="h-5 w-5 text-primary" />
                       Admin Dashboard
                     </Button>
                   </Link>
                   <Link href="/admin/inventory" onClick={() => setIsOpen(false)}>
-                    <Button variant="ghost" className="w-full justify-start gap-3 font-bold text-slate-600 rounded-xl">
+                    <Button variant="ghost" className="w-full justify-start gap-3 font-bold text-slate-600">
                       <Database className="h-5 w-5 text-primary" />
                       Inventory Management
                     </Button>
