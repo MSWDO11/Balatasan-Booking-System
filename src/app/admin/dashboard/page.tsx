@@ -96,7 +96,6 @@ export default function AdminDashboard() {
   };
 
   const handleExportCSV = () => {
-    // Force export even if bookings seem empty - use rawBookings as fallback
     const exportData = bookings.length ? bookings : (rawBookings ?? []);
     
     if (!exportData.length) {
@@ -105,7 +104,7 @@ export default function AdminDashboard() {
     }
 
     const headers = ["Ref ID", "Guest Name", "Contact", "Item", "Start Date", "End Date", "Guests", "Status", "Total Price", "Created At"];
-    const rows = exportData.map((b: any) => [
+    const rows = (exportData as any[]).map(b => [
       String(b.id ?? "").slice(0, 8).toUpperCase(),
       String(b.guestName ?? ""),
       String(b.contactNumber ?? ""),
@@ -119,28 +118,17 @@ export default function AdminDashboard() {
     ]);
 
     const csvContent = [headers, ...rows]
-      .map(row => row.map(v => `"${v.replace(/"/g, '""')}"`).join(","))
+      .map(row => row.map((v: string) => `"${v.replace(/"/g, '""')}"`).join(","))
       .join("\r\n");
 
-    const BOM = "\uFEFF";
-    const blob = new Blob([BOM + csvContent], { type: "text/csv;charset=utf-8;" });
-    const url = window.URL.createObjectURL(blob);
-    const filename = `balatasan-bookings-${new Date().toISOString().slice(0, 10)}.csv`;
-    
+    // Use data URI — works universally without popup blockers
+    const dataUri = "data:text/csv;charset=utf-8,\uFEFF" + encodeURIComponent(csvContent);
     const link = document.createElement("a");
-    link.href = url;
-    link.download = filename;
-    link.style.position = "fixed";
-    link.style.top = "-100px";
-    document.body.appendChild(link);
+    link.href = dataUri;
+    link.download = `balatasan-bookings-${new Date().toISOString().slice(0, 10)}.csv`;
     link.click();
-    
-    setTimeout(() => {
-      document.body.removeChild(link);
-      window.URL.revokeObjectURL(url);
-    }, 1000);
 
-    toast({ title: "✅ Exported!", description: `${exportData.length} booking(s) saved to ${filename}` });
+    toast({ title: "✅ Exported!", description: `${exportData.length} booking(s) exported.` });
   };
 
   const handleInitializeAdmin = () => {
