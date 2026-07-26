@@ -9,19 +9,23 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Loader2, Save, Trash2, Eye, Database, ShieldAlert } from "lucide-react";
+import { Loader2, Save, Trash2, Eye, Database, ShieldAlert, Upload } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { useFirestore, useCollection, useMemoFirebase, addDocumentNonBlocking, deleteDocumentNonBlocking, setDocumentNonBlocking, useUser, useDoc } from "@/firebase";
+import { useFirestore, useCollection, useMemoFirebase, addDocumentNonBlocking, deleteDocumentNonBlocking, setDocumentNonBlocking, useUser, useDoc, useStorage } from "@/firebase";
 import { collection, doc } from "firebase/firestore";
+import { ref, uploadBytesResumable, getDownloadURL } from "firebase/storage";
 import { PlaceHolderImages } from "@/lib/placeholder-images";
 import Link from "next/link";
 
 export default function AdminInventoryPage() {
   const { toast } = useToast();
   const firestore = useFirestore();
+  const storage = useStorage();
   const { user, isUserLoading } = useUser();
   const [activeTab, setActiveTab] = useState("rooms");
   const [isSeeding, setIsSeeding] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
   
   const adminDocRef = useMemoFirebase(() => 
     (firestore && user) ? doc(firestore, "roles_admin", user.uid) : null, 
@@ -48,6 +52,37 @@ export default function AdminInventoryPage() {
 
   const { data: rooms } = useCollection(roomsQuery);
   const { data: tours } = useCollection(toursQuery);
+
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !storage) return;
+
+    setIsUploading(true);
+    setUploadProgress(0);
+
+    const folder = activeTab === "rooms" ? "rooms" : "tours";
+    const storageRef = ref(storage, `${folder}/${Date.now()}_${file.name}`);
+    const uploadTask = uploadBytesResumable(storageRef, file);
+
+    uploadTask.on(
+      "state_changed",
+      (snapshot) => {
+        const progress = Math.round((snapshot.bytesTransferred / snapshot.totalBytes) * 100);
+        setUploadProgress(progress);
+      },
+      (error) => {
+        toast({ variant: "destructive", title: "Upload failed", description: error.message });
+        setIsUploading(false);
+      },
+      async () => {
+        const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
+        setFormData(prev => ({ ...prev, imageUrl: downloadURL }));
+        toast({ title: "Image uploaded", description: "URL has been set in the form below." });
+        setIsUploading(false);
+        setUploadProgress(0);
+      }
+    );
+  };
 
   const handleUpdateIslandImages = async () => {
     if (!firestore) return;
@@ -315,11 +350,36 @@ export default function AdminInventoryPage() {
                     </div>
                     <div className="space-y-2">
                       <label className="text-sm font-medium">Image URL</label>
-                      <Input 
-                        placeholder="https://..." 
-                        value={formData.imageUrl}
-                        onChange={e => setFormData({...formData, imageUrl: e.target.value})}
-                      />
+                      <div className="flex gap-2">
+                        <Input 
+                          placeholder="https://... or upload below" 
+                          value={formData.imageUrl}
+                          onChange={e => setFormData({...formData, imageUrl: e.target.value})}
+                        />
+                        <div className="relative">
+                          <input
+                            type="file"
+                            accept="image/*"
+                            id="image-upload"
+                            className="hidden"
+                            onChange={handleImageUpload}
+                            disabled={isUploading}
+                          />
+                          <label
+                            htmlFor="image-upload"
+                            className={`inline-flex items-center gap-2 px-3 py-2 rounded-md border border-input bg-background text-sm font-medium cursor-pointer hover:bg-accent transition-colors whitespace-nowrap ${isUploading ? 'opacity-50 cursor-not-allowed' : ''}`}
+                          >
+                            {isUploading ? (
+                              <><Loader2 className="h-4 w-4 animate-spin" /> {uploadProgress}%</>
+                            ) : (
+                              <><Upload className="h-4 w-4" /> Upload</>
+                            )}
+                          </label>
+                        </div>
+                      </div>
+                      {formData.imageUrl && formData.imageUrl.startsWith("https://firebasestorage") && (
+                        <p className="text-xs text-emerald-600 font-medium">✓ Firebase Storage image set</p>
+                      )}
                     </div>
                   </div>
 
