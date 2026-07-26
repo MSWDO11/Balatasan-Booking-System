@@ -49,6 +49,38 @@ export default function AdminInventoryPage() {
   const { data: rooms } = useCollection(roomsQuery);
   const { data: tours } = useCollection(toursQuery);
 
+  const handleUpdateIslandImages = async () => {
+    if (!firestore) return;
+    const imageMap: Record<string, string> = {
+      "Aslom": "https://travelorientalmindoro.ph/Content/img/uploads/83c5a007-b150-430f-b9c4-c5a7549a7f13_thumb.jpg",
+      "Sibalat": "https://travelorientalmindoro.ph/Content/img/uploads/83c5a007-b150-430f-b9c4-c5a7549a7f13_thumb.jpg",
+      "Target": "https://travelorientalmindoro.ph/Content/img/uploads/33b63d38-739b-4b7f-b8c4-ca744970c5cf.jpg",
+      "Buyayao": "https://travelorientalmindoro.ph/Content/img/uploads/aaeb2388-f485-4799-8db1-c31162b102a8_thumb.jpg",
+      "Suguicay": "https://travelorientalmindoro.ph/Content/img/uploads/0ccf5666-41a4-4efc-b51c-abcb142057e7.jpg",
+      "Silad": "https://travelorientalmindoro.ph/Content/img/uploads/04468cee-9e1b-469f-a21c-90fef8360379.jpg",
+    };
+
+    const islandTours = tours?.filter(t => t.category === "island-hopping") || [];
+    let updated = 0;
+
+    for (const tour of islandTours) {
+      const tourName: string = tour.name || tour.title || "";
+      const matchedKey = Object.keys(imageMap).find(key =>
+        tourName.toLowerCase().includes(key.toLowerCase())
+      );
+      if (matchedKey) {
+        const docRef = doc(firestore, "tours", tour.id);
+        setDocumentNonBlocking(docRef, { imageUrl: imageMap[matchedKey] }, { merge: true });
+        updated++;
+      }
+    }
+
+    toast({
+      title: "Island Images Updated",
+      description: `Updated images for ${updated} island hopping tour(s).`,
+    });
+  };
+
   const handleSeedData = async () => {
     if (!firestore) return;
     setIsSeeding(true);
@@ -219,6 +251,10 @@ export default function AdminInventoryPage() {
             <p className="text-muted-foreground">Define your rates (per person or per minute) and set maximum guest capacity.</p>
           </div>
           <div className="flex gap-3">
+            <Button variant="outline" className="gap-2" onClick={handleUpdateIslandImages}>
+              <Eye className="h-4 w-4" />
+              Update Island Images
+            </Button>
             <Button variant="outline" className="gap-2" onClick={handleSeedData} disabled={isSeeding}>
               <Database className="h-4 w-4" />
               Seed Demo Data

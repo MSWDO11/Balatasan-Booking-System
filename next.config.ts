@@ -36,6 +36,12 @@ const nextConfig: NextConfig = {
       },
       {
         protocol: 'https',
+        hostname: 'travelorientalmindoro.ph',
+        port: '',
+        pathname: '/**',
+      },
+      {
+        protocol: 'https',
         hostname: 'lakbay-v3.poggerss.com',
         port: '',
         pathname: '/**',
