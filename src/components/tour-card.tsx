@@ -8,8 +8,8 @@ import { Badge } from "@/components/ui/badge";
 import Link from "next/link";
 import { useState } from "react";
 
-// Reliable Unsplash images per island/tour — used as primary source when name matches
-const ISLAND_IMAGES: Record<string, string> = {
+// Fallback images used ONLY when Firestore has no image
+const ISLAND_FALLBACKS: Record<string, string> = {
   "aslom":       "https://images.unsplash.com/photo-1559128010-7c1ad6e1b6a5?w=600&q=80",
   "sibalat":     "https://images.unsplash.com/photo-1559128010-7c1ad6e1b6a5?w=600&q=80",
   "target":      "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?w=600&q=80",
@@ -20,16 +20,14 @@ const ISLAND_IMAGES: Record<string, string> = {
   "flying fish": "https://images.unsplash.com/photo-1530541834187-2f74f5d4a4d6?w=600&q=80",
 };
 
-const DEFAULT_IMAGE = "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=600&q=80";
+const DEFAULT_FALLBACK = "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=600&q=80";
 
-function resolveImage(title: string, firestoreUrl: string): string {
+function getFallback(title: string): string {
   const lower = title.toLowerCase();
-  // If title matches a known island/tour, use the reliable image directly
-  for (const [key, url] of Object.entries(ISLAND_IMAGES)) {
+  for (const [key, url] of Object.entries(ISLAND_FALLBACKS)) {
     if (lower.includes(key)) return url;
   }
-  // Otherwise use what's in Firestore, falling back to default
-  return firestoreUrl || DEFAULT_IMAGE;
+  return DEFAULT_FALLBACK;
 }
 
 interface TourCardProps {
@@ -47,8 +45,9 @@ interface TourCardProps {
 
 export function TourCard({ tour }: TourCardProps) {
   const displayTitle = tour.title || tour.name || "Tour Experience";
-  const resolvedImage = resolveImage(displayTitle, tour.imageUrl);
-  const [imgSrc, setImgSrc] = useState(resolvedImage);
+  const fallback = getFallback(displayTitle);
+  // Use Firestore imageUrl first — fallback only if empty or on error
+  const [imgSrc, setImgSrc] = useState(tour.imageUrl || fallback);
 
   const isFlyingFish = displayTitle.toLowerCase().includes("flying fish");
   const isJetSki = displayTitle.toLowerCase().includes("jet ski");
@@ -66,7 +65,8 @@ export function TourCard({ tour }: TourCardProps) {
           fill
           className="object-cover transition-transform duration-500 group-hover:scale-105"
           sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-          onError={() => setImgSrc(DEFAULT_IMAGE)}
+          onError={() => setImgSrc(fallback)}
+          unoptimized={imgSrc.startsWith("data:")}
         />
         <Badge className="absolute top-4 left-4 bg-[#6FDDC2] text-[#006D6B] hover:bg-[#6FDDC2]/90 border-none font-semibold px-3 py-1 rounded-full">
           Adventure
@@ -94,7 +94,7 @@ export function TourCard({ tour }: TourCardProps) {
         <Link href={`/tours/${tour.id}`} className="w-full">
           <Button
             variant="outline"
-            className="w-full gap-2 border-[#12AFAB]/20 hover:border-[#12AFAB]/50 hover:bg-[#12AFAB]/5 rounded-xl h-12 text-slate-700 font-medium"
+            className="w-full gap-2 border-[#12AFAB]/20 hover:border-[#12AFDC]/50 hover:bg-[#12AFAB]/5 rounded-xl h-12 text-slate-700 font-medium"
           >
             <Eye className="h-4 w-4" />
             Details

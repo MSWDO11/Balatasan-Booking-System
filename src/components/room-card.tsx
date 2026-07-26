@@ -35,6 +35,7 @@ export function RoomCard({ room }: RoomCardProps) {
           className="object-cover transition-transform duration-500 group-hover:scale-105"
           sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
           onError={() => setImgSrc(FALLBACK_ROOM_IMAGE)}
+          unoptimized={imgSrc.startsWith("data:")}
         />
         <div className="absolute top-4 right-4 bg-primary text-primary-foreground px-3 py-1 rounded-full text-sm font-semibold">
           ₱{rate.toLocaleString()} / person
