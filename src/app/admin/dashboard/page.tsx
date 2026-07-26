@@ -96,35 +96,51 @@ export default function AdminDashboard() {
   };
 
   const handleExportCSV = () => {
-    if (!bookings.length) {
-      toast({ title: "No data", description: "There are no bookings to export." });
+    // Force export even if bookings seem empty - use rawBookings as fallback
+    const exportData = bookings.length ? bookings : (rawBookings ?? []);
+    
+    if (!exportData.length) {
+      toast({ title: "No bookings", description: "No booking data available to export yet." });
       return;
     }
+
     const headers = ["Ref ID", "Guest Name", "Contact", "Item", "Start Date", "End Date", "Guests", "Status", "Total Price", "Created At"];
-    const rows = bookings.map(b => [
-      b.id?.slice(0, 8).toUpperCase() ?? "",
-      b.guestName ?? "",
-      b.contactNumber ?? "",
-      b.itemName ?? "",
-      b.startDate ?? "",
-      b.endDate ?? "",
-      b.guestCount ?? "",
-      b.status ?? "",
-      b.totalPrice ?? 0,
+    const rows = exportData.map((b: any) => [
+      String(b.id ?? "").slice(0, 8).toUpperCase(),
+      String(b.guestName ?? ""),
+      String(b.contactNumber ?? ""),
+      String(b.itemName ?? ""),
+      String(b.startDate ?? ""),
+      String(b.endDate ?? ""),
+      String(b.guestCount ?? ""),
+      String(b.status ?? ""),
+      String(b.totalPrice ?? 0),
       b.createdAt ? new Date(b.createdAt).toLocaleDateString() : "",
     ]);
-    const csv = [headers, ...rows].map(row => row.map(v => `"${String(v).replace(/"/g, '""')}"`).join(",")).join("\r\n");
-    const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8;" });
-    const url = URL.createObjectURL(blob);
+
+    const csvContent = [headers, ...rows]
+      .map(row => row.map(v => `"${v.replace(/"/g, '""')}"`).join(","))
+      .join("\r\n");
+
+    const BOM = "\uFEFF";
+    const blob = new Blob([BOM + csvContent], { type: "text/csv;charset=utf-8;" });
+    const url = window.URL.createObjectURL(blob);
+    const filename = `balatasan-bookings-${new Date().toISOString().slice(0, 10)}.csv`;
+    
     const link = document.createElement("a");
-    link.setAttribute("href", url);
-    link.setAttribute("download", `balatasan-bookings-${new Date().toISOString().slice(0, 10)}.csv`);
-    link.style.visibility = "hidden";
+    link.href = url;
+    link.download = filename;
+    link.style.position = "fixed";
+    link.style.top = "-100px";
     document.body.appendChild(link);
     link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
-    toast({ title: "Exported!", description: `${bookings.length} booking(s) exported as CSV.` });
+    
+    setTimeout(() => {
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+    }, 1000);
+
+    toast({ title: "✅ Exported!", description: `${exportData.length} booking(s) saved to ${filename}` });
   };
 
   const handleInitializeAdmin = () => {
