@@ -46,11 +46,11 @@ const buttonVariants = cva(
           "bg-primary/10 text-primary border-primary/25 shadow-[inset_0_1px_0_rgba(255,255,255,0.4)] hover:bg-primary/18",
       },
       size: {
-        default: "h-10 px-5 py-2 text-sm",
-        sm: "h-8 px-4 py-1.5 text-xs",
-        lg: "h-12 px-8 py-3 text-base",
+        default: "h-12 px-6 py-3 text-sm",
+        sm: "h-9 px-4 py-2 text-xs",
+        lg: "h-14 px-8 py-4 text-base",
         icon: "h-10 w-10",
-        fluid: "px-8 py-4 text-base",
+        fluid: "h-12 px-8 py-3 text-base",
       },
     },
     defaultVariants: {

@@ -103,8 +103,8 @@ export default function LoginPage() {
                 <Button
                   type="submit"
                   disabled={isLoading}
+                  className="w-full"
                   size="lg"
-                  className="px-12"
                 >
                   {isLoading ? (
                     <Loader2 className="h-4 w-4 animate-spin" />
@@ -130,7 +130,7 @@ export default function LoginPage() {
               <Button 
                 variant="outline" 
                 size="lg"
-                className="px-8"
+                className="w-full"
                 onClick={() => { setIsSignUp(!isSignUp); setErrorMsg(""); }}
                 disabled={isLoading}
               >

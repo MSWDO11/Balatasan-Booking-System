@@ -104,9 +104,9 @@ export function TourCard({ tour }: TourCardProps) {
         </div>
       </CardContent>
 
-      <CardFooter className="pb-6 flex justify-center">
-        <Link href={`/tours/${tour.id}`}>
-          <Button variant="outline" size="lg" className="gap-2 px-8">
+      <CardFooter className="pb-6">
+        <Link href={`/tours/${tour.id}`} className="w-full">
+          <Button variant="outline" size="lg" className="w-full gap-2">
             <Eye className="h-4 w-4" />
             Details
             <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
