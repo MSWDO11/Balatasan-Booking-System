@@ -3,7 +3,7 @@
 
 import { Navbar } from "@/components/navbar";
 import { Footer } from "@/components/footer";
-import { useUser, useCollection, useMemoFirebase, useFirestore, updateDocumentNonBlocking } from "@/firebase";
+import { useUser, useCollection, useMemoFirebase, useFirestore, updateDocumentNonBlocking, useDoc } from "@/firebase";
 import { collection, query, orderBy, doc } from "firebase/firestore";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -22,6 +22,12 @@ export default function MyBookingsPage() {
   const router = useRouter();
   const { toast } = useToast();
   const [cancelBookingId, setCancelBookingId] = useState<string | null>(null);
+
+  // Load payment settings from Firestore — admin can update gcashNumber there
+  const settingsRef = useMemoFirebase(() => firestore ? doc(firestore, "settings", "payment") : null, [firestore]);
+  const { data: paymentSettings } = useDoc(settingsRef);
+  const gcashNumber = paymentSettings?.gcashNumber || "0912-345-6789";
+  const gcashName = paymentSettings?.gcashName || "Balatasan Resort";
 
   useEffect(() => {
     if (!isUserLoading && !user) {
@@ -163,10 +169,10 @@ export default function MyBookingsPage() {
                             Action Required: Payment
                           </div>
                           <p className="text-xs text-amber-700 leading-relaxed font-medium">
-                            Send your payment to <strong>G-Cash: 0912-345-6789 (Balatasan Resort)</strong>. After paying, please upload your receipt below to confirm.
+                            Send your payment to <strong>G-Cash: {gcashNumber} ({gcashName})</strong>. After paying, please upload your receipt below to confirm.
                           </p>
                           <div className="flex justify-center my-2">
-                            <img src="https://api.qrserver.com/v1/create-qr-code/?size=120x120&data=GCASH:09123456789" alt="GCash QR" className="rounded-xl border shadow-sm" width={120} height={120} />
+                            <img src={`https://api.qrserver.com/v1/create-qr-code/?size=120x120&data=GCASH:${gcashNumber.replace(/-/g, "")}`} alt="GCash QR" className="rounded-xl border shadow-sm" width={120} height={120} />
                           </div>
                           <div className="pt-2 flex flex-col sm:flex-row gap-4">
                             <div className="relative">

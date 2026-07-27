@@ -40,9 +40,12 @@ export default function RoomDetailsPage({ params }: { params: Promise<{ id: stri
   const guestCount = parseInt(guests);
   const maxCapacity = room?.capacity ? parseInt(room.capacity.toString()) : 10;
   const ratePerPerson = room?.pricePerPerson || room?.price || 0;
+  // Apply item-level discount if admin set one
+  const itemDiscount = room?.discountPercent > 0 ? (1 - room.discountPercent / 100) : 1;
+  const effectiveRate = Math.round(ratePerPerson * itemDiscount);
 
   const pricing = calculatePrice({
-    baseRate: ratePerPerson,
+    baseRate: effectiveRate,
     guestCount,
     nights: Math.max(nights, 1),
     date: checkIn,
@@ -134,6 +137,26 @@ export default function RoomDetailsPage({ params }: { params: Promise<{ id: stri
                 <div className="space-y-4">
                   <h3 className="text-2xl font-headline font-bold">Description</h3>
                   <p className="text-muted-foreground leading-relaxed text-lg">{room.description}</p>
+                  {Array.isArray(room.includedItems) && room.includedItems.length > 0 && (
+                    <div className="space-y-2">
+                      <h4 className="font-semibold text-sm uppercase tracking-widest text-muted-foreground">What&apos;s Included</h4>
+                      <ul className="grid grid-cols-2 gap-1.5">
+                        {room.includedItems.map((item: string) => (
+                          <li key={item} className="flex items-center gap-2 text-sm text-foreground">
+                            <span className="h-4 w-4 rounded-full bg-primary/10 text-primary flex items-center justify-center text-[10px] font-bold shrink-0">✓</span>
+                            {item}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                  {Array.isArray(room.tags) && room.tags.length > 0 && (
+                    <div className="flex flex-wrap gap-2">
+                      {room.tags.map((tag: string) => (
+                        <span key={tag} className="px-3 py-1 bg-primary/10 text-primary text-xs font-semibold rounded-full">{tag}</span>
+                      ))}
+                    </div>
+                  )}
                 </div>
 
                 {/* Package Deals Info */}
@@ -168,17 +191,21 @@ export default function RoomDetailsPage({ params }: { params: Promise<{ id: stri
               <Card className="sticky top-24 border-none shadow-2xl">
                 <CardContent className="p-8 space-y-6">
                   <div className="flex justify-between items-baseline">
-                    <span className="text-3xl font-bold text-primary">₱{ratePerPerson.toLocaleString()}</span>
+                    <div className="space-y-0.5">
+                      {room.originalPrice > 0 && (
+                        <p className="text-sm text-muted-foreground line-through">₱{Number(room.originalPrice).toLocaleString()}</p>
+                      )}
+                      <div className="flex items-center gap-2">
+                        <span className="text-3xl font-bold text-primary">₱{effectiveRate.toLocaleString()}</span>
+                        {room.discountPercent > 0 && (
+                          <span className="text-xs bg-green-100 text-green-700 font-bold px-2 py-0.5 rounded-full">{room.discountPercent}% off</span>
+                        )}
+                      </div>
+                    </div>
                     <span className="text-muted-foreground font-medium">/ person / night</span>
                   </div>
 
-                  {/* Seasonal badge */}
-                  {pricing.seasonInfo && (
-                    <div className={`flex items-center gap-2 px-3 py-2 rounded-xl border text-xs font-semibold ${pricing.seasonInfo.color}`}>
-                      <Tag className="h-3.5 w-3.5" />
-                      {pricing.seasonInfo.label} — {pricing.seasonInfo.multiplier > 1 ? `+${Math.round((pricing.seasonInfo.multiplier - 1) * 100)}%` : `-${Math.round((1 - pricing.seasonInfo.multiplier) * 100)}%`} rate applies
-                    </div>
-                  )}
+                  {/* No seasonal badge — pricing is set directly by admin in inventory */}
 
                   <Separator />
 
@@ -234,17 +261,9 @@ export default function RoomDetailsPage({ params }: { params: Promise<{ id: stri
 
                   <div className="space-y-2 pt-2 text-sm">
                     <div className="flex justify-between text-muted-foreground">
-                      <span>Base: ₱{ratePerPerson.toLocaleString()} × {guestCount} × {Math.max(nights,1)}n</span>
+                      <span>Base: ₱{effectiveRate.toLocaleString()} × {guestCount} × {Math.max(nights,1)}n</span>
                       <span>₱{pricing.basePrice.toLocaleString()}</span>
                     </div>
-                    {pricing.seasonInfo && (
-                      <div className="flex justify-between text-muted-foreground">
-                        <span>{pricing.seasonInfo.label}</span>
-                        <span className={pricing.seasonInfo.multiplier > 1 ? "text-orange-600" : "text-green-600"}>
-                          {pricing.seasonInfo.multiplier > 1 ? "+" : ""}₱{(pricing.afterSeasonal - pricing.basePrice).toLocaleString()}
-                        </span>
-                      </div>
-                    )}
                     {pricing.groupDiscountInfo && (
                       <div className="flex justify-between text-green-600 font-medium">
                         <span>Group discount ({pricing.groupDiscountInfo.discountPercent}%)</span>

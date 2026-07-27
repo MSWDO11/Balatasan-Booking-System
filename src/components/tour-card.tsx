@@ -8,7 +8,6 @@ import { Badge } from "@/components/ui/badge";
 import Link from "next/link";
 import { useState } from "react";
 
-// Fallback images used ONLY when Firestore has no image
 const ISLAND_FALLBACKS: Record<string, string> = {
   "aslom":       "https://images.unsplash.com/photo-1559128010-7c1ad6e1b6a5?w=600&q=80",
   "sibalat":     "https://images.unsplash.com/photo-1559128010-7c1ad6e1b6a5?w=600&q=80",
@@ -37,9 +36,12 @@ interface TourCardProps {
     name?: string;
     pricePerPerson?: number;
     price?: number;
+    originalPrice?: number;
+    discountPercent?: number;
     duration: string;
     imageUrl: string;
     description: string;
+    tags?: string[];
   };
 }
 
@@ -52,16 +54,17 @@ export function TourCard({ tour }: TourCardProps) {
   const isJetSki = displayTitle.toLowerCase().includes("jet ski");
 
   const defaultRate = isJetSki ? 150 : (isFlyingFish ? 500 : 1000);
-  const rate = tour.pricePerPerson ?? tour.price ?? defaultRate;
+  const baseRate = tour.pricePerPerson ?? tour.price ?? defaultRate;
+  const itemDiscount = tour.discountPercent && tour.discountPercent > 0 ? (1 - tour.discountPercent / 100) : 1;
+  const rate = Math.round(baseRate * itemDiscount);
   const unitLabel = isJetSki ? "min" : "pax";
 
+  // First non-empty tag to show as a badge
+  const firstTag = tour.tags?.find(t => t.trim());
+
   return (
-    <div
-      className="card-liquid group bg-white shadow-md hover:shadow-xl transition-all duration-500 border border-primary/10"
-    >
-      <div
-        className="relative h-48 w-full overflow-hidden rounded-t-3xl"
-      >
+    <div className="card-liquid group bg-white shadow-md hover:shadow-xl transition-all duration-500 border border-primary/10">
+      <div className="relative h-48 w-full overflow-hidden rounded-t-3xl">
         <Image
           src={imgSrc}
           alt={displayTitle}
@@ -72,11 +75,16 @@ export function TourCard({ tour }: TourCardProps) {
           unoptimized={imgSrc.startsWith("data:")}
         />
         <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent" />
-        <Badge
-          className="absolute top-4 left-4 bg-[#6FDDC2] text-[#006D6B] hover:bg-[#6FDDC2]/90 border-none font-semibold px-3 py-1 shadow rounded-full"
-        >
-          Adventure
+        {/* Category badge — replaced by first tag if available */}
+        <Badge className="absolute top-4 left-4 bg-[#6FDDC2] text-[#006D6B] hover:bg-[#6FDDC2]/90 border-none font-semibold px-3 py-1 shadow rounded-full">
+          {firstTag || "Adventure"}
         </Badge>
+        {/* Discount badge */}
+        {tour.discountPercent && tour.discountPercent > 0 ? (
+          <span className="absolute top-4 right-4 bg-rose-500 text-white text-[11px] font-bold px-2 py-0.5 rounded-full shadow">
+            {tour.discountPercent}% OFF
+          </span>
+        ) : null}
       </div>
 
       <CardHeader className="pt-6 pb-2">
@@ -84,20 +92,23 @@ export function TourCard({ tour }: TourCardProps) {
       </CardHeader>
 
       <CardContent className="space-y-4">
-        <p className="text-[#12AFAB] text-sm line-clamp-2">
-          {tour.description}
-        </p>
+        <p className="text-[#12AFAB] text-sm line-clamp-2">{tour.description}</p>
         <div className="flex items-center justify-between text-sm">
           <div className="flex items-center gap-2 text-[#12AFAB]">
             {isJetSki ? <Timer className="h-5 w-5" /> : <Clock className="h-5 w-5" />}
             <span className="font-medium">{tour.duration}</span>
           </div>
-          <div className="font-bold text-[#12AFAB] flex items-center gap-1">
-            <span className="text-lg">₱</span>
-            <span>
-              {rate.toLocaleString()}{" "}
-              <span className="text-xs text-slate-400 font-normal">/ {unitLabel}</span>
-            </span>
+          <div className="text-right">
+            {tour.originalPrice && tour.originalPrice > 0 && (
+              <p className="text-xs text-slate-400 line-through">₱{tour.originalPrice.toLocaleString()}</p>
+            )}
+            <div className="font-bold text-[#12AFAB] flex items-center gap-1">
+              <span className="text-lg">₱</span>
+              <span>
+                {rate.toLocaleString()}{" "}
+                <span className="text-xs text-slate-400 font-normal">/ {unitLabel}</span>
+              </span>
+            </div>
           </div>
         </div>
       </CardContent>

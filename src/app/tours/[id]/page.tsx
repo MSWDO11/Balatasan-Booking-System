@@ -42,12 +42,15 @@ export default function TourDetailsPage({ params }: { params: Promise<{ id: stri
   const isJetSki = displayTitle.toLowerCase().includes("jet ski");
   
   const individualRate = tour?.pricePerPerson ?? (isJetSki ? 150 : (isFlyingFish ? 500 : 1000));
+  // Apply item-level discount if set by admin
+  const itemDiscount = tour?.discountPercent > 0 ? (1 - tour.discountPercent / 100) : 1;
+  const effectiveRate = Math.round(individualRate * itemDiscount);
   const guestCount = parseInt(guests);
   const minutes = parseInt(durationMinutes);
   const maxCapacity = tour?.capacity ? parseInt(tour.capacity.toString()) : (isFlyingFish ? 3 : (isJetSki ? 2 : 10));
 
   const pricing = calculatePrice({
-    baseRate: individualRate,
+    baseRate: effectiveRate,
     guestCount,
     nights: 1,
     date,
@@ -80,8 +83,8 @@ export default function TourDetailsPage({ params }: { params: Promise<{ id: stri
       startDate: format(date, "yyyy-MM-dd"),
       endDate: format(date, "yyyy-MM-dd"),
       status: "Pending Payment",
-      totalPrice: pricing.finalPrice,
-      originalPrice: pricing.basePrice,
+      totalPrice: totalPrice,
+      originalPrice: totalPrice,
       guestCount: guestCount,
       duration: isJetSki ? `${minutes} Minutes` : (tour.duration || "Custom"),
       guestName: user.displayName || user.email?.split('@')[0] || "Guest",
@@ -153,7 +156,7 @@ export default function TourDetailsPage({ params }: { params: Promise<{ id: stri
                     <h1 className="text-4xl font-headline font-bold text-primary">{tour.name || tour.title}</h1>
                     <div className="flex items-center gap-2 text-muted-foreground">
                       <MapPin className="h-4 w-4" />
-                      <span>Bulalacao, Oriental Mindoro</span>
+                      <span>{tour.location || "Bulalacao, Oriental Mindoro"}</span>
                     </div>
                   </div>
                   <div className="flex items-center gap-1 bg-accent/10 text-accent-foreground px-3 py-1.5 rounded-full font-bold">
@@ -182,6 +185,26 @@ export default function TourDetailsPage({ params }: { params: Promise<{ id: stri
                   <p className="text-muted-foreground leading-relaxed text-lg">
                     {tour.description}
                   </p>
+                  {Array.isArray(tour.includedItems) && tour.includedItems.length > 0 && (
+                    <div className="space-y-2">
+                      <h4 className="font-semibold text-sm uppercase tracking-widest text-muted-foreground">What&apos;s Included</h4>
+                      <ul className="grid grid-cols-2 gap-1.5">
+                        {tour.includedItems.map((item: string) => (
+                          <li key={item} className="flex items-center gap-2 text-sm text-foreground">
+                            <span className="h-4 w-4 rounded-full bg-primary/10 text-primary flex items-center justify-center text-[10px] font-bold shrink-0">✓</span>
+                            {item}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                  {Array.isArray(tour.tags) && tour.tags.length > 0 && (
+                    <div className="flex flex-wrap gap-2">
+                      {tour.tags.map((tag: string) => (
+                        <span key={tag} className="px-3 py-1 bg-primary/10 text-primary text-xs font-semibold rounded-full">{tag}</span>
+                      ))}
+                    </div>
+                  )}
                 </div>
 
                 <Alert className="bg-primary/5 border-primary/20 rounded-2xl">
@@ -198,7 +221,17 @@ export default function TourDetailsPage({ params }: { params: Promise<{ id: stri
               <Card className="sticky top-24 border-none shadow-2xl bg-white/50 backdrop-blur">
                 <CardContent className="p-8 space-y-6">
                   <div className="flex justify-between items-baseline">
-                    <span className="text-3xl font-bold text-primary">₱{(individualRate).toLocaleString()}</span>
+                    <div className="space-y-0.5">
+                      {tour.originalPrice > 0 && (
+                        <p className="text-sm text-muted-foreground line-through">₱{Number(tour.originalPrice).toLocaleString()}</p>
+                      )}
+                      <div className="flex items-center gap-2">
+                        <span className="text-3xl font-bold text-primary">₱{effectiveRate.toLocaleString()}</span>
+                        {tour.discountPercent > 0 && (
+                          <span className="text-xs bg-green-100 text-green-700 font-bold px-2 py-0.5 rounded-full">{tour.discountPercent}% off</span>
+                        )}
+                      </div>
+                    </div>
                     <span className="text-muted-foreground font-medium">{isJetSki ? "/ minute" : "/ person"}</span>
                   </div>
 
@@ -244,9 +277,9 @@ export default function TourDetailsPage({ params }: { params: Promise<{ id: stri
                             <SelectValue placeholder="15 Minutes" />
                           </SelectTrigger>
                           <SelectContent className="rounded-xl">
-                            <SelectItem value="15">15 Minutes (₱{(individualRate * 15).toLocaleString()})</SelectItem>
-                            <SelectItem value="30">30 Minutes (₱{(individualRate * 30).toLocaleString()})</SelectItem>
-                            <SelectItem value="60">60 Minutes (₱{(individualRate * 60).toLocaleString()})</SelectItem>
+                            <SelectItem value="15">15 Minutes (₱{(effectiveRate * 15).toLocaleString()})</SelectItem>
+                            <SelectItem value="30">30 Minutes (₱{(effectiveRate * 30).toLocaleString()})</SelectItem>
+                            <SelectItem value="60">60 Minutes (₱{(effectiveRate * 60).toLocaleString()})</SelectItem>
                           </SelectContent>
                         </Select>
                       </div>
@@ -286,12 +319,7 @@ export default function TourDetailsPage({ params }: { params: Promise<{ id: stri
                     {isBooking ? <Loader2 className="h-5 w-5 animate-spin" /> : "Book Adventure"}
                   </Button>
 
-                  {pricing.seasonInfo && (
-                    <div className={`flex items-center gap-2 px-3 py-2 rounded-xl border text-xs font-semibold ${pricing.seasonInfo.color}`}>
-                      <Tag className="h-3.5 w-3.5" />
-                      {pricing.seasonInfo.label} rate applies
-                    </div>
-                  )}
+                  {/* No seasonal badge — pricing is set directly by admin in inventory */}
                   {pricing.groupDiscountInfo && (
                     <div className="flex items-center gap-2 px-3 py-2 bg-green-50 border border-green-200 rounded-xl text-xs font-semibold text-green-700">
                       <TrendingDown className="h-3.5 w-3.5" />
@@ -303,20 +331,12 @@ export default function TourDetailsPage({ params }: { params: Promise<{ id: stri
                     <div className="flex justify-between text-sm text-muted-foreground">
                       <span>
                         {isJetSki
-                          ? `₱${individualRate.toLocaleString()} × ${minutes} min`
-                          : `₱${individualRate.toLocaleString()} × ${guestCount} ${guestCount === 1 ? 'person' : 'people'}`
+                          ? `₱${effectiveRate.toLocaleString()} × ${minutes} min`
+                          : `₱${effectiveRate.toLocaleString()} × ${guestCount} ${guestCount === 1 ? 'person' : 'people'}`
                         }
                       </span>
                       <span>₱{pricing.basePrice.toLocaleString()}</span>
                     </div>
-                    {pricing.seasonInfo && (
-                      <div className="flex justify-between text-sm text-muted-foreground">
-                        <span>{pricing.seasonInfo.label}</span>
-                        <span className={pricing.seasonInfo.multiplier > 1 ? "text-orange-600" : "text-green-600"}>
-                          {pricing.seasonInfo.multiplier > 1 ? "+" : ""}₱{(pricing.afterSeasonal - pricing.basePrice).toLocaleString()}
-                        </span>
-                      </div>
-                    )}
                     {pricing.groupDiscountInfo && (
                       <div className="flex justify-between text-sm text-green-600 font-medium">
                         <span>Group discount ({pricing.groupDiscountInfo.discountPercent}%)</span>

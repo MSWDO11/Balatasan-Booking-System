@@ -6,12 +6,13 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import {
   Clock, TrendingUp, MoreVertical, Check, X, Loader2, ShieldAlert,
   User, MapPin, Wallet, Users as UsersIcon, ShoppingBag, Download,
-  Search, Eye, UserPlus, Image as ImageIcon
+  Search, Eye, UserPlus, Image as ImageIcon, Settings
 } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
@@ -19,7 +20,7 @@ import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGri
 import { useFirestore, useCollection, useMemoFirebase, updateDocumentNonBlocking, useUser, setDocumentNonBlocking, useDoc, addDocumentNonBlocking } from "@/firebase";
 import { collectionGroup, query, doc, collection } from "firebase/firestore";
 import { useToast } from "@/hooks/use-toast";
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { cn } from "@/lib/utils";
 import Image from "next/image";
 
@@ -33,8 +34,12 @@ export default function AdminDashboard() {
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("All");
   const [selectedBooking, setSelectedBooking] = useState<any>(null);
+  const [bookingNote, setBookingNote] = useState("");
   const [newAdminEmail, setNewAdminEmail] = useState("");
   const [isAddingAdmin, setIsAddingAdmin] = useState(false);
+  const [gcashNumber, setGcashNumber] = useState("");
+  const [gcashName, setGcashName] = useState("");
+  const [isSavingSettings, setIsSavingSettings] = useState(false);
 
   const adminDocRef = useMemoFirebase(() =>
     (firestore && user) ? doc(firestore, "roles_admin", user.uid) : null,
@@ -55,8 +60,27 @@ export default function AdminDashboard() {
     return collection(firestore, "roles_admin");
   }, [firestore, user, canLoadData]);
 
+  const settingsRef = useMemoFirebase(() => firestore ? doc(firestore, "settings", "payment") : null, [firestore]);
+  const { data: paymentSettings } = useDoc(settingsRef);
+
   const { data: rawBookings, isLoading: isBookingsLoading } = useCollection(bookingsQuery);
   const { data: adminsList, isLoading: isAdminsLoading } = useCollection(adminsQuery);
+
+  // Sync payment settings into local state for editing
+  useEffect(() => {
+    if (paymentSettings) {
+      setGcashNumber(paymentSettings.gcashNumber || "");
+      setGcashName(paymentSettings.gcashName || "");
+    }
+  }, [paymentSettings]);
+
+  const handleSaveSettings = () => {
+    if (!firestore) return;
+    setIsSavingSettings(true);
+    setDocumentNonBlocking(doc(firestore, "settings", "payment"), { gcashNumber, gcashName }, { merge: true });
+    toast({ title: "Settings saved", description: "GCash details updated." });
+    setIsSavingSettings(false);
+  };
 
   const bookings = useMemo(() => {
     if (!rawBookings) return [];
@@ -91,6 +115,12 @@ export default function AdminDashboard() {
     updateDocumentNonBlocking(doc(firestore, "users", userId, "bookings", bookingId), { status });
     toast({ title: `Booking ${status}`, description: `Status updated to ${status}.` });
     if (selectedBooking?.id === bookingId) setSelectedBooking((prev: any) => ({ ...prev, status }));
+  };
+
+  const handleSaveNote = () => {
+    if (!firestore || !selectedBooking) return;
+    updateDocumentNonBlocking(doc(firestore, "users", selectedBooking.userId, "bookings", selectedBooking.id), { adminNote: bookingNote });
+    toast({ title: "Note saved" });
   };
 
   const handleExportCSV = () => {
@@ -182,8 +212,8 @@ export default function AdminDashboard() {
 
   const stats = [
     { label: "Total Bookings", value: bookings.length.toString(), icon: ShoppingBag, color: "text-blue-600", bg: "bg-blue-50" },
+    { label: "Confirmed", value: bookings.filter(b => b.status === "Confirmed").length.toString(), icon: Check, color: "text-emerald-600", bg: "bg-emerald-50" },
     { label: "Pending", value: bookings.filter(b => b.status === "Pending Payment").length.toString(), icon: Clock, color: "text-amber-600", bg: "bg-amber-50" },
-    { label: "Admins", value: (adminsList?.length || 0).toString(), icon: UsersIcon, color: "text-emerald-600", bg: "bg-emerald-50" },
     { label: "Revenue", value: `₱${bookings.filter(b=>b.status==="Confirmed").reduce((acc,b) => acc+(b.totalPrice||0), 0).toLocaleString()}`, icon: TrendingUp, color: "text-primary", bg: "bg-primary/10" },
   ];
 
@@ -229,6 +259,16 @@ export default function AdminDashboard() {
                     </div>
                   </div>
                 )}
+                <div className="space-y-2">
+                  <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest">Admin Notes</p>
+                  <Textarea
+                    placeholder="e.g. Paid via BDO, GCash receipt verified..."
+                    value={bookingNote}
+                    onChange={e => setBookingNote(e.target.value)}
+                    className="text-sm min-h-[80px]"
+                  />
+                  <Button size="sm" variant="outline" onClick={handleSaveNote} className="w-full">Save Note</Button>
+                </div>
                 <div className="flex gap-2 pt-2">
                   <Button size="sm" onClick={() => { updateStatus(selectedBooking.userId, selectedBooking.id, "Confirmed"); setSelectedBooking(null); }} className="flex-1">Confirm</Button>
                   <Button size="sm" variant="outline" onClick={() => { updateStatus(selectedBooking.userId, selectedBooking.id, "Cancelled"); setSelectedBooking(null); }} className="flex-1 text-rose-600 border-rose-200 hover:bg-rose-50">Cancel</Button>
@@ -284,6 +324,7 @@ export default function AdminDashboard() {
           <TabsList className="bg-white p-1 rounded-2xl shadow-sm border border-slate-100 w-fit">
             <TabsTrigger value="bookings" className="rounded-xl px-8 py-2.5 font-bold data-[state=active]:bg-primary data-[state=active]:text-white">Reservations</TabsTrigger>
             <TabsTrigger value="users" className="rounded-xl px-8 py-2.5 font-bold data-[state=active]:bg-primary data-[state=active]:text-white">Administrators</TabsTrigger>
+            <TabsTrigger value="settings" className="rounded-xl px-8 py-2.5 font-bold data-[state=active]:bg-primary data-[state=active]:text-white">Settings</TabsTrigger>
           </TabsList>
 
           <TabsContent value="bookings">
@@ -330,7 +371,7 @@ export default function AdminDashboard() {
                       </TableHeader>
                       <TableBody>
                         {filteredBookings.map((booking) => (
-                          <TableRow key={booking.id} className="hover:bg-slate-50/40 transition-colors border-slate-50 cursor-pointer" onClick={() => setSelectedBooking(booking)}>
+                          <TableRow key={booking.id} className="hover:bg-slate-50/40 transition-colors border-slate-50 cursor-pointer" onClick={() => { setSelectedBooking(booking); setBookingNote(booking.adminNote || ""); }}>
                             <TableCell className="px-6 py-5">
                               <div className="flex items-center gap-3">
                                 <div className="h-9 w-9 rounded-full bg-slate-100 flex items-center justify-center"><User className="h-4 w-4 text-slate-400" /></div>
@@ -355,7 +396,7 @@ export default function AdminDashboard() {
                                   <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full"><MoreVertical className="h-4 w-4" /></Button>
                                 </DropdownMenuTrigger>
                                 <DropdownMenuContent align="end" className="rounded-xl p-2 min-w-[160px]">
-                                  <DropdownMenuItem onClick={() => setSelectedBooking(booking)} className="rounded-lg cursor-pointer"><Eye className="mr-2 h-4 w-4 text-primary" /><span className="font-semibold">View Details</span></DropdownMenuItem>
+                                  <DropdownMenuItem onClick={() => { setSelectedBooking(booking); setBookingNote(booking.adminNote || ""); }} className="rounded-lg cursor-pointer"><Eye className="mr-2 h-4 w-4 text-primary" /><span className="font-semibold">View Details</span></DropdownMenuItem>
                                   <DropdownMenuItem onClick={() => updateStatus(booking.userId, booking.id, "Confirmed")} className="rounded-lg cursor-pointer"><Check className="mr-2 h-4 w-4 text-emerald-600" /><span className="font-semibold">Confirm</span></DropdownMenuItem>
                                   <DropdownMenuItem onClick={() => updateStatus(booking.userId, booking.id, "Cancelled")} className="rounded-lg cursor-pointer text-rose-600 focus:bg-rose-50"><X className="mr-2 h-4 w-4" /><span className="font-semibold">Cancel</span></DropdownMenuItem>
                                 </DropdownMenuContent>
@@ -412,6 +453,44 @@ export default function AdminDashboard() {
               </CardContent>
             </Card>
           </TabsContent>
+
+          <TabsContent value="settings">
+            <Card className="border-none shadow-2xl shadow-slate-200/50 rounded-3xl overflow-hidden bg-white">
+              <CardHeader className="p-8 border-b border-slate-50">
+                <div className="flex items-center gap-3">
+                  <div className="bg-primary/10 p-3 rounded-2xl"><Settings className="h-5 w-5 text-primary" /></div>
+                  <div>
+                    <CardTitle className="text-2xl font-headline font-bold text-slate-900">Payment Settings</CardTitle>
+                    <CardDescription className="text-slate-500">Update the GCash number shown to guests on My Bookings.</CardDescription>
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent className="p-8 space-y-6 max-w-lg">
+                <div className="space-y-2">
+                  <label className="text-sm font-bold text-slate-600">GCash Number</label>
+                  <Input
+                    placeholder="e.g. 0912-345-6789"
+                    value={gcashNumber}
+                    onChange={e => setGcashNumber(e.target.value)}
+                  />
+                  <p className="text-xs text-muted-foreground">This number is shown to guests when they need to pay.</p>
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-bold text-slate-600">Account Name</label>
+                  <Input
+                    placeholder="e.g. Balatasan Resort"
+                    value={gcashName}
+                    onChange={e => setGcashName(e.target.value)}
+                  />
+                </div>
+                <Button onClick={handleSaveSettings} disabled={isSavingSettings} className="w-full sm:w-auto">
+                  {isSavingSettings && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
+                  Save Payment Settings
+                </Button>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
         </Tabs>
       </main>
       <Footer />

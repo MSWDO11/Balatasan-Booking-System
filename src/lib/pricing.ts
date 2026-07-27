@@ -1,54 +1,8 @@
 /**
  * Pricing utilities for Balatasan Booking System
- * Handles seasonal pricing, package deals, and group discounts
+ * Group discounts only — seasonal pricing is disabled.
+ * Admin controls pricing via the inventory rate field.
  */
-
-// ─── Seasonal Pricing ───────────────────────────────────────────────────────
-
-export type Season = "summer" | "holiday" | "off-peak";
-
-export interface SeasonRate {
-  season: Season;
-  label: string;
-  multiplier: number; // e.g. 1.3 = 30% more expensive
-  color: string;
-  months: number[]; // 0=Jan, 11=Dec
-}
-
-export const SEASONS: SeasonRate[] = [
-  {
-    season: "summer",
-    label: "Summer Peak",
-    multiplier: 1.3,
-    color: "text-orange-600 bg-orange-50 border-orange-200",
-    months: [3, 4, 5], // April, May, June
-  },
-  {
-    season: "holiday",
-    label: "Holiday Season",
-    multiplier: 1.5,
-    color: "text-red-600 bg-red-50 border-red-200",
-    months: [11, 0], // December, January
-  },
-  {
-    season: "off-peak",
-    label: "Off-Peak",
-    multiplier: 0.85,
-    color: "text-green-600 bg-green-50 border-green-200",
-    months: [1, 2, 6, 7, 8], // Feb, Mar, Jul, Aug, Sep
-  },
-];
-
-export function getSeasonForDate(date: Date): SeasonRate | null {
-  const month = date.getMonth();
-  return SEASONS.find((s) => s.months.includes(month)) ?? null;
-}
-
-export function applySeasonalMultiplier(baseRate: number, date: Date): number {
-  const season = getSeasonForDate(date);
-  if (!season) return baseRate;
-  return Math.round(baseRate * season.multiplier);
-}
 
 // ─── Group Discount ──────────────────────────────────────────────────────────
 
@@ -65,7 +19,6 @@ export const GROUP_DISCOUNTS: GroupDiscount[] = [
 ];
 
 export function getGroupDiscount(guestCount: number): GroupDiscount | null {
-  // Find the best discount tier (highest applicable)
   const applicable = GROUP_DISCOUNTS.filter((d) => guestCount >= d.minGuests);
   if (!applicable.length) return null;
   return applicable[applicable.length - 1];
@@ -112,12 +65,21 @@ export const PACKAGE_DEALS: PackageDeal[] = [
 
 // ─── Combined Price Calculator ───────────────────────────────────────────────
 
+// Kept for backward compatibility — seasonInfo is always null now
+export interface SeasonRate {
+  season: string;
+  label: string;
+  multiplier: number;
+  color: string;
+  months: number[];
+}
+
 export interface PriceBreakdown {
   basePrice: number;
   afterSeasonal: number;
   afterGroupDiscount: number;
   finalPrice: number;
-  seasonInfo: SeasonRate | null;
+  seasonInfo: null;
   groupDiscountInfo: GroupDiscount | null;
   savings: number;
 }
@@ -126,14 +88,13 @@ export function calculatePrice({
   baseRate,
   guestCount,
   nights = 1,
-  date,
   isPerMinute = false,
   minutes = 0,
 }: {
   baseRate: number;
   guestCount: number;
   nights?: number;
-  date?: Date;
+  date?: Date;        // kept in signature for backward compat, not used
   isPerMinute?: boolean;
   minutes?: number;
 }): PriceBreakdown {
@@ -145,12 +106,10 @@ export function calculatePrice({
     basePrice = baseRate * guestCount * nights;
   }
 
-  // Apply seasonal pricing
-  const seasonInfo = date ? getSeasonForDate(date) : null;
-  const seasonMultiplier = seasonInfo ? seasonInfo.multiplier : 1;
-  const afterSeasonal = Math.round(basePrice * seasonMultiplier);
+  // No seasonal multiplier — afterSeasonal equals basePrice
+  const afterSeasonal = basePrice;
 
-  // Apply group discount (only for per-person pricing)
+  // Group discount (only for per-person pricing)
   const groupDiscountInfo = !isPerMinute ? getGroupDiscount(guestCount) : null;
   const discountMultiplier = groupDiscountInfo
     ? 1 - groupDiscountInfo.discountPercent / 100
@@ -165,7 +124,7 @@ export function calculatePrice({
     afterSeasonal,
     afterGroupDiscount,
     finalPrice,
-    seasonInfo,
+    seasonInfo: null,
     groupDiscountInfo,
     savings,
   };
