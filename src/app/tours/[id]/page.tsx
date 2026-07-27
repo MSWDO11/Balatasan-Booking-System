@@ -9,7 +9,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Calendar } from "@/components/ui/calendar";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Clock, Users, Shield, MapPin, Star, Calendar as CalendarIcon, Loader2, CreditCard, ShieldCheck, Timer } from "lucide-react";
+import { Clock, Users, Shield, MapPin, Star, Calendar as CalendarIcon, Loader2, CreditCard, ShieldCheck, Timer, Tag, TrendingDown } from "lucide-react";
 import Image from "next/image";
 import { PlaceHolderImages } from "@/lib/placeholder-images";
 import { useUser, useFirestore, useDoc, useMemoFirebase, addDocumentNonBlocking } from "@/firebase";
@@ -19,9 +19,6 @@ import { useRouter } from "next/navigation";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
-import { calculatePrice } from "@/lib/pricing";
-import { Tag, TrendingDown } from "lucide-react";
-
 import { calculatePrice } from "@/lib/pricing";
 
 export default function TourDetailsPage({ params }: { params: Promise<{ id: string }> }) {
