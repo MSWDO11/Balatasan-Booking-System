@@ -8,9 +8,9 @@ import { Search, Compass, Loader2 } from "lucide-react";
 import { useUser, useFirestore, useCollection, useMemoFirebase } from "@/firebase";
 import { collection } from "firebase/firestore";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useEffect, useMemo, Suspense } from "react";
+import { useEffect, useMemo } from "react";
 
-function ToursContent() {
+export default function ToursPage() {
   const { user, isUserLoading } = useUser();
   const firestore = useFirestore();
   const router = useRouter();
@@ -141,21 +141,5 @@ function ToursContent() {
       </main>
       <Footer />
     </div>
-  );
-}
-
-export default function ToursPage() {
-  return (
-    <Suspense fallback={
-      <div className="flex min-h-screen flex-col">
-        <Navbar />
-        <main className="flex-grow flex items-center justify-center">
-          <Loader2 className="h-8 w-8 animate-spin text-primary" />
-        </main>
-        <Footer />
-      </div>
-    }>
-      <ToursContent />
-    </Suspense>
   );
 }

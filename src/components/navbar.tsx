@@ -23,6 +23,8 @@ const navLinks = [
   { name: "Cottages", href: "/accommodations" },
   { name: "Island Hopping", href: "/tours?category=island-hopping" },
   { name: "Water Activities", href: "/tours?category=water-activities" },
+  { name: "About", href: "/about" },
+  { name: "Contact", href: "/contact" },
 ];
 
 export function Navbar() {

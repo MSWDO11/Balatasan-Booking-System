@@ -5,44 +5,23 @@ import { Footer } from "@/components/footer";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { 
-  Calendar as CalendarIcon, 
-  CheckCircle, 
-  Clock, 
-  TrendingUp,
-  MoreVertical,
-  Check,
-  X,
-  Loader2,
-  ShieldAlert,
-  User,
-  MapPin,
-  Wallet,
-  Users as UsersIcon,
-  ShoppingBag,
-  Download
+import {
+  Clock, TrendingUp, MoreVertical, Check, X, Loader2, ShieldAlert,
+  User, MapPin, Wallet, Users as UsersIcon, ShoppingBag, Download,
+  Search, Eye, UserPlus, Image as ImageIcon
 } from "lucide-react";
-import { 
-  Table, 
-  TableBody, 
-  TableCell, 
-  TableHead, 
-  TableHeader, 
-  TableRow 
-} from "@/components/ui/table";
-import { 
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger
-} from "@/components/ui/dropdown-menu";
-import { useFirestore, useCollection, useMemoFirebase, updateDocumentNonBlocking, useUser, setDocumentNonBlocking, useDoc } from "@/firebase";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from "recharts";
+import { useFirestore, useCollection, useMemoFirebase, updateDocumentNonBlocking, useUser, setDocumentNonBlocking, useDoc, addDocumentNonBlocking } from "@/firebase";
 import { collectionGroup, query, doc, collection } from "firebase/firestore";
 import { useToast } from "@/hooks/use-toast";
 import { useState, useMemo } from "react";
 import { cn } from "@/lib/utils";
+import Image from "next/image";
 
 export default function AdminDashboard() {
   const firestore = useFirestore();
@@ -51,19 +30,19 @@ export default function AdminDashboard() {
   const [isInitializing, setIsInitializing] = useState(false);
   const [showExport, setShowExport] = useState(false);
   const [csvText, setCsvText] = useState("");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [statusFilter, setStatusFilter] = useState("All");
+  const [selectedBooking, setSelectedBooking] = useState<any>(null);
+  const [newAdminEmail, setNewAdminEmail] = useState("");
+  const [isAddingAdmin, setIsAddingAdmin] = useState(false);
 
-  // Check for admin role document
-  const adminDocRef = useMemoFirebase(() => 
-    (firestore && user) ? doc(firestore, "roles_admin", user.uid) : null, 
+  const adminDocRef = useMemoFirebase(() =>
+    (firestore && user) ? doc(firestore, "roles_admin", user.uid) : null,
     [firestore, user]
   );
-  
   const { data: adminRole, isLoading: isAdminRoleLoading } = useDoc(adminDocRef);
-  
   const isMasterAdminEmail = user?.email?.toLowerCase() === "admin@gmail.com";
   const hasAdminRecord = !!adminRole;
-  
-  // Only load data if we have confirmed admin status
   const canLoadData = !isUserLoading && !isAdminRoleLoading && hasAdminRecord;
 
   const bookingsQuery = useMemoFirebase(() => {
@@ -79,150 +58,78 @@ export default function AdminDashboard() {
   const { data: rawBookings, isLoading: isBookingsLoading } = useCollection(bookingsQuery);
   const { data: adminsList, isLoading: isAdminsLoading } = useCollection(adminsQuery);
 
-  // Sort bookings client-side
   const bookings = useMemo(() => {
     if (!rawBookings) return [];
-    return [...rawBookings].sort((a, b) => {
-      const dateA = a.startDate || "";
-      const dateB = b.startDate || "";
-      return dateB.localeCompare(dateA);
-    });
+    return [...rawBookings].sort((a, b) => (b.startDate || "").localeCompare(a.startDate || ""));
   }, [rawBookings]);
+
+  const filteredBookings = useMemo(() => {
+    return bookings.filter(b => {
+      const matchesSearch = !searchQuery ||
+        (b.guestName ?? "").toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (b.itemName ?? "").toLowerCase().includes(searchQuery.toLowerCase());
+      const matchesStatus = statusFilter === "All" || b.status === statusFilter;
+      return matchesSearch && matchesStatus;
+    });
+  }, [bookings, searchQuery, statusFilter]);
+
+  // Monthly revenue chart data
+  const revenueChartData = useMemo(() => {
+    const months = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+    const data = months.map(month => ({ month, revenue: 0 }));
+    bookings.filter(b => b.status === "Confirmed").forEach(b => {
+      if (b.startDate) {
+        const month = new Date(b.startDate).getMonth();
+        data[month].revenue += b.totalPrice || 0;
+      }
+    });
+    return data.filter(d => d.revenue > 0);
+  }, [bookings]);
 
   const updateStatus = (userId: string, bookingId: string, status: string) => {
     if (!firestore) return;
-    const bookingRef = doc(firestore, "users", userId, "bookings", bookingId);
-    updateDocumentNonBlocking(bookingRef, { status });
-    toast({
-      title: `Booking ${status}`,
-      description: `The reservation status has been updated to ${status}.`,
-    });
+    updateDocumentNonBlocking(doc(firestore, "users", userId, "bookings", bookingId), { status });
+    toast({ title: `Booking ${status}`, description: `Status updated to ${status}.` });
+    if (selectedBooking?.id === bookingId) setSelectedBooking((prev: any) => ({ ...prev, status }));
   };
 
   const handleExportCSV = () => {
     const exportData = bookings.length ? bookings : (rawBookings ?? []);
-    if (!exportData.length) {
-      toast({ title: "No bookings", description: "No booking data available yet." });
-      return;
-    }
-    const headers = ["Ref ID", "Guest Name", "Contact", "Item", "Start Date", "End Date", "Guests", "Status", "Total Price", "Created At"];
+    if (!exportData.length) { toast({ title: "No bookings" }); return; }
+    const headers = ["Ref ID","Guest Name","Contact","Item","Start Date","End Date","Guests","Status","Total Price","Created At"];
     const rows = (exportData as any[]).map(b => [
-      String(b.id ?? "").slice(0, 8).toUpperCase(),
-      String(b.guestName ?? ""),
-      String(b.contactNumber ?? ""),
-      String(b.itemName ?? ""),
-      String(b.startDate ?? ""),
-      String(b.endDate ?? ""),
-      String(b.guestCount ?? ""),
-      String(b.status ?? ""),
-      String(b.totalPrice ?? 0),
+      String(b.id ?? "").slice(0,8).toUpperCase(),
+      String(b.guestName ?? ""), String(b.contactNumber ?? ""), String(b.itemName ?? ""),
+      String(b.startDate ?? ""), String(b.endDate ?? ""), String(b.guestCount ?? ""),
+      String(b.status ?? ""), String(b.totalPrice ?? 0),
       b.createdAt ? new Date(b.createdAt).toLocaleDateString() : "",
     ]);
-    const csv = [headers, ...rows]
-      .map(row => row.map((v: string) => `"${v.replace(/"/g, '""')}"`).join(","))
-      .join("\r\n");
-    setCsvText(csv);
+    setCsvText([headers,...rows].map(r => r.map((v:any) => `"${String(v).replace(/"/g,'""')}"`).join(",")).join("\r\n"));
     setShowExport(true);
+  };
+
+  const handleAddAdmin = () => {
+    if (!firestore || !newAdminEmail.trim()) return;
+    setIsAddingAdmin(true);
+    addDocumentNonBlocking(collection(firestore, "pending_admins"), {
+      email: newAdminEmail.trim().toLowerCase(),
+      addedBy: user?.email,
+      addedAt: new Date().toISOString(),
+    });
+    toast({ title: "Admin Invited", description: `${newAdminEmail} must sign up and you must initialize their admin record manually.` });
+    setNewAdminEmail("");
+    setIsAddingAdmin(false);
   };
 
   const handleInitializeAdmin = () => {
     if (!firestore || !user) return;
     setIsInitializing(true);
-    const adminRef = doc(firestore, "roles_admin", user.uid);
-    setDocumentNonBlocking(adminRef, { 
-      email: user.email, 
-      assignedAt: new Date().toISOString(),
-      role: 'admin'
+    setDocumentNonBlocking(doc(firestore, "roles_admin", user.uid), {
+      email: user.email, assignedAt: new Date().toISOString(), role: 'admin'
     }, { merge: true });
-    
-    toast({
-      title: "Admin Initialized",
-      description: "Database record created. You now have full administrative rights.",
-    });
+    toast({ title: "Admin Initialized", description: "You now have full admin rights." });
     setIsInitializing(false);
   };
-
-  if (isUserLoading || isAdminRoleLoading) {
-    return (
-      <div className="flex min-h-screen flex-col">
-        <Navbar />
-        <main className="flex-grow flex items-center justify-center">
-          <Loader2 className="h-8 w-8 animate-spin text-primary" />
-        </main>
-        <Footer />
-      </div>
-    );
-  }
-
-  if (!isMasterAdminEmail && !hasAdminRecord) {
-    return (
-      <div className="flex min-h-screen flex-col bg-slate-50">
-        <Navbar />
-        <main className="flex-grow flex items-center justify-center p-4">
-          <Card className="max-w-md text-center border-none shadow-2xl rounded-3xl overflow-hidden">
-            <CardHeader className="pt-10 pb-6">
-              <div className="mx-auto bg-destructive/10 p-6 rounded-full w-fit mb-4">
-                <ShieldAlert className="h-12 w-12 text-destructive" />
-              </div>
-              <CardTitle className="text-2xl font-headline font-bold">Access Restricted</CardTitle>
-              <CardDescription className="text-base px-4">
-                You do not have administrative privileges to view this page. Please contact the system administrator.
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="pb-10">
-              <Button onClick={() => window.location.href = '/'} className="px-8 rounded-full">Return Home</Button>
-            </CardContent>
-          </Card>
-        </main>
-        <Footer />
-      </div>
-    );
-  }
-
-  if (isMasterAdminEmail && !hasAdminRecord) {
-    return (
-      <div className="flex min-h-screen flex-col bg-slate-50">
-        <Navbar />
-        <main className="flex-grow flex items-center justify-center p-4">
-          <Card className="max-w-md text-center border-none shadow-2xl rounded-3xl overflow-hidden">
-            <CardHeader className="pt-10 pb-6">
-              <div className="mx-auto bg-primary/10 p-6 rounded-full w-fit mb-4">
-                <ShieldAlert className="h-12 w-12 text-primary" />
-              </div>
-              <CardTitle className="text-2xl font-headline font-bold">Admin Setup Required</CardTitle>
-              <CardDescription className="text-base">
-                Welcome, {user?.email}. To access global data, you must first initialize your admin record.
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="pb-10 px-8">
-              <Button 
-                onClick={handleInitializeAdmin} 
-                disabled={isInitializing}
-                className="w-full rounded-full h-12 text-lg font-bold"
-              >
-                {isInitializing ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
-                Initialize Admin Record
-              </Button>
-            </CardContent>
-          </Card>
-        </main>
-        <Footer />
-      </div>
-    );
-  }
-
-  const stats = [
-    { label: "Total Bookings", value: bookings.length.toString(), icon: ShoppingBag, color: "text-blue-600", bg: "bg-blue-50" },
-    { label: "Pending", value: bookings.filter(b => b.status === "Pending Payment").length.toString(), icon: Clock, color: "text-amber-600", bg: "bg-amber-50" },
-    { label: "Admins", value: (adminsList?.length || 0).toString(), icon: UsersIcon, color: "text-emerald-600", bg: "bg-emerald-50" },
-    { 
-      label: "Revenue", 
-      value: `₱${bookings.reduce((acc, b) => acc + (b.totalPrice || 0), 0).toLocaleString()}`, 
-      icon: TrendingUp, 
-      color: "text-primary", 
-      bg: "bg-primary/10" 
-    },
-  ];
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -231,7 +138,54 @@ export default function AdminDashboard() {
       case 'Cancelled': return 'bg-rose-100 text-rose-700 border-rose-200';
       default: return 'bg-slate-100 text-slate-700 border-slate-200';
     }
-  }
+  };
+
+  if (isUserLoading || isAdminRoleLoading) return (
+    <div className="flex min-h-screen flex-col"><Navbar />
+      <main className="flex-grow flex items-center justify-center"><Loader2 className="h-8 w-8 animate-spin text-primary" /></main>
+    <Footer /></div>
+  );
+
+  if (!isMasterAdminEmail && !hasAdminRecord) return (
+    <div className="flex min-h-screen flex-col bg-slate-50"><Navbar />
+      <main className="flex-grow flex items-center justify-center p-4">
+        <Card className="max-w-md text-center border-none shadow-2xl rounded-3xl overflow-hidden">
+          <CardHeader className="pt-10 pb-6">
+            <div className="mx-auto bg-destructive/10 p-6 rounded-full w-fit mb-4"><ShieldAlert className="h-12 w-12 text-destructive" /></div>
+            <CardTitle>Access Restricted</CardTitle>
+            <CardDescription>You do not have administrative privileges.</CardDescription>
+          </CardHeader>
+          <CardContent className="pb-10"><Button onClick={() => window.location.href='/'}>Return Home</Button></CardContent>
+        </Card>
+      </main>
+    <Footer /></div>
+  );
+
+  if (isMasterAdminEmail && !hasAdminRecord) return (
+    <div className="flex min-h-screen flex-col bg-slate-50"><Navbar />
+      <main className="flex-grow flex items-center justify-center p-4">
+        <Card className="max-w-md text-center border-none shadow-2xl rounded-3xl overflow-hidden">
+          <CardHeader className="pt-10 pb-6">
+            <div className="mx-auto bg-primary/10 p-6 rounded-full w-fit mb-4"><ShieldAlert className="h-12 w-12 text-primary" /></div>
+            <CardTitle>Admin Setup Required</CardTitle>
+            <CardDescription>Welcome, {user?.email}. Initialize your admin record first.</CardDescription>
+          </CardHeader>
+          <CardContent className="pb-10 px-8">
+            <Button onClick={handleInitializeAdmin} disabled={isInitializing} className="w-full">
+              {isInitializing && <Loader2 className="h-4 w-4 animate-spin mr-2" />} Initialize Admin Record
+            </Button>
+          </CardContent>
+        </Card>
+      </main>
+    <Footer /></div>
+  );
+
+  const stats = [
+    { label: "Total Bookings", value: bookings.length.toString(), icon: ShoppingBag, color: "text-blue-600", bg: "bg-blue-50" },
+    { label: "Pending", value: bookings.filter(b => b.status === "Pending Payment").length.toString(), icon: Clock, color: "text-amber-600", bg: "bg-amber-50" },
+    { label: "Admins", value: (adminsList?.length || 0).toString(), icon: UsersIcon, color: "text-emerald-600", bg: "bg-emerald-50" },
+    { label: "Revenue", value: `₱${bookings.filter(b=>b.status==="Confirmed").reduce((acc,b) => acc+(b.totalPrice||0), 0).toLocaleString()}`, icon: TrendingUp, color: "text-primary", bg: "bg-primary/10" },
+  ];
 
   return (
     <div className="flex min-h-screen flex-col bg-[#F8FBFB]">
@@ -241,170 +195,169 @@ export default function AdminDashboard() {
         {/* Export Modal */}
         <Dialog open={showExport} onOpenChange={setShowExport}>
           <DialogContent className="max-w-3xl max-h-[80vh] overflow-auto">
-            <DialogHeader>
-              <DialogTitle className="flex items-center gap-2">
-                <Download className="h-5 w-5 text-primary" />
-                Export Bookings Data
-              </DialogTitle>
-            </DialogHeader>
-            <p className="text-sm text-muted-foreground mb-3">Select all text below, copy it, and paste into a spreadsheet or save as a .csv file.</p>
-            <textarea
-              readOnly
-              value={csvText}
-              className="w-full h-64 font-mono text-xs p-3 border rounded-xl bg-slate-50 resize-none focus:outline-none focus:ring-2 focus:ring-primary"
-              onClick={e => (e.target as HTMLTextAreaElement).select()}
-            />
+            <DialogHeader><DialogTitle className="flex items-center gap-2"><Download className="h-5 w-5 text-primary" />Export Bookings</DialogTitle></DialogHeader>
+            <p className="text-sm text-muted-foreground mb-3">Click in the box to select all, then copy and paste into Excel or Google Sheets.</p>
+            <textarea readOnly value={csvText} className="w-full h-64 font-mono text-xs p-3 border rounded-xl bg-slate-50 resize-none" onClick={e => (e.target as HTMLTextAreaElement).select()} />
             <div className="flex gap-2 pt-2">
-              <Button onClick={() => { navigator.clipboard.writeText(csvText); toast({ title: "Copied!", description: "CSV data copied to clipboard." }); }} className="flex-1">
-                Copy to Clipboard
-              </Button>
-              <Button variant="outline" onClick={() => setShowExport(false)} className="flex-1">
-                Close
-              </Button>
+              <Button onClick={() => { navigator.clipboard.writeText(csvText); toast({ title: "Copied!" }); }} className="flex-1">Copy to Clipboard</Button>
+              <Button variant="outline" onClick={() => setShowExport(false)} className="flex-1">Close</Button>
             </div>
           </DialogContent>
         </Dialog>
+
+        {/* Booking Detail Modal */}
+        <Dialog open={!!selectedBooking} onOpenChange={() => setSelectedBooking(null)}>
+          <DialogContent className="max-w-lg">
+            <DialogHeader><DialogTitle>Booking Details</DialogTitle></DialogHeader>
+            {selectedBooking && (
+              <div className="space-y-4">
+                <div className="grid grid-cols-2 gap-3 text-sm">
+                  <div><p className="text-muted-foreground text-xs">Ref ID</p><p className="font-bold">{selectedBooking.id?.slice(0,8).toUpperCase()}</p></div>
+                  <div><p className="text-muted-foreground text-xs">Status</p><Badge className={cn("text-xs border", getStatusColor(selectedBooking.status))}>{selectedBooking.status}</Badge></div>
+                  <div><p className="text-muted-foreground text-xs">Guest</p><p className="font-semibold">{selectedBooking.guestName}</p></div>
+                  <div><p className="text-muted-foreground text-xs">Contact</p><p className="font-semibold">{selectedBooking.contactNumber || "Not provided"}</p></div>
+                  <div><p className="text-muted-foreground text-xs">Item</p><p className="font-semibold">{selectedBooking.itemName}</p></div>
+                  <div><p className="text-muted-foreground text-xs">Guests</p><p className="font-semibold">{selectedBooking.guestCount}</p></div>
+                  <div><p className="text-muted-foreground text-xs">Dates</p><p className="font-semibold">{selectedBooking.startDate}{selectedBooking.endDate !== selectedBooking.startDate ? ` → ${selectedBooking.endDate}` : ""}</p></div>
+                  <div><p className="text-muted-foreground text-xs">Total</p><p className="font-bold text-primary text-lg">₱{selectedBooking.totalPrice?.toLocaleString()}</p></div>
+                </div>
+                {selectedBooking.paymentImageUrl && (
+                  <div className="space-y-2">
+                    <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest flex items-center gap-1"><ImageIcon className="h-3 w-3" />Proof of Payment</p>
+                    <div className="relative w-full h-48 rounded-xl overflow-hidden border">
+                      <Image src={selectedBooking.paymentImageUrl} alt="Payment proof" fill className="object-contain" unoptimized />
+                    </div>
+                  </div>
+                )}
+                <div className="flex gap-2 pt-2">
+                  <Button size="sm" onClick={() => { updateStatus(selectedBooking.userId, selectedBooking.id, "Confirmed"); setSelectedBooking(null); }} className="flex-1">Confirm</Button>
+                  <Button size="sm" variant="outline" onClick={() => { updateStatus(selectedBooking.userId, selectedBooking.id, "Cancelled"); setSelectedBooking(null); }} className="flex-1 text-rose-600 border-rose-200 hover:bg-rose-50">Cancel</Button>
+                </div>
+              </div>
+            )}
+          </DialogContent>
+        </Dialog>
+
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
           <div className="space-y-1">
             <h1 className="text-4xl font-headline font-bold text-slate-900 tracking-tight">Admin Dashboard</h1>
             <p className="text-slate-500 font-medium">Manage reservations and monitor resort growth.</p>
           </div>
-          <div className="flex gap-2">
-             <button
-               type="button"
-               onClick={handleExportCSV}
-               className="px-5 py-2.5 rounded-full bg-white border border-slate-200 text-slate-600 font-semibold shadow-sm hover:bg-slate-50 transition-colors text-sm cursor-pointer"
-             >
-               Export Data
-             </button>
-          </div>
+          <button type="button" onClick={handleExportCSV} className="px-5 py-2.5 rounded-full bg-white border border-slate-200 text-slate-600 font-semibold shadow-sm hover:bg-slate-50 transition-colors text-sm cursor-pointer">
+            Export Data
+          </button>
         </div>
 
+        {/* Stats */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
           {stats.map((stat, i) => (
             <Card key={i} className="border-none shadow-xl shadow-slate-200/50 rounded-2xl overflow-hidden bg-white group hover:scale-[1.02] transition-transform duration-300">
               <CardContent className="pt-6">
                 <div className="flex items-center gap-5">
-                  <div className={cn("p-4 rounded-2xl transition-colors duration-300", stat.bg)}>
-                    <stat.icon className={cn("h-7 w-7", stat.color)} />
-                  </div>
-                  <div>
-                    <p className="text-sm font-bold text-slate-400 uppercase tracking-wider">{stat.label}</p>
-                    <p className="text-3xl font-bold text-slate-900">{stat.value}</p>
-                  </div>
+                  <div className={cn("p-4 rounded-2xl", stat.bg)}><stat.icon className={cn("h-7 w-7", stat.color)} /></div>
+                  <div><p className="text-sm font-bold text-slate-400 uppercase tracking-wider">{stat.label}</p><p className="text-3xl font-bold text-slate-900">{stat.value}</p></div>
                 </div>
               </CardContent>
             </Card>
           ))}
         </div>
 
+        {/* Revenue Chart */}
+        {revenueChartData.length > 0 && (
+          <Card className="border-none shadow-xl shadow-slate-200/50 rounded-2xl bg-white">
+            <CardHeader className="pb-2"><CardTitle className="text-lg font-headline font-bold text-slate-900">Monthly Revenue (Confirmed Bookings)</CardTitle></CardHeader>
+            <CardContent>
+              <ResponsiveContainer width="100%" height={200}>
+                <BarChart data={revenueChartData}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+                  <XAxis dataKey="month" tick={{ fontSize: 12 }} />
+                  <YAxis tick={{ fontSize: 12 }} tickFormatter={v => `₱${(v/1000).toFixed(0)}k`} />
+                  <Tooltip formatter={(v: any) => [`₱${v.toLocaleString()}`, "Revenue"]} />
+                  <Bar dataKey="revenue" fill="#12AFAB" radius={[6,6,0,0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            </CardContent>
+          </Card>
+        )}
+
         <Tabs defaultValue="bookings" className="w-full space-y-6">
           <TabsList className="bg-white p-1 rounded-2xl shadow-sm border border-slate-100 w-fit">
-            <TabsTrigger value="bookings" className="rounded-xl px-8 py-2.5 font-bold data-[state=active]:bg-primary data-[state=active]:text-white">
-              Reservations
-            </TabsTrigger>
-            <TabsTrigger value="users" className="rounded-xl px-8 py-2.5 font-bold data-[state=active]:bg-primary data-[state=active]:text-white">
-              Administrators
-            </TabsTrigger>
+            <TabsTrigger value="bookings" className="rounded-xl px-8 py-2.5 font-bold data-[state=active]:bg-primary data-[state=active]:text-white">Reservations</TabsTrigger>
+            <TabsTrigger value="users" className="rounded-xl px-8 py-2.5 font-bold data-[state=active]:bg-primary data-[state=active]:text-white">Administrators</TabsTrigger>
           </TabsList>
 
           <TabsContent value="bookings">
             <Card className="border-none shadow-2xl shadow-slate-200/50 rounded-3xl overflow-hidden bg-white">
-              <CardHeader className="p-8 border-b border-slate-50 flex flex-row items-center justify-between">
-                <div className="space-y-1">
-                  <CardTitle className="text-2xl font-headline font-bold text-slate-900">Recent Reservations</CardTitle>
-                  <CardDescription className="text-slate-500 text-base">A complete list of guest activities and booking status.</CardDescription>
+              <CardHeader className="p-8 border-b border-slate-50">
+                <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
+                  <div>
+                    <CardTitle className="text-2xl font-headline font-bold text-slate-900">Recent Reservations</CardTitle>
+                    <CardDescription className="text-slate-500">Click a row to view full details.</CardDescription>
+                  </div>
+                  <div className="bg-primary/5 px-4 py-2 rounded-xl flex items-center gap-2">
+                    <Wallet className="h-4 w-4 text-primary" /><span className="text-sm font-bold text-primary">Live Updates</span>
+                  </div>
                 </div>
-                <div className="bg-primary/5 px-4 py-2 rounded-xl flex items-center gap-2">
-                  <Wallet className="h-4 w-4 text-primary" />
-                  <span className="text-sm font-bold text-primary">Live Updates</span>
+                {/* Search + Filter */}
+                <div className="flex flex-col sm:flex-row gap-3 mt-4">
+                  <div className="relative flex-1">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Input placeholder="Search by guest or item..." className="pl-9" value={searchQuery} onChange={e => setSearchQuery(e.target.value)} />
+                  </div>
+                  <div className="flex gap-2 flex-wrap">
+                    {["All","Pending Payment","Confirmed","Cancelled"].map(s => (
+                      <button key={s} onClick={() => setStatusFilter(s)} className={cn("px-3 py-1.5 rounded-full text-xs font-semibold border transition-colors", statusFilter === s ? "bg-primary text-white border-primary" : "bg-white text-slate-600 border-slate-200 hover:border-primary/40")}>
+                        {s === "Pending Payment" ? "Pending" : s}
+                      </button>
+                    ))}
+                  </div>
                 </div>
               </CardHeader>
               <CardContent className="p-0">
                 {isBookingsLoading ? (
-                  <div className="flex justify-center py-24">
-                    <Loader2 className="h-10 w-10 animate-spin text-primary opacity-50" />
-                  </div>
-                ) : bookings.length === 0 ? (
-                  <div className="text-center py-24 text-slate-400 italic">
-                    No bookings found in the system yet.
-                  </div>
+                  <div className="flex justify-center py-24"><Loader2 className="h-10 w-10 animate-spin text-primary opacity-50" /></div>
+                ) : filteredBookings.length === 0 ? (
+                  <div className="text-center py-24 text-slate-400 italic">No bookings found.</div>
                 ) : (
                   <div className="overflow-x-auto">
                     <Table>
                       <TableHeader className="bg-slate-50/50">
                         <TableRow className="border-none">
-                          <TableHead className="px-8 py-5 font-bold text-slate-400 uppercase tracking-widest text-[11px]">Guest Details</TableHead>
-                          <TableHead className="py-5 font-bold text-slate-400 uppercase tracking-widest text-[11px]">Experience</TableHead>
-                          <TableHead className="py-5 font-bold text-slate-400 uppercase tracking-widest text-[11px]">Booking Dates</TableHead>
-                          <TableHead className="py-5 font-bold text-slate-400 uppercase tracking-widest text-[11px]">Status</TableHead>
-                          <TableHead className="py-5 font-bold text-slate-400 uppercase tracking-widest text-[11px]">Amount</TableHead>
-                          <TableHead className="pr-8 py-5 text-right font-bold text-slate-400 uppercase tracking-widest text-[11px]">Actions</TableHead>
+                          {["Guest Details","Experience","Booking Dates","Status","Amount","Actions"].map(h => (
+                            <TableHead key={h} className="px-6 py-5 font-bold text-slate-400 uppercase tracking-widest text-[11px]">{h}</TableHead>
+                          ))}
                         </TableRow>
                       </TableHeader>
                       <TableBody>
-                        {bookings.map((booking) => (
-                          <TableRow key={booking.id} className="hover:bg-slate-50/40 transition-colors border-slate-50 group">
-                            <TableCell className="px-8 py-6">
+                        {filteredBookings.map((booking) => (
+                          <TableRow key={booking.id} className="hover:bg-slate-50/40 transition-colors border-slate-50 cursor-pointer" onClick={() => setSelectedBooking(booking)}>
+                            <TableCell className="px-6 py-5">
                               <div className="flex items-center gap-3">
-                                <div className="h-10 w-10 rounded-full bg-slate-100 flex items-center justify-center text-slate-400">
-                                  <User className="h-5 w-5" />
-                                </div>
+                                <div className="h-9 w-9 rounded-full bg-slate-100 flex items-center justify-center"><User className="h-4 w-4 text-slate-400" /></div>
                                 <div>
-                                  <div className="font-bold text-slate-900">{booking.guestName}</div>
-                                  <div className="text-xs text-slate-400 font-medium">{booking.contactNumber || "No contact provided"}</div>
+                                  <div className="font-bold text-slate-900 text-sm">{booking.guestName}</div>
+                                  <div className="text-xs text-slate-400">{booking.contactNumber || "No contact"}</div>
                                 </div>
                               </div>
                             </TableCell>
-                            <TableCell className="py-6">
-                               <div className="flex items-center gap-2">
-                                  <MapPin className="h-3.5 w-3.5 text-primary/50" />
-                                  <span className="font-semibold text-slate-700">{booking.itemName}</span>
-                               </div>
+                            <TableCell className="px-6 py-5"><div className="flex items-center gap-1.5"><MapPin className="h-3 w-3 text-primary/50" /><span className="font-semibold text-slate-700 text-sm">{booking.itemName}</span></div></TableCell>
+                            <TableCell className="px-6 py-5">
+                              <div className="text-sm font-bold text-slate-700">{booking.startDate}</div>
+                              {booking.endDate !== booking.startDate && <div className="text-xs text-slate-400 italic">to {booking.endDate}</div>}
                             </TableCell>
-                            <TableCell className="py-6">
-                              <div className="flex flex-col gap-0.5">
-                                 <div className="text-[13px] font-bold text-slate-700">{booking.startDate}</div>
-                                 {booking.endDate !== booking.startDate && (
-                                   <div className="text-[11px] text-slate-400 font-medium italic">to {booking.endDate}</div>
-                                 )}
-                              </div>
+                            <TableCell className="px-6 py-5">
+                              <Badge className={cn("px-3 py-1 rounded-full text-[11px] font-bold border", getStatusColor(booking.status))}>{booking.status}</Badge>
                             </TableCell>
-                            <TableCell className="py-6">
-                              <Badge 
-                                className={cn(
-                                  "px-3 py-1 rounded-full text-[11px] font-bold border shadow-sm",
-                                  getStatusColor(booking.status)
-                                )}
-                              >
-                                {booking.status}
-                              </Badge>
-                            </TableCell>
-                            <TableCell className="py-6">
-                              <div className="font-headline font-bold text-primary text-lg">
-                                ₱{booking.totalPrice?.toLocaleString()}
-                              </div>
-                            </TableCell>
-                            <TableCell className="pr-8 py-6 text-right">
+                            <TableCell className="px-6 py-5"><span className="font-bold text-primary">₱{booking.totalPrice?.toLocaleString()}</span></TableCell>
+                            <TableCell className="px-6 py-5 text-right" onClick={e => e.stopPropagation()}>
                               <DropdownMenu>
                                 <DropdownMenuTrigger asChild>
-                                  <Button variant="ghost" size="icon" className="h-9 w-9 rounded-full hover:bg-slate-100"><MoreVertical className="h-4 w-4" /></Button>
+                                  <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full"><MoreVertical className="h-4 w-4" /></Button>
                                 </DropdownMenuTrigger>
-                                <DropdownMenuContent align="end" className="rounded-xl border-slate-100 shadow-xl p-2 min-w-[160px]">
-                                  <DropdownMenuItem 
-                                    onClick={() => updateStatus(booking.userId, booking.id, "Confirmed")}
-                                    className="rounded-lg py-2.5 cursor-pointer"
-                                  >
-                                    <Check className="mr-3 h-4 w-4 text-emerald-600" /> 
-                                    <span className="font-semibold">Confirm Booking</span>
-                                  </DropdownMenuItem>
-                                  <DropdownMenuItem 
-                                    onClick={() => updateStatus(booking.userId, booking.id, "Cancelled")}
-                                    className="rounded-lg py-2.5 cursor-pointer text-rose-600 focus:bg-rose-50 focus:text-rose-600"
-                                  >
-                                    <X className="mr-3 h-4 w-4" /> 
-                                    <span className="font-semibold">Cancel Request</span>
-                                  </DropdownMenuItem>
+                                <DropdownMenuContent align="end" className="rounded-xl p-2 min-w-[160px]">
+                                  <DropdownMenuItem onClick={() => setSelectedBooking(booking)} className="rounded-lg cursor-pointer"><Eye className="mr-2 h-4 w-4 text-primary" /><span className="font-semibold">View Details</span></DropdownMenuItem>
+                                  <DropdownMenuItem onClick={() => updateStatus(booking.userId, booking.id, "Confirmed")} className="rounded-lg cursor-pointer"><Check className="mr-2 h-4 w-4 text-emerald-600" /><span className="font-semibold">Confirm</span></DropdownMenuItem>
+                                  <DropdownMenuItem onClick={() => updateStatus(booking.userId, booking.id, "Cancelled")} className="rounded-lg cursor-pointer text-rose-600 focus:bg-rose-50"><X className="mr-2 h-4 w-4" /><span className="font-semibold">Cancel</span></DropdownMenuItem>
                                 </DropdownMenuContent>
                               </DropdownMenu>
                             </TableCell>
@@ -422,21 +375,26 @@ export default function AdminDashboard() {
             <Card className="border-none shadow-2xl shadow-slate-200/50 rounded-3xl overflow-hidden bg-white">
               <CardHeader className="p-8 border-b border-slate-50">
                 <CardTitle className="text-2xl font-headline font-bold text-slate-900">Administrator Overview</CardTitle>
-                <CardDescription className="text-slate-500 text-base">Authorized users with system-level access.</CardDescription>
+                <CardDescription className="text-slate-500">Authorized users with system-level access.</CardDescription>
+                {/* Add Admin */}
+                <div className="flex gap-3 mt-4">
+                  <Input placeholder="Enter email to invite as admin..." value={newAdminEmail} onChange={e => setNewAdminEmail(e.target.value)} className="flex-1" />
+                  <Button size="sm" onClick={handleAddAdmin} disabled={isAddingAdmin || !newAdminEmail.trim()} className="gap-2">
+                    <UserPlus className="h-4 w-4" /> Invite Admin
+                  </Button>
+                </div>
+                <p className="text-xs text-muted-foreground mt-2">The invited user must sign up then you manually assign their role in Firestore.</p>
               </CardHeader>
               <CardContent className="p-0">
                 {isAdminsLoading ? (
-                  <div className="flex justify-center py-24">
-                    <Loader2 className="h-10 w-10 animate-spin text-primary opacity-50" />
-                  </div>
+                  <div className="flex justify-center py-24"><Loader2 className="h-10 w-10 animate-spin text-primary opacity-50" /></div>
                 ) : (
                   <Table>
                     <TableHeader className="bg-slate-50/50">
                       <TableRow className="border-none">
-                        <TableHead className="px-8 py-5 font-bold text-slate-400 uppercase tracking-widest text-[11px]">Admin Email</TableHead>
-                        <TableHead className="py-5 font-bold text-slate-400 uppercase tracking-widest text-[11px]">Assigned Date</TableHead>
-                        <TableHead className="py-5 font-bold text-slate-400 uppercase tracking-widest text-[11px]">Role</TableHead>
-                        <TableHead className="pr-8 py-5 text-right font-bold text-slate-400 uppercase tracking-widest text-[11px]">ID</TableHead>
+                        {["Admin Email","Assigned Date","Role","ID"].map(h => (
+                          <TableHead key={h} className="px-8 py-5 font-bold text-slate-400 uppercase tracking-widest text-[11px]">{h}</TableHead>
+                        ))}
                       </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -444,12 +402,8 @@ export default function AdminDashboard() {
                         <TableRow key={adm.id} className="hover:bg-slate-50/40 transition-colors border-slate-50">
                           <TableCell className="px-8 py-6 font-semibold text-slate-700">{adm.email}</TableCell>
                           <TableCell className="py-6 text-slate-500">{adm.assignedAt ? new Date(adm.assignedAt).toLocaleDateString() : 'N/A'}</TableCell>
-                          <TableCell className="py-6">
-                            <Badge className="bg-primary/10 text-primary border-none font-bold uppercase tracking-widest text-[10px] px-3 py-1">
-                              {adm.role || 'Admin'}
-                            </Badge>
-                          </TableCell>
-                          <TableCell className="pr-8 py-6 text-right font-mono text-[11px] text-slate-300">{adm.id}</TableCell>
+                          <TableCell className="py-6"><Badge className="bg-primary/10 text-primary border-none font-bold uppercase tracking-widest text-[10px] px-3 py-1">{adm.role || 'Admin'}</Badge></TableCell>
+                          <TableCell className="px-8 py-6 text-right font-mono text-[11px] text-slate-300">{adm.id}</TableCell>
                         </TableRow>
                       ))}
                     </TableBody>

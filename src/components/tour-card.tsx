@@ -60,8 +60,7 @@ export function TourCard({ tour }: TourCardProps) {
       className="card-liquid group bg-white shadow-md hover:shadow-xl transition-all duration-500 border border-primary/10"
     >
       <div
-        className="relative h-48 w-full overflow-hidden"
-        style={{ borderRadius: "24px 36px 0 0 / 32px 28px 0 0" }}
+        className="relative h-48 w-full overflow-hidden rounded-t-3xl"
       >
         <Image
           src={imgSrc}
@@ -74,8 +73,7 @@ export function TourCard({ tour }: TourCardProps) {
         />
         <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent" />
         <Badge
-          className="absolute top-4 left-4 bg-[#6FDDC2] text-[#006D6B] hover:bg-[#6FDDC2]/90 border-none font-semibold px-3 py-1 shadow"
-          style={{ borderRadius: "40% 60% 60% 40% / 60% 30% 70% 40%" }}
+          className="absolute top-4 left-4 bg-[#6FDDC2] text-[#006D6B] hover:bg-[#6FDDC2]/90 border-none font-semibold px-3 py-1 shadow rounded-full"
         >
           Adventure
         </Badge>

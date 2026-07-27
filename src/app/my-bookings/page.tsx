@@ -8,16 +8,20 @@ import { collection, query, orderBy, doc } from "firebase/firestore";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Calendar, Loader2, ShoppingBag, ChevronRight, CreditCard, Clock, Image as ImageIcon, CheckCircle } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Calendar, Loader2, ShoppingBag, ChevronRight, CreditCard, Clock, Image as ImageIcon, CheckCircle, XCircle } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import Image from "next/image";
+import { useToast } from "@/hooks/use-toast";
 
 export default function MyBookingsPage() {
   const { user, isUserLoading } = useUser();
   const firestore = useFirestore();
   const router = useRouter();
+  const { toast } = useToast();
+  const [cancelBookingId, setCancelBookingId] = useState<string | null>(null);
 
   useEffect(() => {
     if (!isUserLoading && !user) {
@@ -37,7 +41,6 @@ export default function MyBookingsPage() {
 
   const handleFileUpload = (bookingId: string, event: React.ChangeEvent<HTMLInputElement>) => {
     if (!firestore || !user || !event.target.files?.[0]) return;
-    
     const file = event.target.files[0];
     const reader = new FileReader();
     reader.onloadend = () => {
@@ -46,6 +49,13 @@ export default function MyBookingsPage() {
       updateDocumentNonBlocking(bookingRef, { paymentImageUrl: base64String });
     };
     reader.readAsDataURL(file);
+  };
+
+  const handleCancelBooking = (bookingId: string) => {
+    if (!firestore || !user) return;
+    updateDocumentNonBlocking(doc(firestore, "users", user.uid, "bookings", bookingId), { status: "Cancelled" });
+    toast({ title: "Booking Cancelled", description: "Your booking has been cancelled." });
+    setCancelBookingId(null);
   };
 
   if (isUserLoading || (user && isBookingsLoading)) {
@@ -63,6 +73,17 @@ export default function MyBookingsPage() {
   return (
     <div className="flex min-h-screen flex-col bg-secondary/10">
       <Navbar />
+      {/* Cancel Confirmation Dialog */}
+      <Dialog open={!!cancelBookingId} onOpenChange={() => setCancelBookingId(null)}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader><DialogTitle>Cancel Booking?</DialogTitle></DialogHeader>
+          <p className="text-sm text-muted-foreground">Are you sure you want to cancel this booking? This action cannot be undone.</p>
+          <div className="flex gap-3 pt-2">
+            <Button variant="outline" onClick={() => setCancelBookingId(null)} className="flex-1">Keep Booking</Button>
+            <Button onClick={() => cancelBookingId && handleCancelBooking(cancelBookingId)} className="flex-1 bg-rose-500 hover:bg-rose-600 border-rose-500">Yes, Cancel</Button>
+          </div>
+        </DialogContent>
+      </Dialog>
       <main className="flex-grow container mx-auto py-12 px-4">
         <div className="max-w-4xl mx-auto space-y-8">
           <div className="flex justify-between items-end">
@@ -144,7 +165,9 @@ export default function MyBookingsPage() {
                           <p className="text-xs text-amber-700 leading-relaxed font-medium">
                             Send your payment to <strong>G-Cash: 0912-345-6789 (Balatasan Resort)</strong>. After paying, please upload your receipt below to confirm.
                           </p>
-                          
+                          <div className="flex justify-center my-2">
+                            <img src="https://api.qrserver.com/v1/create-qr-code/?size=120x120&data=GCASH:09123456789" alt="GCash QR" className="rounded-xl border shadow-sm" width={120} height={120} />
+                          </div>
                           <div className="pt-2 flex flex-col sm:flex-row gap-4">
                             <div className="relative">
                               <input 
@@ -162,13 +185,19 @@ export default function MyBookingsPage() {
                                 {booking.paymentImageUrl ? "Update Proof" : "Upload Proof of Payment"}
                               </label>
                             </div>
-                            
                             {booking.paymentImageUrl && (
                               <div className="flex items-center gap-2 text-xs font-bold text-green-700">
                                 <CheckCircle className="h-4 w-4" />
                                 Uploaded
                               </div>
                             )}
+                            <button
+                              onClick={() => setCancelBookingId(booking.id)}
+                              className="inline-flex items-center gap-2 px-4 py-2 bg-white border border-rose-200 rounded-xl text-xs font-bold text-rose-600 cursor-pointer hover:bg-rose-50 transition-colors shadow-sm"
+                            >
+                              <XCircle className="h-4 w-4" />
+                              Cancel Booking
+                            </button>
                           </div>
                         </div>
                       )}
