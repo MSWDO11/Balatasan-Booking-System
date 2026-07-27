@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { 
   Calendar as CalendarIcon, 
   CheckCircle, 
@@ -20,7 +21,8 @@ import {
   MapPin,
   Wallet,
   Users as UsersIcon,
-  ShoppingBag
+  ShoppingBag,
+  Download
 } from "lucide-react";
 import { 
   Table, 
@@ -47,6 +49,8 @@ export default function AdminDashboard() {
   const { user, isUserLoading } = useUser();
   const { toast } = useToast();
   const [isInitializing, setIsInitializing] = useState(false);
+  const [showExport, setShowExport] = useState(false);
+  const [csvText, setCsvText] = useState("");
 
   // Check for admin role document
   const adminDocRef = useMemoFirebase(() => 
@@ -97,12 +101,10 @@ export default function AdminDashboard() {
 
   const handleExportCSV = () => {
     const exportData = bookings.length ? bookings : (rawBookings ?? []);
-    
     if (!exportData.length) {
-      toast({ title: "No bookings", description: "No booking data available to export yet." });
+      toast({ title: "No bookings", description: "No booking data available yet." });
       return;
     }
-
     const headers = ["Ref ID", "Guest Name", "Contact", "Item", "Start Date", "End Date", "Guests", "Status", "Total Price", "Created At"];
     const rows = (exportData as any[]).map(b => [
       String(b.id ?? "").slice(0, 8).toUpperCase(),
@@ -116,21 +118,11 @@ export default function AdminDashboard() {
       String(b.totalPrice ?? 0),
       b.createdAt ? new Date(b.createdAt).toLocaleDateString() : "",
     ]);
-
-    const csvContent = [headers, ...rows]
+    const csv = [headers, ...rows]
       .map(row => row.map((v: string) => `"${v.replace(/"/g, '""')}"`).join(","))
       .join("\r\n");
-
-    // Open in new tab — always works regardless of browser security
-    const newTab = window.open();
-    if (newTab) {
-      newTab.document.write(`<pre style="font-family:monospace;font-size:13px;white-space:pre-wrap;padding:20px;">${csvContent.replace(/</g, "&lt;")}</pre>`);
-      newTab.document.title = `Bookings Export - ${new Date().toLocaleDateString()}`;
-      newTab.document.close();
-      toast({ title: "✅ Exported!", description: `${exportData.length} booking(s) opened in new tab. Use Ctrl+S to save as CSV.` });
-    } else {
-      toast({ variant: "destructive", title: "Blocked", description: "Allow popups for this site to export data." });
-    }
+    setCsvText(csv);
+    setShowExport(true);
   };
 
   const handleInitializeAdmin = () => {
@@ -245,6 +237,33 @@ export default function AdminDashboard() {
     <div className="flex min-h-screen flex-col bg-[#F8FBFB]">
       <Navbar />
       <main className="flex-grow container mx-auto py-12 px-4 space-y-10">
+
+        {/* Export Modal */}
+        <Dialog open={showExport} onOpenChange={setShowExport}>
+          <DialogContent className="max-w-3xl max-h-[80vh] overflow-auto">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <Download className="h-5 w-5 text-primary" />
+                Export Bookings Data
+              </DialogTitle>
+            </DialogHeader>
+            <p className="text-sm text-muted-foreground mb-3">Select all text below, copy it, and paste into a spreadsheet or save as a .csv file.</p>
+            <textarea
+              readOnly
+              value={csvText}
+              className="w-full h-64 font-mono text-xs p-3 border rounded-xl bg-slate-50 resize-none focus:outline-none focus:ring-2 focus:ring-primary"
+              onClick={e => (e.target as HTMLTextAreaElement).select()}
+            />
+            <div className="flex gap-2 pt-2">
+              <Button onClick={() => { navigator.clipboard.writeText(csvText); toast({ title: "Copied!", description: "CSV data copied to clipboard." }); }} className="flex-1">
+                Copy to Clipboard
+              </Button>
+              <Button variant="outline" onClick={() => setShowExport(false)} className="flex-1">
+                Close
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
           <div className="space-y-1">
             <h1 className="text-4xl font-headline font-bold text-slate-900 tracking-tight">Admin Dashboard</h1>
