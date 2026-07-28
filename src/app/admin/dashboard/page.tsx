@@ -226,7 +226,23 @@ export default function AdminDashboard() {
   return (
     <div className="flex min-h-screen flex-col bg-[#F8FBFB]">
       <Navbar />
-      <main className="flex-grow container mx-auto py-12 px-4 space-y-10">
+      <main className="flex-grow">
+        {/* Page Header with gradient */}
+        <div className="bg-gradient-to-br from-primary/8 via-white to-transparent border-b border-slate-100 px-4 py-8">
+          <div className="container mx-auto flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div className="space-y-1">
+              <p className="text-xs font-bold text-primary uppercase tracking-widest">Admin Panel</p>
+              <h1 className="text-4xl font-headline font-bold text-slate-900 tracking-tight">Dashboard</h1>
+              <p className="text-slate-500">Manage reservations and monitor resort growth.</p>
+            </div>
+            <button type="button" onClick={handleExportCSV} className="self-start md:self-auto flex items-center gap-2 px-5 py-2.5 rounded-full bg-white border border-slate-200 text-slate-600 font-semibold shadow-sm hover:bg-slate-50 transition-colors text-sm cursor-pointer">
+              <Download className="h-4 w-4" />
+              Export Data
+            </button>
+          </div>
+        </div>
+
+        <div className="container mx-auto py-8 px-4 space-y-8">
 
         {/* Export Modal */}
         <Dialog open={showExport} onOpenChange={setShowExport}>
@@ -315,24 +331,20 @@ export default function AdminDashboard() {
           </DialogContent>
         </Dialog>
 
-        <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
-          <div className="space-y-1">
-            <h1 className="text-4xl font-headline font-bold text-slate-900 tracking-tight">Admin Dashboard</h1>
-            <p className="text-slate-500 font-medium">Manage reservations and monitor resort growth.</p>
-          </div>
-          <button type="button" onClick={handleExportCSV} className="px-5 py-2.5 rounded-full bg-white border border-slate-200 text-slate-600 font-semibold shadow-sm hover:bg-slate-50 transition-colors text-sm cursor-pointer">
-            Export Data
-          </button>
-        </div>
-
         {/* Stats */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
           {stats.map((stat, i) => (
-            <Card key={i} className="border-none shadow-xl shadow-slate-200/50 rounded-2xl overflow-hidden bg-white group hover:scale-[1.02] transition-transform duration-300">
-              <CardContent className="pt-6">
-                <div className="flex items-center gap-5">
-                  <div className={cn("p-4 rounded-2xl", stat.bg)}><stat.icon className={cn("h-7 w-7", stat.color)} /></div>
-                  <div><p className="text-sm font-bold text-slate-400 uppercase tracking-wider">{stat.label}</p><p className="text-3xl font-bold text-slate-900">{stat.value}</p></div>
+            <Card key={i} className="border-none shadow-md rounded-2xl overflow-hidden bg-white group hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200">
+              <CardContent className="p-0">
+                <div className={cn("h-1 w-full", stat.color.replace("text-", "bg-").replace("-600","-400").replace("-500","-400"))} />
+                <div className="p-5 flex items-start justify-between gap-3">
+                  <div>
+                    <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-1">{stat.label}</p>
+                    <p className="text-3xl font-bold text-slate-900 leading-none">{stat.value}</p>
+                  </div>
+                  <div className={cn("p-3 rounded-xl shrink-0", stat.bg)}>
+                    <stat.icon className={cn("h-5 w-5", stat.color)} />
+                  </div>
                 </div>
               </CardContent>
             </Card>
@@ -341,16 +353,34 @@ export default function AdminDashboard() {
 
         {/* Revenue Chart */}
         {revenueChartData.length > 0 && (
-          <Card className="border-none shadow-xl shadow-slate-200/50 rounded-2xl bg-white">
-            <CardHeader className="pb-2"><CardTitle className="text-lg font-headline font-bold text-slate-900">Monthly Revenue (Confirmed Bookings)</CardTitle></CardHeader>
-            <CardContent>
-              <ResponsiveContainer width="100%" height={200}>
-                <BarChart data={revenueChartData}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-                  <XAxis dataKey="month" tick={{ fontSize: 12 }} />
-                  <YAxis tick={{ fontSize: 12 }} tickFormatter={v => `₱${(v/1000).toFixed(0)}k`} />
-                  <Tooltip formatter={(v: any) => [`₱${v.toLocaleString()}`, "Revenue"]} />
-                  <Bar dataKey="revenue" fill="#12AFAB" radius={[6,6,0,0]} />
+          <Card className="border-none shadow-md rounded-2xl bg-white">
+            <CardHeader className="pb-0 pt-6 px-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <CardTitle className="text-base font-headline font-bold text-slate-900">Monthly Revenue</CardTitle>
+                  <CardDescription className="text-xs text-slate-400">Confirmed bookings only</CardDescription>
+                </div>
+                <TrendingUp className="h-5 w-5 text-primary opacity-60" />
+              </div>
+            </CardHeader>
+            <CardContent className="px-2 pb-4 pt-2">
+              <ResponsiveContainer width="100%" height={180}>
+                <BarChart data={revenueChartData} margin={{ top: 5, right: 10, left: 0, bottom: 0 }}>
+                  <defs>
+                    <linearGradient id="revenueGrad" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor="#12AFAB" stopOpacity={1} />
+                      <stop offset="100%" stopColor="#12AFAB" stopOpacity={0.4} />
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#f5f5f5" vertical={false} />
+                  <XAxis dataKey="month" tick={{ fontSize: 11, fill: "#94a3b8" }} axisLine={false} tickLine={false} />
+                  <YAxis tick={{ fontSize: 11, fill: "#94a3b8" }} tickFormatter={v => `₱${(v/1000).toFixed(0)}k`} axisLine={false} tickLine={false} />
+                  <Tooltip
+                    cursor={{ fill: "rgba(18,175,171,0.05)" }}
+                    contentStyle={{ borderRadius: "12px", border: "1px solid #e2e8f0", boxShadow: "0 4px 20px rgba(0,0,0,0.08)", fontSize: "12px" }}
+                    formatter={(v: any) => [`₱${Number(v).toLocaleString()}`, "Revenue"]}
+                  />
+                  <Bar dataKey="revenue" fill="url(#revenueGrad)" radius={[8,8,0,0]} maxBarSize={50} />
                 </BarChart>
               </ResponsiveContainer>
             </CardContent>
@@ -358,10 +388,10 @@ export default function AdminDashboard() {
         )}
 
         <Tabs defaultValue="bookings" className="w-full space-y-6">
-          <TabsList className="bg-white p-1 rounded-2xl shadow-sm border border-slate-100 w-fit">
-            <TabsTrigger value="bookings" className="rounded-xl px-8 py-2.5 font-bold data-[state=active]:bg-primary data-[state=active]:text-white">Reservations</TabsTrigger>
-            <TabsTrigger value="users" className="rounded-xl px-8 py-2.5 font-bold data-[state=active]:bg-primary data-[state=active]:text-white">Administrators</TabsTrigger>
-            <TabsTrigger value="settings" className="rounded-xl px-8 py-2.5 font-bold data-[state=active]:bg-primary data-[state=active]:text-white">Settings</TabsTrigger>
+          <TabsList className="bg-white p-1.5 rounded-2xl shadow-md border border-slate-100 w-fit gap-1">
+            <TabsTrigger value="bookings" className="rounded-xl px-6 py-2.5 font-bold text-sm data-[state=active]:bg-primary data-[state=active]:text-white data-[state=active]:shadow-md transition-all">Reservations</TabsTrigger>
+            <TabsTrigger value="users" className="rounded-xl px-6 py-2.5 font-bold text-sm data-[state=active]:bg-primary data-[state=active]:text-white data-[state=active]:shadow-md transition-all">Administrators</TabsTrigger>
+            <TabsTrigger value="settings" className="rounded-xl px-6 py-2.5 font-bold text-sm data-[state=active]:bg-primary data-[state=active]:text-white data-[state=active]:shadow-md transition-all">Settings</TabsTrigger>
           </TabsList>
 
           <TabsContent value="bookings">
@@ -541,6 +571,7 @@ export default function AdminDashboard() {
           </TabsContent>
 
         </Tabs>
+        </div>{/* end container */}
       </main>
       <Footer />
     </div>
