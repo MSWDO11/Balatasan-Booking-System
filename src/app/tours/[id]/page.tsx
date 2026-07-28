@@ -42,7 +42,7 @@ export default function TourDetailsPage({ params }: { params: Promise<{ id: stri
   const isJetSki = displayTitle.toLowerCase().includes("jet ski");
   
   const individualRate = tour?.pricePerPerson ?? (isJetSki ? 150 : (isFlyingFish ? 500 : 1000));
-  // Apply item-level discount if set by admin
+  // Apply admin-set item discount if present
   const itemDiscount = tour?.discountPercent > 0 ? (1 - tour.discountPercent / 100) : 1;
   const effectiveRate = Math.round(individualRate * itemDiscount);
   const guestCount = parseInt(guests);
@@ -222,15 +222,15 @@ export default function TourDetailsPage({ params }: { params: Promise<{ id: stri
                 <CardContent className="p-8 space-y-6">
                   <div className="flex justify-between items-baseline">
                     <div className="space-y-0.5">
-                      {tour.originalPrice > 0 && (
-                        <p className="text-sm text-muted-foreground line-through">₱{Number(tour.originalPrice).toLocaleString()}</p>
-                      )}
                       <div className="flex items-center gap-2">
                         <span className="text-3xl font-bold text-primary">₱{effectiveRate.toLocaleString()}</span>
                         {tour.discountPercent > 0 && (
-                          <span className="text-xs bg-green-100 text-green-700 font-bold px-2 py-0.5 rounded-full">{tour.discountPercent}% off</span>
+                          <span className="text-xs bg-rose-500 text-white font-bold px-2 py-0.5 rounded-full">{tour.discountPercent}% OFF</span>
                         )}
                       </div>
+                      {tour.discountPercent > 0 && (
+                        <p className="text-xs text-muted-foreground line-through">was ₱{individualRate.toLocaleString()}</p>
+                      )}
                     </div>
                     <span className="text-muted-foreground font-medium">{isJetSki ? "/ minute" : "/ person"}</span>
                   </div>

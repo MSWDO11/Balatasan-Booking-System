@@ -50,6 +50,7 @@ export default function AdminInventoryPage() {
     location: "",
     category: "",
     isAvailable: true,
+    discountPercent: "",  // admin-set % discount shown on listing
     includedItems: "",
     tags: "",
     sortOrder: "",
@@ -231,6 +232,7 @@ export default function AdminInventoryPage() {
       duration: formData.duration || undefined,
       location: formData.location || undefined,
       isAvailable: formData.isAvailable,
+      discountPercent: formData.discountPercent ? Number(formData.discountPercent) : 0,
       includedItems: formData.includedItems ? formData.includedItems.split(",").map(s => s.trim()).filter(Boolean) : [],
       tags: formData.tags ? formData.tags.split(",").map(s => s.trim()).filter(Boolean) : [],
       sortOrder: formData.sortOrder ? Number(formData.sortOrder) : 0,
@@ -241,7 +243,7 @@ export default function AdminInventoryPage() {
       addDocumentNonBlocking(collectionRef, data);
     }
     toast({ title: "Saved", description: "Item saved to catalog." });
-    setFormData({ id: "", name: "", capacity: "", pricePerPerson: "", description: "", keyFeatures: "", imageUrl: "", duration: "", location: "", category: "", isAvailable: true, includedItems: "", tags: "", sortOrder: "" });
+    setFormData({ id: "", name: "", capacity: "", pricePerPerson: "", description: "", keyFeatures: "", imageUrl: "", duration: "", location: "", category: "", isAvailable: true, discountPercent: "", includedItems: "", tags: "", sortOrder: "" });
   };
 
   const handleClone = (item: any) => {
@@ -257,6 +259,7 @@ export default function AdminInventoryPage() {
       location: item.location || "",
       category: item.category || "",
       isAvailable: item.isAvailable !== false,
+      discountPercent: item.discountPercent?.toString() || "",
       includedItems: Array.isArray(item.includedItems) ? item.includedItems.join(", ") : "",
       tags: Array.isArray(item.tags) ? item.tags.join(", ") : "",
       sortOrder: item.sortOrder?.toString() || "",
@@ -541,6 +544,24 @@ export default function AdminInventoryPage() {
                     />
                   </div>
 
+                  {/* ── Discount ── */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-1">
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium">Discount (%)</label>
+                      <Input
+                        type="number"
+                        min="0"
+                        max="100"
+                        placeholder="e.g. 10 — leave blank for no discount"
+                        value={formData.discountPercent}
+                        onChange={e => setFormData({...formData, discountPercent: e.target.value})}
+                      />
+                      <p className="text-[11px] text-muted-foreground">
+                        Set by admin only. Shown as a badge on the listing (e.g. 10% OFF).
+                      </p>
+                    </div>
+                  </div>
+
                   {/* ── Extras & Display ── */}
                   <div className="pt-2 space-y-3">
                     <div className="flex items-center gap-2 text-sm font-semibold text-slate-700">
@@ -621,6 +642,9 @@ export default function AdminInventoryPage() {
                             {item.isAvailable === false && (
                               <span className="text-[10px] text-red-500 font-medium">Unavailable</span>
                             )}
+                            {item.discountPercent > 0 && (
+                              <span className="text-[10px] bg-green-100 text-green-700 font-bold px-1 rounded">{item.discountPercent}% off</span>
+                            )}
                             {Array.isArray(item.tags) && item.tags.slice(0,2).map((t: string) => (
                               <span key={t} className="text-[10px] bg-primary/10 text-primary font-medium px-1 rounded">{t}</span>
                             ))}
@@ -644,6 +668,7 @@ export default function AdminInventoryPage() {
                             location: item.location || "",
                             category: item.category || "",
                             isAvailable: item.isAvailable !== false,
+                            discountPercent: item.discountPercent?.toString() || "",
                             includedItems: Array.isArray(item.includedItems) ? item.includedItems.join(", ") : "",
                             tags: Array.isArray(item.tags) ? item.tags.join(", ") : "",
                             sortOrder: item.sortOrder?.toString() || "",

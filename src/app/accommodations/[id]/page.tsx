@@ -192,15 +192,15 @@ export default function RoomDetailsPage({ params }: { params: Promise<{ id: stri
                 <CardContent className="p-8 space-y-6">
                   <div className="flex justify-between items-baseline">
                     <div className="space-y-0.5">
-                      {room.originalPrice > 0 && (
-                        <p className="text-sm text-muted-foreground line-through">₱{Number(room.originalPrice).toLocaleString()}</p>
-                      )}
                       <div className="flex items-center gap-2">
                         <span className="text-3xl font-bold text-primary">₱{effectiveRate.toLocaleString()}</span>
                         {room.discountPercent > 0 && (
-                          <span className="text-xs bg-green-100 text-green-700 font-bold px-2 py-0.5 rounded-full">{room.discountPercent}% off</span>
+                          <span className="text-xs bg-rose-500 text-white font-bold px-2 py-0.5 rounded-full">{room.discountPercent}% OFF</span>
                         )}
                       </div>
+                      {room.discountPercent > 0 && (
+                        <p className="text-xs text-muted-foreground line-through">was ₱{ratePerPerson.toLocaleString()}</p>
+                      )}
                     </div>
                     <span className="text-muted-foreground font-medium">/ person / night</span>
                   </div>
