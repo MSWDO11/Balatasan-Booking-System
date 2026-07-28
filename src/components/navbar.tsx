@@ -4,11 +4,13 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Menu, X, Waves, ShoppingBag, LogOut, LayoutDashboard, Database } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
 import { useUser, useAuth, useDoc, useMemoFirebase, useFirestore } from "@/firebase";
 import { doc } from "firebase/firestore";
 import { signOut } from "firebase/auth";
+
+const ADMIN_CACHE_KEY = "bls_is_admin";
 
 const navLinks = [
   { name: "Home", href: "/" },
@@ -21,6 +23,14 @@ const navLinks = [
 
 export function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
+  // Initialize from cache to avoid flash
+  const [cachedAdmin, setCachedAdmin] = useState(() => {
+    if (typeof window !== "undefined") {
+      return localStorage.getItem(ADMIN_CACHE_KEY) === "true";
+    }
+    return false;
+  });
+
   const pathname = usePathname();
   const { user, isUserLoading } = useUser();
   const firestore = useFirestore();
@@ -34,10 +44,30 @@ export function Navbar() {
   const { data: adminRole, isLoading: isAdminLoading } = useDoc(adminDocRef);
 
   const isDesignatedAdmin = user?.email?.toLowerCase() === "admin@gmail.com";
-  // While loading, treat as admin if email matches to avoid flash
   const hasAdminAccess = isDesignatedAdmin || !!adminRole;
 
+  // Cache admin state in localStorage as soon as we know
+  useEffect(() => {
+    if (!isUserLoading && !isAdminLoading) {
+      if (!user) {
+        localStorage.removeItem(ADMIN_CACHE_KEY);
+        setCachedAdmin(false);
+      } else if (hasAdminAccess) {
+        localStorage.setItem(ADMIN_CACHE_KEY, "true");
+        setCachedAdmin(true);
+      } else {
+        localStorage.removeItem(ADMIN_CACHE_KEY);
+        setCachedAdmin(false);
+      }
+    }
+  }, [hasAdminAccess, isUserLoading, isAdminLoading, user]);
+
+  // Use cached value while loading to prevent flash
+  const showAdminNav = cachedAdmin || hasAdminAccess;
+
   const handleSignOut = () => {
+    localStorage.removeItem(ADMIN_CACHE_KEY);
+    setCachedAdmin(false);
     signOut(auth);
   };
 
@@ -57,8 +87,8 @@ export function Navbar() {
 
         {/* Desktop Nav */}
         <div className="hidden md:flex md:items-center md:gap-8">
-          {/* If admin: show Dashboard + Inventory. While loading for admin users: show nothing. Regular users: show nav links */}
-          ) : hasAdminAccess ? (
+          {/* If admin: show Dashboard + Inventory. Regular users: show nav links */}
+          {showAdminNav ? (
             <div className="flex items-center gap-2 pr-6 border-r border-slate-100">
               <Link
                 href="/admin/dashboard"
@@ -120,7 +150,7 @@ export function Navbar() {
                   </Button>
                 </Link>
 
-                {!hasAdminAccess && (
+                {!showAdminNav && (
                   <Button 
                     variant="ghost" 
                     size="icon" 
@@ -131,7 +161,7 @@ export function Navbar() {
                     <LogOut className="h-4 w-4" />
                   </Button>
                 )}
-                {hasAdminAccess && (
+                {showAdminNav && (
                   <Button
                     variant="ghost"
                     size="sm"
@@ -161,7 +191,7 @@ export function Navbar() {
       {/* Mobile Menu */}
       {isOpen && (
         <div className="md:hidden border-t bg-white px-4 py-6 space-y-4 shadow-xl">
-          {hasAdminAccess ? (
+          {showAdminNav ? (
             <>
               <Link href="/admin/dashboard" className="block text-base font-bold text-slate-600 hover:text-primary px-2" onClick={() => setIsOpen(false)}>Dashboard</Link>
               <Link href="/admin/inventory" className="block text-base font-bold text-slate-600 hover:text-primary px-2" onClick={() => setIsOpen(false)}>Inventory</Link>
@@ -190,7 +220,7 @@ export function Navbar() {
                   My Bookings
                 </Button>
               </Link>
-              {hasAdminAccess && (
+              {showAdminNav && (
                 <div className="bg-slate-50 rounded-2xl p-2 space-y-1">
                   <Link href="/admin/dashboard" onClick={() => setIsOpen(false)}>
                     <Button variant="ghost" className="w-full justify-start gap-3 font-bold text-slate-600">
