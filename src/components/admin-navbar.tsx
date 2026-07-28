@@ -56,7 +56,7 @@ export function AdminNavbar() {
           </Link>
           {/* View as User button */}
           <Link
-            href="/"
+            href="/?preview=user"
             target="_blank"
             className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold text-teal-600 border border-teal-200 bg-teal-50 hover:bg-teal-100 transition-colors ml-2"
           >
@@ -98,7 +98,7 @@ export function AdminNavbar() {
           Inventory
         </Link>
         <Link
-          href="/"
+          href="/?preview=user"
           target="_blank"
           className="flex-1 flex flex-col items-center gap-1 py-3 text-xs font-bold text-teal-500"
         >
