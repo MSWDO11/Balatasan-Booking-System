@@ -5,7 +5,8 @@ import { Clock, ArrowRight, Eye, Timer } from "lucide-react";
 import { CardContent, CardFooter, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useUser } from "@/firebase";
 import { useState } from "react";
 
 const ISLAND_FALLBACKS: Record<string, string> = {
@@ -49,6 +50,8 @@ export function TourCard({ tour }: TourCardProps) {
   const displayTitle = tour.title || tour.name || "Tour Experience";
   const fallback = getFallback(displayTitle);
   const [imgSrc, setImgSrc] = useState(tour.imageUrl || fallback);
+  const { user } = useUser();
+  const router = useRouter();
 
   const isFlyingFish = displayTitle.toLowerCase().includes("flying fish");
   const isJetSki = displayTitle.toLowerCase().includes("jet ski");
@@ -58,9 +61,15 @@ export function TourCard({ tour }: TourCardProps) {
   const itemDiscount = tour.discountPercent && tour.discountPercent > 0 ? (1 - tour.discountPercent / 100) : 1;
   const rate = Math.round(baseRate * itemDiscount);
   const unitLabel = isJetSki ? "min" : "pax";
-
-  // First non-empty tag to show as a badge
   const firstTag = tour.tags?.find(t => t.trim());
+
+  const handleViewDetails = () => {
+    if (!user) {
+      router.push("/login");
+      return;
+    }
+    router.push(`/tours/${tour.id}`);
+  };
 
   return (
     <div className="card-liquid group bg-white shadow-md hover:shadow-xl transition-all duration-500 border border-primary/10">
@@ -114,13 +123,11 @@ export function TourCard({ tour }: TourCardProps) {
       </CardContent>
 
       <CardFooter className="pb-6">
-        <Link href={`/tours/${tour.id}`} className="w-full">
-          <Button variant="outline" size="lg" className="w-full gap-2">
-            <Eye className="h-4 w-4" />
-            Details
-            <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
-          </Button>
-        </Link>
+        <Button variant="outline" size="lg" className="w-full gap-2" onClick={handleViewDetails}>
+          <Eye className="h-4 w-4" />
+          Details
+          <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
+        </Button>
       </CardFooter>
     </div>
   );
