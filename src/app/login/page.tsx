@@ -2,7 +2,7 @@
 "use client";
 
 import { useState } from "react";
-import { Navbar } from "@/components/navbar";
+import { SmartNavbar } from "@/components/smart-navbar";
 import { Footer } from "@/components/footer";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -44,7 +44,7 @@ export default function LoginPage() {
 
   return (
     <div className="flex min-h-screen flex-col bg-secondary/10">
-      <Navbar />
+      <SmartNavbar />
       <main className="flex-grow flex items-center justify-center py-12 px-4">
         <Card className="w-full max-w-md border-none shadow-2xl">
           <CardHeader className="text-center space-y-2">
@@ -144,3 +144,4 @@ export default function LoginPage() {
     </div>
   );
 }
+

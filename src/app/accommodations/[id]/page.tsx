@@ -1,6 +1,6 @@
 'use client';
 
-import { Navbar } from "@/components/navbar";
+import { SmartNavbar } from "@/components/smart-navbar";
 import { Footer } from "@/components/footer";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -84,13 +84,13 @@ export default function RoomDetailsPage({ params }: { params: Promise<{ id: stri
   };
 
   if (isRoomLoading) return (
-    <div className="flex min-h-screen flex-col"><Navbar />
+    <div className="flex min-h-screen flex-col"><SmartNavbar />
       <main className="flex-grow flex items-center justify-center"><Loader2 className="h-8 w-8 animate-spin text-primary" /></main>
     <Footer /></div>
   );
 
   if (!room) return (
-    <div className="flex min-h-screen flex-col"><Navbar />
+    <div className="flex min-h-screen flex-col"><SmartNavbar />
       <main className="flex-grow flex flex-col items-center justify-center space-y-4">
         <h2 className="text-2xl font-bold">Cottage not found</h2>
         <Button onClick={() => router.push("/accommodations")}>Back to Cottages</Button>
@@ -100,7 +100,7 @@ export default function RoomDetailsPage({ params }: { params: Promise<{ id: stri
 
   return (
     <div className="flex min-h-screen flex-col">
-      <Navbar />
+      <SmartNavbar />
       <main className="flex-grow">
         <section className="container mx-auto py-10 px-4">
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-12">

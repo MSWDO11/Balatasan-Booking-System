@@ -1,6 +1,6 @@
 'use client';
 
-import { Navbar } from "@/components/navbar";
+import { SmartNavbar } from "@/components/smart-navbar";
 import { Footer } from "@/components/footer";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -112,7 +112,7 @@ export default function TourDetailsPage({ params }: { params: Promise<{ id: stri
   if (isTourLoading) {
     return (
       <div className="flex min-h-screen flex-col">
-        <Navbar />
+        <SmartNavbar />
         <main className="flex-grow flex items-center justify-center">
           <Loader2 className="h-8 w-8 animate-spin text-primary" />
         </main>
@@ -124,7 +124,7 @@ export default function TourDetailsPage({ params }: { params: Promise<{ id: stri
   if (!tour) {
     return (
       <div className="flex min-h-screen flex-col">
-        <Navbar />
+        <SmartNavbar />
         <main className="flex-grow flex flex-col items-center justify-center space-y-4">
           <h2 className="text-2xl font-bold">Experience not found</h2>
           <Button onClick={() => router.push("/tours")}>Back to Tours</Button>
@@ -136,7 +136,7 @@ export default function TourDetailsPage({ params }: { params: Promise<{ id: stri
 
   return (
     <div className="flex min-h-screen flex-col">
-      <Navbar />
+      <SmartNavbar />
       <main className="flex-grow">
         <section className="container mx-auto py-10 px-4">
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-12">

@@ -1,7 +1,7 @@
 
 "use client";
 
-import { Navbar } from "@/components/navbar";
+import { SmartNavbar } from "@/components/smart-navbar";
 import { Footer } from "@/components/footer";
 import { useUser, useCollection, useMemoFirebase, useFirestore, updateDocumentNonBlocking, useDoc } from "@/firebase";
 import { collection, query, orderBy, doc } from "firebase/firestore";
@@ -71,7 +71,7 @@ export default function MyBookingsPage() {
   if (isUserLoading || (user && isBookingsLoading)) {
     return (
       <div className="flex min-h-screen flex-col">
-        <Navbar />
+        <SmartNavbar />
         <main className="flex-grow flex items-center justify-center">
           <Loader2 className="h-8 w-8 animate-spin text-primary" />
         </main>
@@ -82,7 +82,7 @@ export default function MyBookingsPage() {
 
   return (
     <div className="flex min-h-screen flex-col bg-secondary/10">
-      <Navbar />
+      <SmartNavbar />
       {/* Cancel Confirmation Dialog */}
       <Dialog open={!!cancelBookingId} onOpenChange={() => setCancelBookingId(null)}>
         <DialogContent className="max-w-sm">
@@ -247,3 +247,4 @@ export default function MyBookingsPage() {
     </div>
   );
 }
+

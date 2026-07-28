@@ -1,6 +1,6 @@
 "use client";
 
-import { Navbar } from "@/components/navbar";
+import { SmartNavbar } from "@/components/smart-navbar";
 import { Footer } from "@/components/footer";
 import { RoomCard } from "@/components/room-card";
 import { TourCard } from "@/components/tour-card";
@@ -80,7 +80,7 @@ export default function Home() {
 
   return (
     <div className="flex min-h-screen flex-col">
-      <Navbar />
+      <SmartNavbar />
 
       <main className="flex-grow">
         {/* ═══════════════════════════════════════
@@ -364,3 +364,4 @@ export default function Home() {
     </div>
   );
 }
+

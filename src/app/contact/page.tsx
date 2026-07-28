@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Navbar } from "@/components/navbar";
+import { SmartNavbar } from "@/components/smart-navbar";
 import { Footer } from "@/components/footer";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -33,7 +33,7 @@ export default function ContactPage() {
 
   return (
     <div className="flex min-h-screen flex-col">
-      <Navbar />
+      <SmartNavbar />
       <main className="flex-grow">
         <section className="bg-primary/5 py-16">
           <div className="container mx-auto px-4 text-center space-y-4">
@@ -119,3 +119,4 @@ export default function ContactPage() {
     </div>
   );
 }
+

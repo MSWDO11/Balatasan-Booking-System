@@ -1,6 +1,6 @@
 "use client";
 
-import { Navbar } from "@/components/navbar";
+import { SmartNavbar } from "@/components/smart-navbar";
 import { Footer } from "@/components/footer";
 import { Waves, Anchor, Compass, Fish, Wifi, Utensils, MapPin, Phone, Mail } from "lucide-react";
 import Link from "next/link";
@@ -18,7 +18,7 @@ const amenities = [
 export default function AboutPage() {
   return (
     <div className="flex min-h-screen flex-col">
-      <Navbar />
+      <SmartNavbar />
       <main className="flex-grow">
         {/* Hero */}
         <section className="bg-primary/5 py-20">
@@ -105,3 +105,4 @@ export default function AboutPage() {
     </div>
   );
 }
+
