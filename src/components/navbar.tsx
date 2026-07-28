@@ -31,10 +31,11 @@ export function Navbar() {
     return doc(firestore, "roles_admin", user.uid);
   }, [user, firestore]);
 
-  const { data: adminRole } = useDoc(adminDocRef);
+  const { data: adminRole, isLoading: isAdminLoading } = useDoc(adminDocRef);
 
   const isDesignatedAdmin = user?.email?.toLowerCase() === "admin@gmail.com";
-  const hasAdminAccess = !!adminRole || isDesignatedAdmin;
+  // While loading, treat as admin if email matches to avoid flash
+  const hasAdminAccess = isDesignatedAdmin || !!adminRole;
 
   const handleSignOut = () => {
     signOut(auth);
@@ -56,8 +57,8 @@ export function Navbar() {
 
         {/* Desktop Nav */}
         <div className="hidden md:flex md:items-center md:gap-8">
-          {/* If admin: show Dashboard + Inventory. If regular user: show nav links */}
-          {hasAdminAccess ? (
+          {/* If admin: show Dashboard + Inventory. While loading for admin users: show nothing. Regular users: show nav links */}
+          ) : hasAdminAccess ? (
             <div className="flex items-center gap-2 pr-6 border-r border-slate-100">
               <Link
                 href="/admin/dashboard"
@@ -201,12 +202,6 @@ export function Navbar() {
                     <Button variant="ghost" className="w-full justify-start gap-3 font-bold text-slate-600">
                       <Database className="h-5 w-5 text-primary" />
                       Inventory Management
-                    </Button>
-                  </Link>
-                  <Link href="/" target="_blank" onClick={() => setIsOpen(false)}>
-                    <Button variant="ghost" className="w-full justify-start gap-3 font-bold text-teal-600">
-                      <Eye className="h-5 w-5 text-teal-500" />
-                      View as Guest
                     </Button>
                   </Link>
                 </div>
