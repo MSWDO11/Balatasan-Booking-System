@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Loader2, Save, Trash2, Eye, Database, ShieldAlert, Upload, ImageIcon, ToggleLeft, ToggleRight, MapPin, Clock, Tag, Copy, AlertTriangle, Search, LayoutDashboard } from "lucide-react";
+import { Loader2, Save, Trash2, Eye, Database, ShieldAlert, Upload, ImageIcon, ToggleLeft, ToggleRight, MapPin, Clock, Tag, Copy, AlertTriangle, Search } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 import { useFirestore, useCollection, useMemoFirebase, addDocumentNonBlocking, deleteDocumentNonBlocking, setDocumentNonBlocking, useUser, useDoc } from "@/firebase";

@@ -12,7 +12,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import {
   Clock, TrendingUp, MoreVertical, Check, X, Loader2, ShieldAlert,
   User, MapPin, Wallet, Users as UsersIcon, ShoppingBag, Download,
-  Search, Eye, UserPlus, Image as ImageIcon, Settings, LayoutDashboard
+  Search, Eye, UserPlus, Image as ImageIcon, Settings
 } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
