@@ -33,7 +33,9 @@ export default function AdminDashboard() {
   const [csvText, setCsvText] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("All");
-  const [selectedBooking, setSelectedBooking] = useState<any>(null);
+  const [selectedBookingId, setSelectedBookingId] = useState<string | null>(null);
+  // Always derive selectedBooking from live bookings data for realtime updates
+  const selectedBooking = selectedBookingId ? bookings.find(b => b.id === selectedBookingId) ?? null : null;
   const [bookingNote, setBookingNote] = useState("");
   const [newAdminEmail, setNewAdminEmail] = useState("");
   const [isAddingAdmin, setIsAddingAdmin] = useState(false);
@@ -92,7 +94,10 @@ export default function AdminDashboard() {
       const matchesSearch = !searchQuery ||
         (b.guestName ?? "").toLowerCase().includes(searchQuery.toLowerCase()) ||
         (b.itemName ?? "").toLowerCase().includes(searchQuery.toLowerCase());
-      const matchesStatus = statusFilter === "All" || b.status === statusFilter;
+      let matchesStatus = true;
+      if (statusFilter === "All") matchesStatus = true;
+      else if (statusFilter === "Payment Uploaded") matchesStatus = !!b.paymentImageUrl;
+      else matchesStatus = b.status === statusFilter;
       return matchesSearch && matchesStatus;
     });
   }, [bookings, searchQuery, statusFilter]);
@@ -114,7 +119,7 @@ export default function AdminDashboard() {
     if (!firestore) return;
     updateDocumentNonBlocking(doc(firestore, "users", userId, "bookings", bookingId), { status });
     toast({ title: `Booking ${status}`, description: `Status updated to ${status}.` });
-    if (selectedBooking?.id === bookingId) setSelectedBooking((prev: any) => ({ ...prev, status }));
+    if (selectedBooking?.id === bookingId) // status updated via live bookings;
   };
 
   const handleSaveNote = () => {
@@ -237,7 +242,7 @@ export default function AdminDashboard() {
         </Dialog>
 
         {/* Booking Detail Modal */}
-        <Dialog open={!!selectedBooking} onOpenChange={() => setSelectedBooking(null)}>
+        <Dialog open={!!selectedBooking} onOpenChange={() => setSelectedBookingId(null)}>
           <DialogContent className="max-w-lg">
             <DialogHeader><DialogTitle>Booking Details</DialogTitle></DialogHeader>
             {selectedBooking && (
@@ -302,8 +307,8 @@ export default function AdminDashboard() {
                   <Button size="sm" variant="outline" onClick={handleSaveNote} className="w-full">Save Note</Button>
                 </div>
                 <div className="flex gap-2 pt-2">
-                  <Button size="sm" onClick={() => { updateStatus(selectedBooking.userId, selectedBooking.id, "Confirmed"); setSelectedBooking(null); }} className="flex-1">Confirm</Button>
-                  <Button size="sm" variant="outline" onClick={() => { updateStatus(selectedBooking.userId, selectedBooking.id, "Cancelled"); setSelectedBooking(null); }} className="flex-1 text-rose-600 border-rose-200 hover:bg-rose-50">Cancel</Button>
+                  <Button size="sm" onClick={() => { updateStatus(selectedBooking.userId, selectedBooking.id, "Confirmed"); setSelectedBookingId(null); }} className="flex-1">Confirm</Button>
+                  <Button size="sm" variant="outline" onClick={() => { updateStatus(selectedBooking.userId, selectedBooking.id, "Cancelled"); setSelectedBookingId(null); }} className="flex-1 text-rose-600 border-rose-200 hover:bg-rose-50">Cancel</Button>
                 </div>
               </div>
             )}
@@ -403,7 +408,7 @@ export default function AdminDashboard() {
                       </TableHeader>
                       <TableBody>
                         {filteredBookings.map((booking) => (
-                          <TableRow key={booking.id} className="hover:bg-slate-50/40 transition-colors border-slate-50 cursor-pointer" onClick={() => { setSelectedBooking(booking); setBookingNote(booking.adminNote || ""); }}>
+                          <TableRow key={booking.id} className="hover:bg-slate-50/40 transition-colors border-slate-50 cursor-pointer" onClick={() => { setSelectedBookingId(booking.id); setBookingNote(booking.adminNote || ""); }}>
                             <TableCell className="px-6 py-5">
                               <div className="flex items-center gap-3">
                                 <div className="h-9 w-9 rounded-full bg-slate-100 flex items-center justify-center"><User className="h-4 w-4 text-slate-400" /></div>
@@ -439,7 +444,7 @@ export default function AdminDashboard() {
                                   <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full"><MoreVertical className="h-4 w-4" /></Button>
                                 </DropdownMenuTrigger>
                                 <DropdownMenuContent align="end" className="rounded-xl p-2 min-w-[160px]">
-                                  <DropdownMenuItem onClick={() => { setSelectedBooking(booking); setBookingNote(booking.adminNote || ""); }} className="rounded-lg cursor-pointer"><Eye className="mr-2 h-4 w-4 text-primary" /><span className="font-semibold">View Details</span></DropdownMenuItem>
+                                  <DropdownMenuItem onClick={() => { setSelectedBookingId(booking.id); setBookingNote(booking.adminNote || ""); }} className="rounded-lg cursor-pointer"><Eye className="mr-2 h-4 w-4 text-primary" /><span className="font-semibold">View Details</span></DropdownMenuItem>
                                   <DropdownMenuItem onClick={() => updateStatus(booking.userId, booking.id, "Confirmed")} className="rounded-lg cursor-pointer"><Check className="mr-2 h-4 w-4 text-emerald-600" /><span className="font-semibold">Confirm</span></DropdownMenuItem>
                                   <DropdownMenuItem onClick={() => updateStatus(booking.userId, booking.id, "Cancelled")} className="rounded-lg cursor-pointer text-rose-600 focus:bg-rose-50"><X className="mr-2 h-4 w-4" /><span className="font-semibold">Cancel</span></DropdownMenuItem>
                                 </DropdownMenuContent>
