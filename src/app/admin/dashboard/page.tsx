@@ -1,6 +1,6 @@
 "use client";
 
-import { Navbar } from "@/components/navbar";
+import { AdminNavbar } from "@/components/admin-navbar";
 import { Footer } from "@/components/footer";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -178,13 +178,13 @@ export default function AdminDashboard() {
   };
 
   if (isUserLoading || isAdminRoleLoading) return (
-    <div className="flex min-h-screen flex-col"><Navbar />
+    <div className="flex min-h-screen flex-col"><AdminNavbar />
       <main className="flex-grow flex items-center justify-center"><Loader2 className="h-8 w-8 animate-spin text-primary" /></main>
     <Footer /></div>
   );
 
   if (!isMasterAdminEmail && !hasAdminRecord) return (
-    <div className="flex min-h-screen flex-col bg-slate-50"><Navbar />
+    <div className="flex min-h-screen flex-col bg-slate-50"><AdminNavbar />
       <main className="flex-grow flex items-center justify-center p-4">
         <Card className="max-w-md text-center border-none shadow-2xl rounded-3xl overflow-hidden">
           <CardHeader className="pt-10 pb-6">
@@ -199,7 +199,7 @@ export default function AdminDashboard() {
   );
 
   if (isMasterAdminEmail && !hasAdminRecord) return (
-    <div className="flex min-h-screen flex-col bg-slate-50"><Navbar />
+    <div className="flex min-h-screen flex-col bg-slate-50"><AdminNavbar />
       <main className="flex-grow flex items-center justify-center p-4">
         <Card className="max-w-md text-center border-none shadow-2xl rounded-3xl overflow-hidden">
           <CardHeader className="pt-10 pb-6">
@@ -226,7 +226,7 @@ export default function AdminDashboard() {
 
   return (
     <div className="flex min-h-screen flex-col bg-[#F8FBFB]">
-      <Navbar />
+      <AdminNavbar />
       <main className="flex-grow">
         {/* Page Header with gradient */}
         <div className="bg-gradient-to-br from-primary/8 via-white to-transparent border-b border-slate-100 px-4 py-8">

@@ -3,20 +3,12 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Button } from "@/components/ui/button";
-import { Menu, X, Waves, ShoppingBag, LayoutDashboard, LogOut, Database, ChevronDown, Eye } from "lucide-react";
+import { Menu, X, Waves, ShoppingBag, LogOut } from "lucide-react";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
 import { useUser, useAuth, useDoc, useMemoFirebase, useFirestore } from "@/firebase";
 import { doc } from "firebase/firestore";
 import { signOut } from "firebase/auth";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 
 const navLinks = [
   { name: "Home", href: "/" },
@@ -64,44 +56,21 @@ export function Navbar() {
 
         {/* Desktop Nav */}
         <div className="hidden md:flex md:items-center md:gap-8">
-          {/* If admin: show Dashboard + Inventory links. Otherwise: show regular nav */}
-          {hasAdminAccess ? (
-            <div className="flex items-center gap-6 pr-6 border-r border-slate-100">
+          {/* Regular nav links — always show for non-admin users */}
+          <div className="flex items-center gap-6 pr-6 border-r border-slate-100">
+            {navLinks.map((link) => (
               <Link
-                href="/admin/dashboard"
+                key={link.name}
+                href={link.href}
                 className={cn(
                   "text-sm font-semibold transition-colors hover:text-primary",
-                  pathname === "/admin/dashboard" ? "text-primary" : "text-slate-500"
+                  pathname === link.href ? "text-primary" : "text-slate-500"
                 )}
               >
-                Dashboard
+                {link.name}
               </Link>
-              <Link
-                href="/admin/inventory"
-                className={cn(
-                  "text-sm font-semibold transition-colors hover:text-primary",
-                  pathname === "/admin/inventory" ? "text-primary" : "text-slate-500"
-                )}
-              >
-                Inventory
-              </Link>
-            </div>
-          ) : (
-            <div className="flex items-center gap-6 pr-6 border-r border-slate-100">
-              {navLinks.map((link) => (
-                <Link
-                  key={link.name}
-                  href={link.href}
-                  className={cn(
-                    "text-sm font-semibold transition-colors hover:text-primary",
-                    pathname === link.href ? "text-primary" : "text-slate-500"
-                  )}
-                >
-                  {link.name}
-                </Link>
-              ))}
-            </div>
-          )}
+            ))}
+          </div>
           
           <div className="flex items-center gap-4">
             {!user && !isUserLoading && (
@@ -120,36 +89,6 @@ export function Navbar() {
                     My Bookings
                   </Button>
                 </Link>
-
-                {hasAdminAccess && (
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="outline" size="sm" className="gap-2 px-4 font-bold">
-                        Admin <ChevronDown className="h-3.5 w-3.5" />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end" className="w-56 rounded-2xl p-2 shadow-2xl border-slate-100">
-                      <DropdownMenuLabel className="px-3 py-2 text-xs font-bold text-slate-400 uppercase tracking-widest">Management</DropdownMenuLabel>
-                      <DropdownMenuItem asChild>
-                        <Link href="/admin/dashboard" className="flex items-center gap-3 px-3 py-2.5 rounded-xl cursor-pointer">
-                          <LayoutDashboard className="h-4 w-4 text-primary" />
-                          <span className="font-semibold text-slate-700">Dashboard</span>
-                        </Link>
-                      </DropdownMenuItem>
-                      <DropdownMenuItem asChild>
-                        <Link href="/admin/inventory" className="flex items-center gap-3 px-3 py-2.5 rounded-xl cursor-pointer">
-                          <Database className="h-4 w-4 text-primary" />
-                          <span className="font-semibold text-slate-700">Inventory</span>
-                        </Link>
-                      </DropdownMenuItem>
-                      <DropdownMenuSeparator className="my-2 bg-slate-50" />
-                      <DropdownMenuItem onClick={handleSignOut} className="flex items-center gap-3 px-3 py-2.5 rounded-xl cursor-pointer text-rose-500 focus:bg-rose-50 focus:text-rose-500">
-                        <LogOut className="h-4 w-4" />
-                        <span className="font-semibold">Sign Out</span>
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                )}
 
                 {!hasAdminAccess && (
                   <Button 
@@ -181,23 +120,16 @@ export function Navbar() {
       {/* Mobile Menu */}
       {isOpen && (
         <div className="md:hidden border-t bg-white px-4 py-6 space-y-4 shadow-xl">
-          {hasAdminAccess ? (
-            <>
-              <Link href="/admin/dashboard" className="block text-base font-bold text-slate-600 hover:text-primary transition-colors px-2" onClick={() => setIsOpen(false)}>Dashboard</Link>
-              <Link href="/admin/inventory" className="block text-base font-bold text-slate-600 hover:text-primary transition-colors px-2" onClick={() => setIsOpen(false)}>Inventory</Link>
-            </>
-          ) : (
-            navLinks.map((link) => (
-              <Link
-                key={link.name}
-                href={link.href}
-                className="block text-base font-bold text-slate-600 hover:text-primary transition-colors px-2"
-                onClick={() => setIsOpen(false)}
-              >
-                {link.name}
-              </Link>
-            ))
-          )}
+          {navLinks.map((link) => (
+            <Link
+              key={link.name}
+              href={link.href}
+              className="block text-base font-bold text-slate-600 hover:text-primary transition-colors px-2"
+              onClick={() => setIsOpen(false)}
+            >
+              {link.name}
+            </Link>
+          ))}
           {!user && !isUserLoading && (
             <Link 
               href="/login" 

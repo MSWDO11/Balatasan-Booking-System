@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Navbar } from "@/components/navbar";
+import { AdminNavbar } from "@/components/admin-navbar";
 import { Footer } from "@/components/footer";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -278,7 +278,7 @@ export default function AdminInventoryPage() {
   if (isUserLoading || isAdminRoleLoading) {
     return (
       <div className="flex min-h-screen flex-col">
-        <Navbar />
+        <AdminNavbar />
         <main className="flex-grow flex items-center justify-center">
           <Loader2 className="h-8 w-8 animate-spin text-primary" />
         </main>
@@ -290,7 +290,7 @@ export default function AdminInventoryPage() {
   if (!isMasterAdminEmail && !hasAdminRecord) {
     return (
       <div className="flex min-h-screen flex-col bg-secondary/10">
-        <Navbar />
+        <AdminNavbar />
         <main className="flex-grow flex items-center justify-center p-4">
           <Card className="max-w-md text-center border-none shadow-xl">
             <CardHeader>
@@ -320,7 +320,7 @@ export default function AdminInventoryPage() {
 
   return (
     <div className="flex min-h-screen flex-col bg-secondary/10">
-      <Navbar />
+      <AdminNavbar />
 
       {/* Delete Confirmation Dialog */}
       <Dialog open={!!deleteConfirmId} onOpenChange={() => setDeleteConfirmId(null)}>
