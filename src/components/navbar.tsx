@@ -64,20 +64,34 @@ export function Navbar() {
 
         {/* Desktop Nav */}
         <div className="hidden md:flex md:items-center md:gap-8">
-          <div className="flex items-center gap-6 pr-6 border-r border-slate-100">
-            {navLinks.map((link) => (
-              <Link
-                key={link.name}
-                href={link.href}
-                className={cn(
-                  "text-sm font-semibold transition-colors hover:text-primary",
-                  pathname === link.href ? "text-primary" : "text-slate-500"
-                )}
-              >
-                {link.name}
+          {/* Hide nav links on admin pages, show View Site button instead */}
+          {!pathname.startsWith("/admin") ? (
+            <div className="flex items-center gap-6 pr-6 border-r border-slate-100">
+              {navLinks.map((link) => (
+                <Link
+                  key={link.name}
+                  href={link.href}
+                  className={cn(
+                    "text-sm font-semibold transition-colors hover:text-primary",
+                    pathname === link.href ? "text-primary" : "text-slate-500"
+                  )}
+                >
+                  {link.name}
+                </Link>
+              ))}
+            </div>
+          ) : (
+            <div className="flex items-center gap-3 pr-6 border-r border-slate-100">
+              <Link href="/" target="_blank">
+                <Button variant="outline" size="sm" className="gap-2 font-bold text-primary border-primary/30 hover:bg-primary/5">
+                  <Eye className="h-4 w-4" />
+                  View Site
+                </Button>
               </Link>
-            ))}
-          </div>
+              <Link href="/accommodations" target="_blank" className="text-xs font-semibold text-slate-400 hover:text-primary transition-colors">Cottages</Link>
+              <Link href="/tours" target="_blank" className="text-xs font-semibold text-slate-400 hover:text-primary transition-colors">Tours</Link>
+            </div>
+          )}
           
           <div className="flex items-center gap-4">
             {!user && !isUserLoading && (
@@ -119,26 +133,6 @@ export function Navbar() {
                         </Link>
                       </DropdownMenuItem>
                       <DropdownMenuSeparator className="my-2 bg-slate-50" />
-                      <DropdownMenuLabel className="px-3 py-1 text-xs font-bold text-slate-400 uppercase tracking-widest">Preview</DropdownMenuLabel>
-                      <DropdownMenuItem asChild>
-                        <Link href="/" target="_blank" className="flex items-center gap-3 px-3 py-2.5 rounded-xl cursor-pointer">
-                          <Eye className="h-4 w-4 text-teal-500" />
-                          <span className="font-semibold text-slate-700">View as Guest</span>
-                        </Link>
-                      </DropdownMenuItem>
-                      <DropdownMenuItem asChild>
-                        <Link href="/accommodations" target="_blank" className="flex items-center gap-3 px-3 py-2.5 rounded-xl cursor-pointer">
-                          <Eye className="h-4 w-4 text-teal-500" />
-                          <span className="font-semibold text-slate-700">Preview Cottages</span>
-                        </Link>
-                      </DropdownMenuItem>
-                      <DropdownMenuItem asChild>
-                        <Link href="/tours" target="_blank" className="flex items-center gap-3 px-3 py-2.5 rounded-xl cursor-pointer">
-                          <Eye className="h-4 w-4 text-teal-500" />
-                          <span className="font-semibold text-slate-700">Preview Tours</span>
-                        </Link>
-                      </DropdownMenuItem>
-                      <DropdownMenuSeparator className="my-2 bg-slate-50" />
                       <DropdownMenuItem onClick={handleSignOut} className="flex items-center gap-3 px-3 py-2.5 rounded-xl cursor-pointer text-rose-500 focus:bg-rose-50 focus:text-rose-500">
                         <LogOut className="h-4 w-4" />
                         <span className="font-semibold">Sign Out</span>
@@ -177,16 +171,25 @@ export function Navbar() {
       {/* Mobile Menu */}
       {isOpen && (
         <div className="md:hidden border-t bg-white px-4 py-6 space-y-4 shadow-xl">
-          {navLinks.map((link) => (
-            <Link
-              key={link.name}
-              href={link.href}
-              className="block text-base font-bold text-slate-600 hover:text-primary transition-colors px-2"
-              onClick={() => setIsOpen(false)}
-            >
-              {link.name}
+          {!pathname.startsWith("/admin") ? (
+            navLinks.map((link) => (
+              <Link
+                key={link.name}
+                href={link.href}
+                className="block text-base font-bold text-slate-600 hover:text-primary transition-colors px-2"
+                onClick={() => setIsOpen(false)}
+              >
+                {link.name}
+              </Link>
+            ))
+          ) : (
+            <Link href="/" target="_blank" onClick={() => setIsOpen(false)}>
+              <Button variant="outline" size="sm" className="gap-2 font-bold text-primary border-primary/30 w-full">
+                <Eye className="h-4 w-4" />
+                View Site as Guest
+              </Button>
             </Link>
-          ))}
+          )}
           {!user && !isUserLoading && (
             <Link 
               href="/login" 
