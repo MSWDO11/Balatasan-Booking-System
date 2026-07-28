@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Waves, LayoutDashboard, Database, LogOut } from "lucide-react";
+import { Waves, LayoutDashboard, Database, LogOut, Eye } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/firebase";
 import { signOut } from "firebase/auth";
@@ -54,6 +54,15 @@ export function AdminNavbar() {
             <Database className="h-4 w-4" />
             Inventory
           </Link>
+          {/* View as User button */}
+          <Link
+            href="/"
+            target="_blank"
+            className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold text-teal-600 border border-teal-200 bg-teal-50 hover:bg-teal-100 transition-colors ml-2"
+          >
+            <Eye className="h-4 w-4" />
+            View as User
+          </Link>
         </div>
 
         {/* Sign Out */}
@@ -87,6 +96,14 @@ export function AdminNavbar() {
         >
           <Database className="h-5 w-5" />
           Inventory
+        </Link>
+        <Link
+          href="/"
+          target="_blank"
+          className="flex-1 flex flex-col items-center gap-1 py-3 text-xs font-bold text-teal-500"
+        >
+          <Eye className="h-5 w-5" />
+          View Site
         </Link>
         <button
           onClick={handleSignOut}
