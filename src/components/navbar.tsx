@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Button } from "@/components/ui/button";
-import { Menu, X, Waves, ShoppingBag, LogOut } from "lucide-react";
+import { Menu, X, Waves, ShoppingBag, LogOut, LayoutDashboard, Database } from "lucide-react";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
 import { useUser, useAuth, useDoc, useMemoFirebase, useFirestore } from "@/firebase";
@@ -56,21 +56,50 @@ export function Navbar() {
 
         {/* Desktop Nav */}
         <div className="hidden md:flex md:items-center md:gap-8">
-          {/* Regular nav links — always show for non-admin users */}
-          <div className="flex items-center gap-6 pr-6 border-r border-slate-100">
-            {navLinks.map((link) => (
+          {/* If admin: show Dashboard + Inventory. If regular user: show nav links */}
+          {hasAdminAccess ? (
+            <div className="flex items-center gap-2 pr-6 border-r border-slate-100">
               <Link
-                key={link.name}
-                href={link.href}
+                href="/admin/dashboard"
                 className={cn(
-                  "text-sm font-semibold transition-colors hover:text-primary",
-                  pathname === link.href ? "text-primary" : "text-slate-500"
+                  "flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold transition-colors",
+                  pathname === "/admin/dashboard"
+                    ? "bg-primary text-white shadow-md"
+                    : "text-slate-600 hover:bg-primary/10 hover:text-primary"
                 )}
               >
-                {link.name}
+                <LayoutDashboard className="h-4 w-4" />
+                Dashboard
               </Link>
-            ))}
-          </div>
+              <Link
+                href="/admin/inventory"
+                className={cn(
+                  "flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold transition-colors",
+                  pathname === "/admin/inventory"
+                    ? "bg-primary text-white shadow-md"
+                    : "text-slate-600 hover:bg-primary/10 hover:text-primary"
+                )}
+              >
+                <Database className="h-4 w-4" />
+                Inventory
+              </Link>
+            </div>
+          ) : (
+            <div className="flex items-center gap-6 pr-6 border-r border-slate-100">
+              {navLinks.map((link) => (
+                <Link
+                  key={link.name}
+                  href={link.href}
+                  className={cn(
+                    "text-sm font-semibold transition-colors hover:text-primary",
+                    pathname === link.href ? "text-primary" : "text-slate-500"
+                  )}
+                >
+                  {link.name}
+                </Link>
+              ))}
+            </div>
+          )}
           
           <div className="flex items-center gap-4">
             {!user && !isUserLoading && (
@@ -101,6 +130,17 @@ export function Navbar() {
                     <LogOut className="h-4 w-4" />
                   </Button>
                 )}
+                {hasAdminAccess && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={handleSignOut}
+                    className="gap-2 font-bold text-rose-500 hover:bg-rose-50 hover:text-rose-600 rounded-xl px-4"
+                  >
+                    <LogOut className="h-4 w-4" />
+                    Sign Out
+                  </Button>
+                )}
               </div>
             )}
           </div>
@@ -120,16 +160,18 @@ export function Navbar() {
       {/* Mobile Menu */}
       {isOpen && (
         <div className="md:hidden border-t bg-white px-4 py-6 space-y-4 shadow-xl">
-          {navLinks.map((link) => (
-            <Link
-              key={link.name}
-              href={link.href}
-              className="block text-base font-bold text-slate-600 hover:text-primary transition-colors px-2"
-              onClick={() => setIsOpen(false)}
-            >
-              {link.name}
-            </Link>
-          ))}
+          {hasAdminAccess ? (
+            <>
+              <Link href="/admin/dashboard" className="block text-base font-bold text-slate-600 hover:text-primary px-2" onClick={() => setIsOpen(false)}>Dashboard</Link>
+              <Link href="/admin/inventory" className="block text-base font-bold text-slate-600 hover:text-primary px-2" onClick={() => setIsOpen(false)}>Inventory</Link>
+            </>
+          ) : (
+            navLinks.map((link) => (
+              <Link key={link.name} href={link.href} className="block text-base font-bold text-slate-600 hover:text-primary transition-colors px-2" onClick={() => setIsOpen(false)}>
+                {link.name}
+              </Link>
+            ))
+          )}
           {!user && !isUserLoading && (
             <Link 
               href="/login" 
