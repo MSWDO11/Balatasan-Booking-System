@@ -5,13 +5,30 @@ import { doc } from "firebase/firestore";
 import { AdminNavbar } from "@/components/admin-navbar";
 import { Navbar } from "@/components/navbar";
 import { useSearchParams } from "next/navigation";
-import { Suspense } from "react";
+import { Suspense, useEffect, useState } from "react";
+
+const PREVIEW_KEY = "bls_preview_user";
 
 function SmartNavbarInner() {
   const { user, isUserLoading } = useUser();
   const firestore = useFirestore();
   const searchParams = useSearchParams();
-  const isPreview = searchParams.get("preview") === "user";
+  const previewParam = searchParams.get("preview");
+
+  const [isPreview, setIsPreview] = useState(() => {
+    if (typeof window !== "undefined") {
+      return sessionStorage.getItem(PREVIEW_KEY) === "true";
+    }
+    return false;
+  });
+
+  // If ?preview=user is in URL, set session flag
+  useEffect(() => {
+    if (previewParam === "user") {
+      sessionStorage.setItem(PREVIEW_KEY, "true");
+      setIsPreview(true);
+    }
+  }, [previewParam]);
 
   const adminDocRef = useMemoFirebase(() => {
     if (!user || !firestore) return null;
@@ -23,7 +40,7 @@ function SmartNavbarInner() {
   const isDesignatedAdmin = user?.email?.toLowerCase() === "admin@gmail.com";
   const isAdmin = isDesignatedAdmin || !!adminRole;
 
-  // If ?preview=user is in URL, always show regular navbar
+  // If preview mode active in this tab — always show regular navbar
   if (isPreview) return <Navbar />;
 
   // While loading auth, show nothing to avoid flash
