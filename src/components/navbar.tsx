@@ -64,8 +64,29 @@ export function Navbar() {
 
         {/* Desktop Nav */}
         <div className="hidden md:flex md:items-center md:gap-8">
-          {/* Hide nav links completely on admin pages */}
-          {!pathname.startsWith("/admin") && (
+          {/* If admin: show Dashboard + Inventory links. Otherwise: show regular nav */}
+          {hasAdminAccess ? (
+            <div className="flex items-center gap-6 pr-6 border-r border-slate-100">
+              <Link
+                href="/admin/dashboard"
+                className={cn(
+                  "text-sm font-semibold transition-colors hover:text-primary",
+                  pathname === "/admin/dashboard" ? "text-primary" : "text-slate-500"
+                )}
+              >
+                Dashboard
+              </Link>
+              <Link
+                href="/admin/inventory"
+                className={cn(
+                  "text-sm font-semibold transition-colors hover:text-primary",
+                  pathname === "/admin/inventory" ? "text-primary" : "text-slate-500"
+                )}
+              >
+                Inventory
+              </Link>
+            </div>
+          ) : (
             <div className="flex items-center gap-6 pr-6 border-r border-slate-100">
               {navLinks.map((link) => (
                 <Link
@@ -160,7 +181,12 @@ export function Navbar() {
       {/* Mobile Menu */}
       {isOpen && (
         <div className="md:hidden border-t bg-white px-4 py-6 space-y-4 shadow-xl">
-          {!pathname.startsWith("/admin") && (
+          {hasAdminAccess ? (
+            <>
+              <Link href="/admin/dashboard" className="block text-base font-bold text-slate-600 hover:text-primary transition-colors px-2" onClick={() => setIsOpen(false)}>Dashboard</Link>
+              <Link href="/admin/inventory" className="block text-base font-bold text-slate-600 hover:text-primary transition-colors px-2" onClick={() => setIsOpen(false)}>Inventory</Link>
+            </>
+          ) : (
             navLinks.map((link) => (
               <Link
                 key={link.name}
