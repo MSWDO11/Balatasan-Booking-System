@@ -36,7 +36,22 @@ function NavbarInner() {
   const handleSignOut = () => signOut(auth);
 
   return (
-    <nav className="sticky top-0 z-50 w-full border-b bg-white/80 backdrop-blur-md">
+    <>
+      {/* Admin preview banner — only shows when viewing as user */}
+      {isPreview && (
+        <div className="bg-primary text-white px-4 py-2 flex items-center justify-between text-sm">
+          <span className="font-semibold flex items-center gap-2">
+            👁 You are previewing as a regular user
+          </span>
+          <Link
+            href="/admin/dashboard"
+            className="flex items-center gap-1.5 bg-white text-primary font-bold px-3 py-1 rounded-full text-xs hover:bg-primary/10 transition-colors"
+          >
+            ← Back to Admin
+          </Link>
+        </div>
+      )}
+      <nav className="sticky top-0 z-50 w-full border-b bg-white/80 backdrop-blur-md">
       <div className="container mx-auto flex h-16 items-center justify-between px-4">
         <Link href={withPreview("/")} className="flex items-center gap-2 group">
           <div className="bg-primary/10 p-1.5 rounded-lg transition-colors group-hover:bg-primary/20">
