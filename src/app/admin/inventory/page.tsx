@@ -321,22 +321,6 @@ export default function AdminInventoryPage() {
   return (
     <div className="flex min-h-screen flex-col bg-secondary/10">
       <Navbar />
-      {/* Admin mode banner */}
-      <div className="bg-primary/10 border-b border-primary/20 px-4 py-2">
-        <div className="container mx-auto flex items-center justify-between gap-4">
-          <p className="text-xs font-semibold text-primary flex items-center gap-1.5">
-            <LayoutDashboard className="h-3.5 w-3.5" />
-            Admin Mode — Inventory
-          </p>
-          <div className="flex items-center gap-3">
-            <Link href="/" target="_blank" className="text-xs font-bold text-primary hover:underline flex items-center gap-1">
-              <Eye className="h-3 w-3" /> View Site as Guest
-            </Link>
-            <Link href="/accommodations" target="_blank" className="text-xs text-primary/70 hover:text-primary hover:underline">Cottages</Link>
-            <Link href="/tours" target="_blank" className="text-xs text-primary/70 hover:text-primary hover:underline">Tours</Link>
-          </div>
-        </div>
-      </div>
 
       {/* Delete Confirmation Dialog */}
       <Dialog open={!!deleteConfirmId} onOpenChange={() => setDeleteConfirmId(null)}>

@@ -64,8 +64,8 @@ export function Navbar() {
 
         {/* Desktop Nav */}
         <div className="hidden md:flex md:items-center md:gap-8">
-          {/* Hide nav links on admin pages, show View Site button instead */}
-          {!pathname.startsWith("/admin") ? (
+          {/* Hide nav links completely on admin pages */}
+          {!pathname.startsWith("/admin") && (
             <div className="flex items-center gap-6 pr-6 border-r border-slate-100">
               {navLinks.map((link) => (
                 <Link
@@ -79,17 +79,6 @@ export function Navbar() {
                   {link.name}
                 </Link>
               ))}
-            </div>
-          ) : (
-            <div className="flex items-center gap-3 pr-6 border-r border-slate-100">
-              <Link href="/" target="_blank">
-                <Button variant="outline" size="sm" className="gap-2 font-bold text-primary border-primary/30 hover:bg-primary/5">
-                  <Eye className="h-4 w-4" />
-                  View Site
-                </Button>
-              </Link>
-              <Link href="/accommodations" target="_blank" className="text-xs font-semibold text-slate-400 hover:text-primary transition-colors">Cottages</Link>
-              <Link href="/tours" target="_blank" className="text-xs font-semibold text-slate-400 hover:text-primary transition-colors">Tours</Link>
             </div>
           )}
           
@@ -171,7 +160,7 @@ export function Navbar() {
       {/* Mobile Menu */}
       {isOpen && (
         <div className="md:hidden border-t bg-white px-4 py-6 space-y-4 shadow-xl">
-          {!pathname.startsWith("/admin") ? (
+          {!pathname.startsWith("/admin") && (
             navLinks.map((link) => (
               <Link
                 key={link.name}
@@ -182,13 +171,6 @@ export function Navbar() {
                 {link.name}
               </Link>
             ))
-          ) : (
-            <Link href="/" target="_blank" onClick={() => setIsOpen(false)}>
-              <Button variant="outline" size="sm" className="gap-2 font-bold text-primary border-primary/30 w-full">
-                <Eye className="h-4 w-4" />
-                View Site as Guest
-              </Button>
-            </Link>
           )}
           {!user && !isUserLoading && (
             <Link 
