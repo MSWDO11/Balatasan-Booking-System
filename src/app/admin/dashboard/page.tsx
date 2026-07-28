@@ -120,7 +120,7 @@ export default function AdminDashboard() {
     if (!firestore) return;
     updateDocumentNonBlocking(doc(firestore, "users", userId, "bookings", bookingId), { status });
     toast({ title: `Booking ${status}`, description: `Status updated to ${status}.` });
-    if (selectedBooking?.id === bookingId) // status updated via live bookings;
+    if (selectedBooking?.id === bookingId) setSelectedBookingId((prev) => prev); // status updated via live bookings
   };
 
   const handleSaveNote = () => {
