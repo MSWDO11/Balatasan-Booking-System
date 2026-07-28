@@ -251,14 +251,45 @@ export default function AdminDashboard() {
                   <div><p className="text-muted-foreground text-xs">Dates</p><p className="font-semibold">{selectedBooking.startDate}{selectedBooking.endDate !== selectedBooking.startDate ? ` → ${selectedBooking.endDate}` : ""}</p></div>
                   <div><p className="text-muted-foreground text-xs">Total</p><p className="font-bold text-primary text-lg">₱{selectedBooking.totalPrice?.toLocaleString()}</p></div>
                 </div>
-                {selectedBooking.paymentImageUrl && (
-                  <div className="space-y-2">
-                    <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest flex items-center gap-1"><ImageIcon className="h-3 w-3" />Proof of Payment</p>
-                    <div className="relative w-full h-48 rounded-xl overflow-hidden border">
-                      <Image src={selectedBooking.paymentImageUrl} alt="Payment proof" fill className="object-contain" unoptimized />
+                {/* Proof of Payment — always visible */}
+                <div className="space-y-2">
+                  <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest flex items-center gap-2">
+                    <ImageIcon className="h-3.5 w-3.5" />
+                    Proof of Payment
+                  </p>
+                  {selectedBooking.paymentImageUrl ? (
+                    <div className="space-y-2">
+                      <div className="relative w-full h-56 rounded-xl overflow-hidden border bg-slate-50">
+                        <Image
+                          src={selectedBooking.paymentImageUrl}
+                          alt="Payment proof"
+                          fill
+                          className="object-contain"
+                          unoptimized
+                        />
+                      </div>
+                      <a
+                        href={selectedBooking.paymentImageUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1.5 text-xs text-primary font-semibold hover:underline"
+                      >
+                        <ImageIcon className="h-3 w-3" />
+                        Open full image
+                      </a>
                     </div>
-                  </div>
-                )}
+                  ) : (
+                    <div className="flex items-center gap-3 p-4 rounded-xl border-2 border-dashed border-slate-200 bg-slate-50">
+                      <div className="bg-slate-200 p-2 rounded-lg">
+                        <ImageIcon className="h-5 w-5 text-slate-400" />
+                      </div>
+                      <div>
+                        <p className="text-sm font-semibold text-slate-500">No proof uploaded yet</p>
+                        <p className="text-xs text-slate-400">Guest hasn&apos;t uploaded a payment receipt.</p>
+                      </div>
+                    </div>
+                  )}
+                </div>
                 <div className="space-y-2">
                   <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest">Admin Notes</p>
                   <Textarea
@@ -391,6 +422,12 @@ export default function AdminDashboard() {
                             </TableCell>
                             <TableCell className="px-6 py-5"><span className="font-bold text-primary">₱{booking.totalPrice?.toLocaleString()}</span></TableCell>
                             <TableCell className="px-6 py-5 text-right" onClick={e => e.stopPropagation()}>
+                              <div className="flex items-center justify-end gap-2">
+                                {booking.status === "Pending Payment" && (
+                                  <span title={booking.paymentImageUrl ? "Proof uploaded" : "No proof yet"}>
+                                    <ImageIcon className={`h-4 w-4 ${booking.paymentImageUrl ? "text-green-500" : "text-slate-300"}`} />
+                                  </span>
+                                )}
                               <DropdownMenu>
                                 <DropdownMenuTrigger asChild>
                                   <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full"><MoreVertical className="h-4 w-4" /></Button>
@@ -401,6 +438,7 @@ export default function AdminDashboard() {
                                   <DropdownMenuItem onClick={() => updateStatus(booking.userId, booking.id, "Cancelled")} className="rounded-lg cursor-pointer text-rose-600 focus:bg-rose-50"><X className="mr-2 h-4 w-4" /><span className="font-semibold">Cancel</span></DropdownMenuItem>
                                 </DropdownMenuContent>
                               </DropdownMenu>
+                            </div>
                             </TableCell>
                           </TableRow>
                         ))}
