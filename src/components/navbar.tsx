@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Button } from "@/components/ui/button";
-import { Menu, X, Waves, ShoppingBag, LayoutDashboard, LogOut, Database, ChevronDown, UserSettings } from "lucide-react";
+import { Menu, X, Waves, ShoppingBag, LayoutDashboard, LogOut, Database, ChevronDown, Eye } from "lucide-react";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
 import { useUser, useAuth, useDoc, useMemoFirebase, useFirestore } from "@/firebase";
@@ -119,6 +119,26 @@ export function Navbar() {
                         </Link>
                       </DropdownMenuItem>
                       <DropdownMenuSeparator className="my-2 bg-slate-50" />
+                      <DropdownMenuLabel className="px-3 py-1 text-xs font-bold text-slate-400 uppercase tracking-widest">Preview</DropdownMenuLabel>
+                      <DropdownMenuItem asChild>
+                        <Link href="/" target="_blank" className="flex items-center gap-3 px-3 py-2.5 rounded-xl cursor-pointer">
+                          <Eye className="h-4 w-4 text-teal-500" />
+                          <span className="font-semibold text-slate-700">View as Guest</span>
+                        </Link>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem asChild>
+                        <Link href="/accommodations" target="_blank" className="flex items-center gap-3 px-3 py-2.5 rounded-xl cursor-pointer">
+                          <Eye className="h-4 w-4 text-teal-500" />
+                          <span className="font-semibold text-slate-700">Preview Cottages</span>
+                        </Link>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem asChild>
+                        <Link href="/tours" target="_blank" className="flex items-center gap-3 px-3 py-2.5 rounded-xl cursor-pointer">
+                          <Eye className="h-4 w-4 text-teal-500" />
+                          <span className="font-semibold text-slate-700">Preview Tours</span>
+                        </Link>
+                      </DropdownMenuItem>
+                      <DropdownMenuSeparator className="my-2 bg-slate-50" />
                       <DropdownMenuItem onClick={handleSignOut} className="flex items-center gap-3 px-3 py-2.5 rounded-xl cursor-pointer text-rose-500 focus:bg-rose-50 focus:text-rose-500">
                         <LogOut className="h-4 w-4" />
                         <span className="font-semibold">Sign Out</span>
@@ -196,6 +216,12 @@ export function Navbar() {
                     <Button variant="ghost" className="w-full justify-start gap-3 font-bold text-slate-600">
                       <Database className="h-5 w-5 text-primary" />
                       Inventory Management
+                    </Button>
+                  </Link>
+                  <Link href="/" target="_blank" onClick={() => setIsOpen(false)}>
+                    <Button variant="ghost" className="w-full justify-start gap-3 font-bold text-teal-600">
+                      <Eye className="h-5 w-5 text-teal-500" />
+                      View as Guest
                     </Button>
                   </Link>
                 </div>
