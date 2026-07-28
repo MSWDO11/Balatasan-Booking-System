@@ -52,7 +52,11 @@ export default function MyBookingsPage() {
     reader.onloadend = () => {
       const base64String = reader.result as string;
       const bookingRef = doc(firestore, "users", user.uid, "bookings", bookingId);
-      updateDocumentNonBlocking(bookingRef, { paymentImageUrl: base64String });
+      updateDocumentNonBlocking(bookingRef, {
+        paymentImageUrl: base64String,
+        status: "Payment Uploaded",
+      });
+      toast({ title: "Receipt uploaded!", description: "Admin will verify and confirm your booking." });
     };
     reader.readAsDataURL(file);
   };

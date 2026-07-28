@@ -165,6 +165,7 @@ export default function AdminDashboard() {
     switch (status) {
       case 'Confirmed': return 'bg-emerald-100 text-emerald-700 border-emerald-200';
       case 'Pending Payment': return 'bg-amber-100 text-amber-700 border-amber-200';
+      case 'Payment Uploaded': return 'bg-blue-100 text-blue-700 border-blue-200';
       case 'Cancelled': return 'bg-rose-100 text-rose-700 border-rose-200';
       default: return 'bg-slate-100 text-slate-700 border-slate-200';
     }
@@ -213,7 +214,7 @@ export default function AdminDashboard() {
   const stats = [
     { label: "Total Bookings", value: bookings.length.toString(), icon: ShoppingBag, color: "text-blue-600", bg: "bg-blue-50" },
     { label: "Confirmed", value: bookings.filter(b => b.status === "Confirmed").length.toString(), icon: Check, color: "text-emerald-600", bg: "bg-emerald-50" },
-    { label: "Pending", value: bookings.filter(b => b.status === "Pending Payment").length.toString(), icon: Clock, color: "text-amber-600", bg: "bg-amber-50" },
+    { label: "Pending", value: bookings.filter(b => b.status === "Pending Payment" || b.status === "Payment Uploaded").length.toString(), icon: Clock, color: "text-amber-600", bg: "bg-amber-50" },
     { label: "Revenue", value: `₱${bookings.filter(b=>b.status==="Confirmed").reduce((acc,b) => acc+(b.totalPrice||0), 0).toLocaleString()}`, icon: TrendingUp, color: "text-primary", bg: "bg-primary/10" },
   ];
 
@@ -377,9 +378,9 @@ export default function AdminDashboard() {
                     <Input placeholder="Search by guest or item..." className="pl-9" value={searchQuery} onChange={e => setSearchQuery(e.target.value)} />
                   </div>
                   <div className="flex gap-2 flex-wrap">
-                    {["All","Pending Payment","Confirmed","Cancelled"].map(s => (
+                    {["All","Pending Payment","Payment Uploaded","Confirmed","Cancelled"].map(s => (
                       <button key={s} onClick={() => setStatusFilter(s)} className={cn("px-3 py-1.5 rounded-full text-xs font-semibold border transition-colors", statusFilter === s ? "bg-primary text-white border-primary" : "bg-white text-slate-600 border-slate-200 hover:border-primary/40")}>
-                        {s === "Pending Payment" ? "Pending" : s}
+                        {s === "Pending Payment" ? "Pending" : s === "Payment Uploaded" ? "Receipt ✓" : s}
                       </button>
                     ))}
                   </div>
@@ -423,9 +424,14 @@ export default function AdminDashboard() {
                             <TableCell className="px-6 py-5"><span className="font-bold text-primary">₱{booking.totalPrice?.toLocaleString()}</span></TableCell>
                             <TableCell className="px-6 py-5 text-right" onClick={e => e.stopPropagation()}>
                               <div className="flex items-center justify-end gap-2">
-                                {booking.status === "Pending Payment" && (
-                                  <span title={booking.paymentImageUrl ? "Proof uploaded" : "No proof yet"}>
-                                    <ImageIcon className={`h-4 w-4 ${booking.paymentImageUrl ? "text-green-500" : "text-slate-300"}`} />
+                                {booking.paymentImageUrl && (
+                                  <span title="Proof of payment uploaded">
+                                    <ImageIcon className="h-4 w-4 text-green-500" />
+                                  </span>
+                                )}
+                                {booking.status === "Pending Payment" && !booking.paymentImageUrl && (
+                                  <span title="No proof uploaded yet">
+                                    <ImageIcon className="h-4 w-4 text-slate-300" />
                                   </span>
                                 )}
                               <DropdownMenu>
