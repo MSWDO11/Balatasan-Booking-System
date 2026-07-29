@@ -35,8 +35,6 @@ export default function AdminDashboard() {
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("All");
   const [selectedBookingId, setSelectedBookingId] = useState<string | null>(null);
-  // Always derive selectedBooking from live bookings data for realtime updates
-  const selectedBooking = selectedBookingId ? bookings.find(b => b.id === selectedBookingId) ?? null : null;
   const [bookingNote, setBookingNote] = useState("");
   const [newAdminEmail, setNewAdminEmail] = useState("");
   const [isAddingAdmin, setIsAddingAdmin] = useState(false);
@@ -88,6 +86,10 @@ export default function AdminDashboard() {
   const bookings = useMemo(() => {
     if (!rawBookings) return [];
     return [...rawBookings].sort((a, b) => (b.startDate || "").localeCompare(a.startDate || ""));
+  }, [rawBookings]);
+
+  // Derive selectedBooking from live bookings data for realtime updates
+  const selectedBooking = selectedBookingId ? bookings.find(b => b.id === selectedBookingId) ?? null : null;
   }, [rawBookings]);
 
   const filteredBookings = useMemo(() => {
