@@ -90,7 +90,6 @@ export default function AdminDashboard() {
 
   // Derive selectedBooking from live bookings data for realtime updates
   const selectedBooking = selectedBookingId ? bookings.find(b => b.id === selectedBookingId) ?? null : null;
-  }, [rawBookings]);
 
   const filteredBookings = useMemo(() => {
     return bookings.filter(b => {
