@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
-import { Users, Wind, Wifi, Coffee, MapPin, Star, Loader2, CreditCard, ShieldCheck, Tag, TrendingDown } from "lucide-react";
+import { Users, MapPin, Star, Loader2, CreditCard, ShieldCheck, Tag, TrendingDown } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -126,14 +126,7 @@ export default function RoomDetailsPage({ params }: { params: Promise<{ id: stri
                     <Star className="h-4 w-4 fill-current" /><span>4.9 (New)</span>
                   </div>
                 </div>
-                <div className="flex gap-6 py-4 border-y">
-                  {[{ icon: Users, label: `Max ${maxCapacity} Guests` }, { icon: Wind, label: "AC" }, { icon: Wifi, label: "Free WiFi" }, { icon: Coffee, label: "Breakfast" }].map(({ icon: Icon, label }) => (
-                    <div key={label} className="flex flex-col items-center gap-1 text-center">
-                      <Icon className="h-6 w-6 text-primary" />
-                      <span className="text-xs font-medium">{label}</span>
-                    </div>
-                  ))}
-                </div>
+
                 <div className="space-y-4">
                   <h3 className="text-2xl font-headline font-bold">Description</h3>
                   <p className="text-muted-foreground leading-relaxed text-lg">{room.description}</p>
