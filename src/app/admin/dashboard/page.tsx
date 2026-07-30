@@ -11,7 +11,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import {
   Clock, TrendingUp, MoreVertical, Check, X, Loader2, ShieldAlert,
-  User, MapPin, Wallet, Users as UsersIcon, ShoppingBag, Download,
+  MapPin, Wallet, Users as UsersIcon, ShoppingBag, Download,
   Search, Eye, UserPlus, Image as ImageIcon, Settings
 } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -41,6 +41,11 @@ export default function AdminDashboard() {
   const [gcashNumber, setGcashNumber] = useState("");
   const [gcashName, setGcashName] = useState("");
   const [isSavingSettings, setIsSavingSettings] = useState(false);
+  const [cancellationHours, setCancellationHours] = useState("");
+  const [contactNumber, setContactNumber] = useState("");
+  const [resortAddress, setResortAddress] = useState("");
+  const [isSavingPolicy, setIsSavingPolicy] = useState(false);
+  const [chartRange, setChartRange] = useState<"month" | "3months" | "all">("all");
 
   const adminDocRef = useMemoFirebase(() =>
     (firestore && user) ? doc(firestore, "roles_admin", user.uid) : null,
@@ -64,6 +69,9 @@ export default function AdminDashboard() {
   const settingsRef = useMemoFirebase(() => firestore ? doc(firestore, "settings", "payment") : null, [firestore]);
   const { data: paymentSettings } = useDoc(settingsRef);
 
+  const policyRef = useMemoFirebase(() => firestore ? doc(firestore, "settings", "policy") : null, [firestore]);
+  const { data: policySettings } = useDoc(policyRef);
+
   const { data: rawBookings, isLoading: isBookingsLoading } = useCollection(bookingsQuery);
   const { data: adminsList, isLoading: isAdminsLoading } = useCollection(adminsQuery);
 
@@ -75,12 +83,33 @@ export default function AdminDashboard() {
     }
   }, [paymentSettings]);
 
+  // Sync policy settings into local state for editing
+  useEffect(() => {
+    if (policySettings) {
+      setCancellationHours(policySettings.cancellationHours ?? "");
+      setContactNumber(policySettings.contactNumber || "");
+      setResortAddress(policySettings.address || "");
+    }
+  }, [policySettings]);
+
   const handleSaveSettings = () => {
     if (!firestore) return;
     setIsSavingSettings(true);
     setDocumentNonBlocking(doc(firestore, "settings", "payment"), { gcashNumber, gcashName }, { merge: true });
     toast({ title: "Settings saved", description: "GCash details updated." });
     setIsSavingSettings(false);
+  };
+
+  const handleSavePolicy = () => {
+    if (!firestore) return;
+    setIsSavingPolicy(true);
+    setDocumentNonBlocking(doc(firestore, "settings", "policy"), {
+      cancellationHours: cancellationHours === "" ? "" : Number(cancellationHours),
+      contactNumber,
+      address: resortAddress,
+    }, { merge: true });
+    toast({ title: "Policy saved", description: "Resort policy updated." });
+    setIsSavingPolicy(false);
   };
 
   const bookings = useMemo(() => {
@@ -107,15 +136,25 @@ export default function AdminDashboard() {
   // Monthly revenue chart data
   const revenueChartData = useMemo(() => {
     const months = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
-    const data = months.map(month => ({ month, revenue: 0 }));
+    const now = new Date();
+    const data = months.map((month, idx) => ({ month, revenue: 0, monthIdx: idx }));
     bookings.filter(b => b.status === "Confirmed").forEach(b => {
       if (b.startDate) {
-        const month = new Date(b.startDate).getMonth();
+        const d = new Date(b.startDate);
+        const month = d.getMonth();
+        const year = d.getFullYear();
+        // Filter by chart range
+        if (chartRange === "month") {
+          if (year !== now.getFullYear() || month !== now.getMonth()) return;
+        } else if (chartRange === "3months") {
+          const cutoff = new Date(now.getFullYear(), now.getMonth() - 2, 1);
+          if (d < cutoff) return;
+        }
         data[month].revenue += b.totalPrice || 0;
       }
     });
     return data.filter(d => d.revenue > 0);
-  }, [bookings]);
+  }, [bookings, chartRange]);
 
   const updateStatus = (userId: string, bookingId: string, status: string) => {
     if (!firestore) return;
@@ -222,6 +261,7 @@ export default function AdminDashboard() {
     { label: "Total Bookings", value: bookings.length.toString(), icon: ShoppingBag, color: "text-blue-600", bg: "bg-blue-50" },
     { label: "Confirmed", value: bookings.filter(b => b.status === "Confirmed").length.toString(), icon: Check, color: "text-emerald-600", bg: "bg-emerald-50" },
     { label: "Pending", value: bookings.filter(b => b.status === "Pending Payment" || b.status === "Payment Uploaded").length.toString(), icon: Clock, color: "text-amber-600", bg: "bg-amber-50" },
+    { label: "Cancelled", value: bookings.filter(b => b.status === "Cancelled").length.toString(), icon: X, color: "text-rose-600", bg: "bg-rose-50" },
     { label: "Revenue", value: `₱${bookings.filter(b=>b.status==="Confirmed").reduce((acc,b) => acc+(b.totalPrice||0), 0).toLocaleString()}`, icon: TrendingUp, color: "text-primary", bg: "bg-primary/10" },
   ];
 
@@ -270,7 +310,7 @@ export default function AdminDashboard() {
                   <div><p className="text-muted-foreground text-xs">Status</p><Badge className={cn("text-xs border", getStatusColor(selectedBooking.status))}>{selectedBooking.status}</Badge></div>
                   <div><p className="text-muted-foreground text-xs">Guest</p><p className="font-semibold">{selectedBooking.guestName}</p></div>
                   <div><p className="text-muted-foreground text-xs">Contact</p><p className="font-semibold">{selectedBooking.contactNumber || "Not provided"}</p></div>
-                  <div><p className="text-muted-foreground text-xs">Item</p><p className="font-semibold">{selectedBooking.itemName}</p></div>
+                  <div><p className="text-muted-foreground text-xs">Item</p><p className="font-semibold flex items-center gap-2">{selectedBooking.itemName}{selectedBooking.itemType === "tour" ? <Badge className="bg-blue-100 text-blue-700 border-blue-200 text-[10px] px-2 py-0.5 font-bold border">Tour</Badge> : selectedBooking.itemType === "room" ? <Badge className="bg-emerald-100 text-emerald-700 border-emerald-200 text-[10px] px-2 py-0.5 font-bold border">Cottage</Badge> : null}</p></div>
                   <div><p className="text-muted-foreground text-xs">Guests</p><p className="font-semibold">{selectedBooking.guestCount}</p></div>
                   <div><p className="text-muted-foreground text-xs">Dates</p><p className="font-semibold">{selectedBooking.startDate}{selectedBooking.endDate !== selectedBooking.startDate ? ` → ${selectedBooking.endDate}` : ""}</p></div>
                   <div><p className="text-muted-foreground text-xs">Total</p><p className="font-bold text-primary text-lg">₱{selectedBooking.totalPrice?.toLocaleString()}</p></div>
@@ -334,7 +374,7 @@ export default function AdminDashboard() {
         </Dialog>
 
         {/* Stats */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+        <div className="grid grid-cols-2 lg:grid-cols-5 gap-5">
           {stats.map((stat, i) => (
             <Card key={i} className="border-none shadow-md rounded-2xl overflow-hidden bg-white group hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200">
               <CardContent className="p-0">
@@ -354,18 +394,28 @@ export default function AdminDashboard() {
         </div>
 
         {/* Revenue Chart */}
-        {revenueChartData.length > 0 && (
+        {(revenueChartData.length > 0 || chartRange !== "all") && (
           <Card className="border-none shadow-md rounded-2xl bg-white">
             <CardHeader className="pb-0 pt-6 px-6">
-              <div className="flex items-center justify-between">
+              <div className="flex items-center justify-between flex-wrap gap-3">
                 <div>
                   <CardTitle className="text-base font-headline font-bold text-slate-900">Monthly Revenue</CardTitle>
                   <CardDescription className="text-xs text-slate-400">Confirmed bookings only</CardDescription>
                 </div>
-                <TrendingUp className="h-5 w-5 text-primary opacity-60" />
+                <div className="flex items-center gap-2">
+                  {([["month","This Month"],["3months","Last 3 Months"],["all","All Time"]] as const).map(([val, label]) => (
+                    <button key={val} onClick={() => setChartRange(val)} className={cn("px-3 py-1.5 rounded-full text-xs font-semibold border transition-colors", chartRange === val ? "bg-primary text-white border-primary" : "bg-white text-slate-600 border-slate-200 hover:border-primary/40")}>
+                      {label}
+                    </button>
+                  ))}
+                  <TrendingUp className="h-5 w-5 text-primary opacity-60 ml-2" />
+                </div>
               </div>
             </CardHeader>
             <CardContent className="px-2 pb-4 pt-2">
+              {revenueChartData.length === 0 ? (
+                <div className="flex items-center justify-center h-[180px] text-slate-400 text-sm italic">No confirmed revenue in this period.</div>
+              ) : (
               <ResponsiveContainer width="100%" height={180}>
                 <BarChart data={revenueChartData} margin={{ top: 5, right: 10, left: 0, bottom: 0 }}>
                   <defs>
@@ -376,15 +426,16 @@ export default function AdminDashboard() {
                   </defs>
                   <CartesianGrid strokeDasharray="3 3" stroke="#f5f5f5" vertical={false} />
                   <XAxis dataKey="month" tick={{ fontSize: 11, fill: "#94a3b8" }} axisLine={false} tickLine={false} />
-                  <YAxis tick={{ fontSize: 11, fill: "#94a3b8" }} tickFormatter={v => `₱${(v/1000).toFixed(0)}k`} axisLine={false} tickLine={false} />
+                  <YAxis tick={{ fontSize: 11, fill: "#94a3b8" }} tickFormatter={(v: number) => `\u20B1${(v/1000).toFixed(0)}k`} axisLine={false} tickLine={false} />
                   <Tooltip
                     cursor={{ fill: "rgba(18,175,171,0.05)" }}
                     contentStyle={{ borderRadius: "12px", border: "1px solid #e2e8f0", boxShadow: "0 4px 20px rgba(0,0,0,0.08)", fontSize: "12px" }}
-                    formatter={(v: any) => [`₱${Number(v).toLocaleString()}`, "Revenue"]}
+                    formatter={(v: number) => [`\u20B1${Number(v).toLocaleString()}`, "Revenue"]}
                   />
                   <Bar dataKey="revenue" fill="url(#revenueGrad)" radius={[8,8,0,0]} maxBarSize={50} />
                 </BarChart>
               </ResponsiveContainer>
+              )}
             </CardContent>
           </Card>
         )}
@@ -439,21 +490,40 @@ export default function AdminDashboard() {
                         </TableRow>
                       </TableHeader>
                       <TableBody>
-                        {filteredBookings.map((booking) => (
-                          <TableRow key={booking.id} className="hover:bg-slate-50/40 transition-colors border-slate-50 cursor-pointer" onClick={() => { setSelectedBookingId(booking.id); setBookingNote(booking.adminNote || ""); }}>
+                        {filteredBookings.map((booking) => {
+                          const todayStr = new Date().toISOString().slice(0, 10);
+                          const isToday = booking.startDate === todayStr;
+                          return (
+                          <TableRow key={booking.id} className={cn("hover:bg-slate-50/40 transition-colors border-slate-50 cursor-pointer", isToday && "bg-amber-50/50")} onClick={() => { setSelectedBookingId(booking.id); setBookingNote(booking.adminNote || ""); }}>
                             <TableCell className="px-6 py-5">
                               <div className="flex items-center gap-3">
-                                <div className="h-9 w-9 rounded-full bg-slate-100 flex items-center justify-center"><User className="h-4 w-4 text-slate-400" /></div>
+                                <div className="h-9 w-9 rounded-full bg-primary/20 flex items-center justify-center shrink-0">
+                                  <span className="text-xs font-bold text-primary uppercase leading-none">
+                                    {(booking.guestName ?? "??").slice(0, 2)}
+                                  </span>
+                                </div>
                                 <div>
                                   <div className="font-bold text-slate-900 text-sm">{booking.guestName}</div>
                                   <div className="text-xs text-slate-400">{booking.contactNumber || "No contact"}</div>
                                 </div>
                               </div>
                             </TableCell>
-                            <TableCell className="px-6 py-5"><div className="flex items-center gap-1.5"><MapPin className="h-3 w-3 text-primary/50" /><span className="font-semibold text-slate-700 text-sm">{booking.itemName}</span></div></TableCell>
                             <TableCell className="px-6 py-5">
-                              <div className="text-sm font-bold text-slate-700">{booking.startDate}</div>
-                              {booking.endDate !== booking.startDate && <div className="text-xs text-slate-400 italic">to {booking.endDate}</div>}
+                              <div className="flex items-center gap-1.5 flex-wrap">
+                                <MapPin className="h-3 w-3 text-primary/50 shrink-0" />
+                                <span className="font-semibold text-slate-700 text-sm">{booking.itemName}</span>
+                                {booking.itemType === "tour" && <Badge className="bg-blue-100 text-blue-700 border-blue-200 text-[10px] px-2 py-0.5 font-bold border">Tour</Badge>}
+                                {booking.itemType === "room" && <Badge className="bg-emerald-100 text-emerald-700 border-emerald-200 text-[10px] px-2 py-0.5 font-bold border">Cottage</Badge>}
+                              </div>
+                            </TableCell>
+                            <TableCell className="px-6 py-5">
+                              <div className="flex items-center gap-2 flex-wrap">
+                                <div>
+                                  <div className="text-sm font-bold text-slate-700">{booking.startDate}</div>
+                                  {booking.endDate !== booking.startDate && <div className="text-xs text-slate-400 italic">to {booking.endDate}</div>}
+                                </div>
+                                {isToday && <Badge className="bg-amber-100 text-amber-700 border-amber-200 text-[10px] px-2 py-0.5 font-bold border">Today</Badge>}
+                              </div>
                             </TableCell>
                             <TableCell className="px-6 py-5">
                               <Badge className={cn("px-3 py-1 rounded-full text-[11px] font-bold border", getStatusColor(booking.status))}>{booking.status}</Badge>
@@ -484,7 +554,8 @@ export default function AdminDashboard() {
                             </div>
                             </TableCell>
                           </TableRow>
-                        ))}
+                          );
+                        })}
                       </TableBody>
                     </Table>
                   </div>
@@ -568,6 +639,43 @@ export default function AdminDashboard() {
                   {isSavingSettings && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
                   Save Payment Settings
                 </Button>
+
+                <div className="border-t border-slate-100 pt-6 mt-2 space-y-6">
+                  <div>
+                    <p className="text-base font-bold text-slate-700 mb-1">Resort Policy</p>
+                    <p className="text-xs text-muted-foreground">Configure cancellation policy and contact information.</p>
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-sm font-bold text-slate-600">Cancellation Policy (hours)</label>
+                    <Input
+                      type="number"
+                      placeholder="e.g. 24"
+                      value={cancellationHours}
+                      onChange={e => setCancellationHours(e.target.value)}
+                    />
+                    <p className="text-xs text-muted-foreground">Number of hours before check-in that guests can cancel.</p>
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-sm font-bold text-slate-600">Resort Contact Number</label>
+                    <Input
+                      placeholder="e.g. +63 912 345 6789"
+                      value={contactNumber}
+                      onChange={e => setContactNumber(e.target.value)}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-sm font-bold text-slate-600">Resort Address</label>
+                    <Input
+                      placeholder="e.g. Balatasan, Bulalacao, Oriental Mindoro"
+                      value={resortAddress}
+                      onChange={e => setResortAddress(e.target.value)}
+                    />
+                  </div>
+                  <Button onClick={handleSavePolicy} disabled={isSavingPolicy} className="w-full sm:w-auto">
+                    {isSavingPolicy && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
+                    Save Policy Settings
+                  </Button>
+                </div>
               </CardContent>
             </Card>
           </TabsContent>
