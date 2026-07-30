@@ -2,12 +2,12 @@
 
 import { SmartNavbar } from "@/components/smart-navbar";
 import { Footer } from "@/components/footer";
-import { RoomCard } from "@/components/room-card";
-import { TourCard } from "@/components/tour-card";
+import { RoomCard, RoomCardSkeleton } from "@/components/room-card";
+import { TourCard, TourCardSkeleton } from "@/components/tour-card";
 import { Button } from "@/components/ui/button";
 import Image from "next/image";
 import Link from "next/link";
-import { ArrowRight, Compass, Loader2, Waves, Anchor } from "lucide-react";
+import { ArrowRight, Compass, Waves, Anchor } from "lucide-react";
 import { PlaceHolderImages } from "@/lib/placeholder-images";
 import { useFirestore, useCollection, useMemoFirebase } from "@/firebase";
 import { collection, limit, query, where } from "firebase/firestore";
@@ -249,8 +249,9 @@ export default function Home() {
             </div>
 
             {roomsLoading ? (
-              <div className="flex justify-center py-20">
-                <Loader2 className="h-12 w-12 animate-spin text-primary opacity-50" />
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
+                <RoomCardSkeleton />
+                <RoomCardSkeleton />
               </div>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
@@ -298,8 +299,10 @@ export default function Home() {
             </div>
 
             {islandLoading ? (
-              <div className="flex justify-center py-20">
-                <Loader2 className="h-12 w-12 animate-spin text-primary opacity-50" />
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-10">
+                <TourCardSkeleton />
+                <TourCardSkeleton />
+                <TourCardSkeleton />
               </div>
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-10">
@@ -346,8 +349,10 @@ export default function Home() {
             </div>
 
             {waterLoading ? (
-              <div className="flex justify-center py-20">
-                <Loader2 className="h-12 w-12 animate-spin text-primary opacity-50" />
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-10">
+                <TourCardSkeleton />
+                <TourCardSkeleton />
+                <TourCardSkeleton />
               </div>
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-10">

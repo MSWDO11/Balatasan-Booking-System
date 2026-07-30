@@ -20,7 +20,8 @@ const ISLAND_FALLBACKS: Record<string, string> = {
   "flying fish": "https://images.unsplash.com/photo-1530541834187-2f74f5d4a4d6?w=600&q=80",
 };
 
-const DEFAULT_FALLBACK = "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=600&q=80";
+const DEFAULT_FALLBACK =
+  "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=600&q=80";
 
 function getFallback(title: string): string {
   const lower = title.toLowerCase();
@@ -46,8 +47,37 @@ interface TourCardProps {
   };
 }
 
+/** Skeleton placeholder shown while tour data is loading */
+export function TourCardSkeleton() {
+  return (
+    <div className="card-liquid bg-white border border-primary/10 shadow-md overflow-hidden">
+      {/* Image area */}
+      <div className="h-48 w-full bg-primary/8 animate-pulse rounded-t-3xl" />
+      <div className="p-6 space-y-4">
+        {/* Title */}
+        <div className="h-6 w-3/4 rounded-md bg-primary/10 animate-pulse" />
+        {/* Description */}
+        <div className="space-y-2">
+          <div className="h-4 w-full rounded-md bg-slate-100 animate-pulse" />
+          <div className="h-4 w-4/5 rounded-md bg-slate-100 animate-pulse" />
+        </div>
+        {/* Duration + price row */}
+        <div className="flex justify-between">
+          <div className="h-4 w-1/4 rounded-md bg-slate-100 animate-pulse" />
+          <div className="h-4 w-1/4 rounded-md bg-slate-100 animate-pulse" />
+        </div>
+        {/* Button */}
+        <div className="h-11 w-full rounded-xl bg-primary/15 animate-pulse mt-2" />
+      </div>
+    </div>
+  );
+}
+
 export function TourCard({ tour }: TourCardProps) {
-  const displayTitle = tour.title || tour.name || "Tour Experience";
+  // Guard: if the tour has no id or title/name it's not ready to display
+  const displayTitle = tour?.title || tour?.name || "";
+  if (!tour?.id || !displayTitle) return <TourCardSkeleton />;
+
   const fallback = getFallback(displayTitle);
   const [imgSrc, setImgSrc] = useState(tour.imageUrl || fallback);
   const { user } = useUser();
@@ -56,12 +86,15 @@ export function TourCard({ tour }: TourCardProps) {
   const isFlyingFish = displayTitle.toLowerCase().includes("flying fish");
   const isJetSki = displayTitle.toLowerCase().includes("jet ski");
 
-  const defaultRate = isJetSki ? 150 : (isFlyingFish ? 500 : 1000);
+  const defaultRate = isJetSki ? 150 : isFlyingFish ? 500 : 1000;
   const baseRate = tour.pricePerPerson ?? tour.price ?? defaultRate;
-  const itemDiscount = tour.discountPercent && tour.discountPercent > 0 ? (1 - tour.discountPercent / 100) : 1;
+  const itemDiscount =
+    tour.discountPercent && tour.discountPercent > 0
+      ? 1 - tour.discountPercent / 100
+      : 1;
   const rate = Math.round(baseRate * itemDiscount);
   const unitLabel = isJetSki ? "min" : "pax";
-  const firstTag = tour.tags?.find(t => t.trim());
+  const firstTag = tour.tags?.find((t) => t.trim());
 
   const handleViewDetails = () => {
     if (!user) {
@@ -84,7 +117,7 @@ export function TourCard({ tour }: TourCardProps) {
           unoptimized={imgSrc.startsWith("data:")}
         />
         <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent" />
-        {/* Category badge — replaced by first tag if available */}
+        {/* Category / first tag badge */}
         <Badge className="absolute top-4 left-4 bg-[#6FDDC2] text-[#006D6B] hover:bg-[#6FDDC2]/90 border-none font-semibold px-3 py-1 shadow rounded-full">
           {firstTag || "Adventure"}
         </Badge>
@@ -97,25 +130,37 @@ export function TourCard({ tour }: TourCardProps) {
       </div>
 
       <CardHeader className="pt-6 pb-2">
-        <h3 className="font-headline text-2xl font-bold text-slate-900">{displayTitle}</h3>
+        <h3 className="font-headline text-2xl font-bold text-slate-900">
+          {displayTitle}
+        </h3>
       </CardHeader>
 
       <CardContent className="space-y-4">
-        <p className="text-[#12AFAB] text-sm line-clamp-2">{tour.description}</p>
+        <p className="text-[#12AFAB] text-sm line-clamp-2">
+          {tour.description || "No description available."}
+        </p>
         <div className="flex items-center justify-between text-sm">
           <div className="flex items-center gap-2 text-[#12AFAB]">
-            {isJetSki ? <Timer className="h-5 w-5" /> : <Clock className="h-5 w-5" />}
-            <span className="font-medium">{tour.duration}</span>
+            {isJetSki ? (
+              <Timer className="h-5 w-5" />
+            ) : (
+              <Clock className="h-5 w-5" />
+            )}
+            <span className="font-medium">{tour.duration || "—"}</span>
           </div>
           <div className="text-right">
             {tour.originalPrice && tour.originalPrice > 0 && (
-              <p className="text-xs text-slate-400 line-through">₱{tour.originalPrice.toLocaleString()}</p>
+              <p className="text-xs text-slate-400 line-through">
+                ₱{tour.originalPrice.toLocaleString()}
+              </p>
             )}
             <div className="font-bold text-[#12AFAB] flex items-center gap-1">
               <span className="text-lg">₱</span>
               <span>
                 {rate.toLocaleString()}{" "}
-                <span className="text-xs text-slate-400 font-normal">/ {unitLabel}</span>
+                <span className="text-xs text-slate-400 font-normal">
+                  / {unitLabel}
+                </span>
               </span>
             </div>
           </div>
@@ -123,7 +168,12 @@ export function TourCard({ tour }: TourCardProps) {
       </CardContent>
 
       <CardFooter className="pb-6">
-        <Button variant="outline" size="lg" className="w-full gap-2" onClick={handleViewDetails}>
+        <Button
+          variant="outline"
+          size="lg"
+          className="w-full gap-2"
+          onClick={handleViewDetails}
+        >
           <Eye className="h-4 w-4" />
           Details
           <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />

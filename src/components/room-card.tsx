@@ -25,14 +25,43 @@ interface RoomCardProps {
   };
 }
 
+/** Skeleton placeholder shown while room data is loading */
+export function RoomCardSkeleton() {
+  return (
+    <div className="card-liquid bg-white/70 border border-primary/10 shadow-md overflow-hidden">
+      {/* Image area */}
+      <div className="h-56 w-full bg-primary/8 animate-pulse rounded-t-3xl" />
+      <div className="p-6 space-y-4">
+        {/* Title */}
+        <div className="h-6 w-3/4 rounded-md bg-primary/10 animate-pulse" />
+        {/* Description lines */}
+        <div className="space-y-2">
+          <div className="h-4 w-full rounded-md bg-slate-100 animate-pulse" />
+          <div className="h-4 w-5/6 rounded-md bg-slate-100 animate-pulse" />
+        </div>
+        {/* Capacity row */}
+        <div className="h-4 w-1/3 rounded-md bg-slate-100 animate-pulse" />
+        {/* Button */}
+        <div className="h-11 w-full rounded-xl bg-primary/15 animate-pulse mt-2" />
+      </div>
+    </div>
+  );
+}
+
 export function RoomCard({ room }: RoomCardProps) {
+  // Guard: if the room has no id or name it's not ready to display
+  if (!room?.id || !room?.name) return <RoomCardSkeleton />;
+
   const baseRate = room.pricePerPerson ?? room.price ?? 0;
-  const itemDiscount = room.discountPercent && room.discountPercent > 0 ? (1 - room.discountPercent / 100) : 1;
+  const itemDiscount =
+    room.discountPercent && room.discountPercent > 0
+      ? 1 - room.discountPercent / 100
+      : 1;
   const rate = Math.round(baseRate * itemDiscount);
   const [imgSrc, setImgSrc] = useState(room.imageUrl || FALLBACK_ROOM_IMAGE);
   const { user } = useUser();
   const router = useRouter();
-  const firstTag = room.tags?.find(t => t.trim());
+  const firstTag = room.tags?.find((t) => t.trim());
 
   const handleViewDetails = () => {
     if (!user) {
@@ -81,17 +110,24 @@ export function RoomCard({ room }: RoomCardProps) {
       </CardHeader>
 
       <CardContent className="space-y-4">
-        <p className="text-muted-foreground text-sm line-clamp-2">{room.description}</p>
+        <p className="text-muted-foreground text-sm line-clamp-2">
+          {room.description || "No description available."}
+        </p>
         <div className="flex items-center gap-4 text-sm text-muted-foreground">
           <div className="flex items-center gap-1.5">
             <Users className="h-4 w-4 text-primary" />
-            <span>Max {room.capacity} guests</span>
+            <span>Max {room.capacity ?? "—"} guests</span>
           </div>
         </div>
       </CardContent>
 
       <CardFooter className="pb-6">
-        <Button variant="default" size="lg" className="w-full gap-2" onClick={handleViewDetails}>
+        <Button
+          variant="default"
+          size="lg"
+          className="w-full gap-2"
+          onClick={handleViewDetails}
+        >
           <Eye className="h-4 w-4" />
           View Details
           <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
