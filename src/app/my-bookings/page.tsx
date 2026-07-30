@@ -9,12 +9,13 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Calendar, Loader2, ShoppingBag, ChevronRight, CreditCard, Clock, Image as ImageIcon, CheckCircle, XCircle } from "lucide-react";
+import { Calendar, ShoppingBag, ChevronRight, CreditCard, Clock, Image as ImageIcon, CheckCircle, XCircle } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import Image from "next/image";
 import { useToast } from "@/hooks/use-toast";
+import { Spinner } from "@/components/spinner";
 
 export default function MyBookingsPage() {
   const { user, isUserLoading } = useUser();
@@ -73,7 +74,7 @@ export default function MyBookingsPage() {
       <div className="flex min-h-screen flex-col">
         <SmartNavbar />
         <main className="flex-grow flex items-center justify-center">
-          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          <Spinner size="lg" />
         </main>
         <Footer />
       </div>
@@ -227,15 +228,13 @@ export default function MyBookingsPage() {
                       )}
                     </div>
                     
-                    <div className="md:w-32 flex items-center justify-center border-t md:border-t-0 md:border-l border-secondary/20 bg-white group cursor-pointer hover:bg-secondary/5 transition-colors">
-                      <div className="flex flex-col items-center gap-3 py-8 px-4 text-center">
-                        <div className="flex flex-col items-center">
-                          <span className="text-sm font-bold text-foreground leading-tight">View</span>
-                          <span className="text-sm font-bold text-foreground leading-tight">Details</span>
-                        </div>
-                        <ChevronRight className="h-6 w-6 text-primary transition-transform group-hover:translate-x-1" />
-                      </div>
-                    </div>
+                    <Link
+                      href={booking.itemType === "room" ? `/accommodations/${booking.itemId}` : `/tours/${booking.itemId}`}
+                      className="flex items-center justify-center gap-3 border-t border-secondary/20 bg-white group cursor-pointer hover:bg-secondary/5 transition-colors px-6 py-4 md:py-0 md:flex-col md:justify-center md:border-t-0 md:border-l md:w-32"
+                    >
+                      <span className="text-sm font-bold text-foreground">View Details</span>
+                      <ChevronRight className="h-5 w-5 text-primary transition-transform group-hover:translate-x-1" />
+                    </Link>
                   </CardContent>
                 </Card>
               ))}
