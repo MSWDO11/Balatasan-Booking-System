@@ -9,7 +9,8 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Calendar } from "@/components/ui/calendar";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Clock, Users, Shield, MapPin, Star, Calendar as CalendarIcon, Loader2, CreditCard, ShieldCheck, Timer, Tag, TrendingDown } from "lucide-react";
+import { Clock, Users, Shield, MapPin, Star, Calendar as CalendarIcon, Loader2, CreditCard, ShieldCheck, Tag, TrendingDown } from "lucide-react";
+import { Spinner } from "@/components/spinner";
 import Image from "next/image";
 import { PlaceHolderImages } from "@/lib/placeholder-images";
 import { useUser, useFirestore, useDoc, useMemoFirebase, addDocumentNonBlocking } from "@/firebase";
@@ -114,7 +115,7 @@ export default function TourDetailsPage({ params }: { params: Promise<{ id: stri
       <div className="flex min-h-screen flex-col">
         <SmartNavbar />
         <main className="flex-grow flex items-center justify-center">
-          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          <Spinner size="lg" />
         </main>
         <Footer />
       </div>

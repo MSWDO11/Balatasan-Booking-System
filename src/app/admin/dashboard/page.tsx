@@ -24,6 +24,7 @@ import { useState, useMemo, useEffect } from "react";
 import { cn } from "@/lib/utils";
 import Image from "next/image";
 import Link from "next/link";
+import { Spinner } from "@/components/spinner";
 
 export default function AdminDashboard() {
   const firestore = useFirestore();
@@ -219,7 +220,9 @@ export default function AdminDashboard() {
 
   if (isUserLoading || isAdminRoleLoading) return (
     <div className="flex min-h-screen flex-col"><AdminNavbar />
-      <main className="flex-grow flex items-center justify-center"><Loader2 className="h-8 w-8 animate-spin text-primary" /></main>
+      <main className="flex-grow flex items-center justify-center">
+        <Spinner size="lg" />
+      </main>
     <Footer /></div>
   );
 
@@ -476,7 +479,7 @@ export default function AdminDashboard() {
               </CardHeader>
               <CardContent className="p-0">
                 {isBookingsLoading ? (
-                  <div className="flex justify-center py-24"><Loader2 className="h-10 w-10 animate-spin text-primary opacity-50" /></div>
+                  <div className="flex justify-center py-24"><Spinner size="lg" /></div>
                 ) : filteredBookings.length === 0 ? (
                   <div className="text-center py-24 text-slate-400 italic">No bookings found.</div>
                 ) : (
@@ -580,7 +583,7 @@ export default function AdminDashboard() {
               </CardHeader>
               <CardContent className="p-0">
                 {isAdminsLoading ? (
-                  <div className="flex justify-center py-24"><Loader2 className="h-10 w-10 animate-spin text-primary opacity-50" /></div>
+                  <div className="flex justify-center py-24"><Spinner size="lg" /></div>
                 ) : (
                   <Table>
                     <TableHeader className="bg-slate-50/50">

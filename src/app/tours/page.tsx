@@ -5,7 +5,8 @@ import { SmartNavbar } from "@/components/smart-navbar";
 import { Footer } from "@/components/footer";
 import { TourCard } from "@/components/tour-card";
 import { Input } from "@/components/ui/input";
-import { Search, Compass, Loader2 } from "lucide-react";
+import { Search, Compass } from "lucide-react";
+import { Spinner } from "@/components/spinner";
 import { useUser, useFirestore, useCollection, useMemoFirebase } from "@/firebase";
 import { collection } from "firebase/firestore";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -44,7 +45,7 @@ function ToursContent() {
       <div className="flex min-h-screen flex-col">
         <SmartNavbar />
         <main className="flex-grow flex items-center justify-center">
-          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          <Spinner size="lg" />
         </main>
         <Footer />
       </div>
@@ -84,7 +85,7 @@ function ToursContent() {
           <div className="container mx-auto px-4 space-y-16">
             {isToursLoading ? (
               <div className="flex justify-center py-20">
-                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                <Spinner size="lg" />
               </div>
             ) : (
               <>
@@ -150,7 +151,7 @@ export default function ToursPage() {
       <div className="flex min-h-screen flex-col">
         <SmartNavbar />
         <main className="flex-grow flex items-center justify-center">
-          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          <Spinner size="lg" />
         </main>
         <Footer />
       </div>

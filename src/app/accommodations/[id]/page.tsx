@@ -7,6 +7,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
 import { Users, MapPin, Star, Loader2, CreditCard, ShieldCheck, Tag, TrendingDown } from "lucide-react";
+import { Spinner } from "@/components/spinner";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -85,7 +86,7 @@ export default function RoomDetailsPage({ params }: { params: Promise<{ id: stri
 
   if (isRoomLoading) return (
     <div className="flex min-h-screen flex-col"><SmartNavbar />
-      <main className="flex-grow flex items-center justify-center"><Loader2 className="h-8 w-8 animate-spin text-primary" /></main>
+      <main className="flex-grow flex items-center justify-center"><Spinner size="lg" /></main>
     <Footer /></div>
   );
 

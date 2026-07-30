@@ -5,7 +5,8 @@ import { Footer } from "@/components/footer";
 import { RoomCard } from "@/components/room-card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Search, SlidersHorizontal, Loader2 } from "lucide-react";
+import { Search, SlidersHorizontal } from "lucide-react";
+import { Spinner } from "@/components/spinner";
 import { useUser, useFirestore, useCollection, useMemoFirebase } from "@/firebase";
 import { collection } from "firebase/firestore";
 import { useRouter } from "next/navigation";
@@ -34,7 +35,7 @@ export default function AccommodationsPage() {
       <div className="flex min-h-screen flex-col">
         <SmartNavbar />
         <main className="flex-grow flex items-center justify-center">
-          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          <Spinner size="lg" />
         </main>
         <Footer />
       </div>
@@ -74,7 +75,7 @@ export default function AccommodationsPage() {
           <div className="container mx-auto px-4">
             {isRoomsLoading ? (
               <div className="flex justify-center py-20">
-                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                <Spinner size="lg" />
               </div>
             ) : rooms && rooms.length > 0 ? (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">

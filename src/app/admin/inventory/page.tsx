@@ -9,6 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Loader2, Save, Trash2, Eye, Database, ShieldAlert, Upload, ImageIcon, ToggleLeft, ToggleRight, MapPin, Clock, Tag, Copy, AlertTriangle, Search } from "lucide-react";
+import { Spinner } from "@/components/spinner";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 import { useFirestore, useCollection, useMemoFirebase, addDocumentNonBlocking, deleteDocumentNonBlocking, setDocumentNonBlocking, useUser, useDoc } from "@/firebase";
@@ -280,7 +281,7 @@ export default function AdminInventoryPage() {
       <div className="flex min-h-screen flex-col">
         <AdminNavbar />
         <main className="flex-grow flex items-center justify-center">
-          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          <Spinner size="lg" />
         </main>
         <Footer />
       </div>
