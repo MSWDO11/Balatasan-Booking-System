@@ -12,13 +12,13 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import {
   Clock, TrendingUp, MoreVertical, Check, X, Loader2, ShieldAlert,
   MapPin, Wallet, Users as UsersIcon, ShoppingBag, Download,
-  Search, Eye, UserPlus, Image as ImageIcon, Settings
+  Search, Eye, UserPlus, Image as ImageIcon, Settings, Star, MessageSquare, Bell
 } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from "recharts";
 import { useFirestore, useCollection, useMemoFirebase, updateDocumentNonBlocking, useUser, setDocumentNonBlocking, useDoc, addDocumentNonBlocking } from "@/firebase";
-import { collectionGroup, query, doc, collection } from "firebase/firestore";
+import { collectionGroup, query, doc, collection, orderBy } from "firebase/firestore";
 import { useToast } from "@/hooks/use-toast";
 import { useState, useMemo, useEffect } from "react";
 import { cn } from "@/lib/utils";
@@ -75,6 +75,13 @@ export default function AdminDashboard() {
 
   const { data: rawBookings, isLoading: isBookingsLoading } = useCollection(bookingsQuery);
   const { data: adminsList, isLoading: isAdminsLoading } = useCollection(adminsQuery);
+
+  // All reviews across all items (collectionGroup on "entries")
+  const allReviewsQuery = useMemoFirebase(() => {
+    if (!firestore || !canLoadData) return null;
+    return query(collectionGroup(firestore, "entries"), orderBy("createdAt", "desc"));
+  }, [firestore, canLoadData]);
+  const { data: allReviews, isLoading: isReviewsLoading } = useCollection(allReviewsQuery);
 
   // Sync payment settings into local state for editing
   useEffect(() => {
@@ -461,6 +468,10 @@ export default function AdminDashboard() {
         <Tabs defaultValue="bookings" className="w-full space-y-6">
           <TabsList className="bg-white p-1.5 rounded-2xl shadow-md border border-slate-100 w-fit gap-1">
             <TabsTrigger value="bookings" className="rounded-xl px-6 py-2.5 font-bold text-sm data-[state=active]:bg-primary data-[state=active]:text-white data-[state=active]:shadow-md transition-all">Reservations</TabsTrigger>
+            <TabsTrigger value="reviews" className="rounded-xl px-6 py-2.5 font-bold text-sm data-[state=active]:bg-primary data-[state=active]:text-white data-[state=active]:shadow-md transition-all flex items-center gap-1.5">
+              <Star className="h-3.5 w-3.5" />Reviews
+              {allReviews && allReviews.length > 0 && <span className="bg-amber-100 text-amber-700 text-[10px] font-bold px-1.5 py-0.5 rounded-full">{allReviews.length}</span>}
+            </TabsTrigger>
             <TabsTrigger value="users" className="rounded-xl px-6 py-2.5 font-bold text-sm data-[state=active]:bg-primary data-[state=active]:text-white data-[state=active]:shadow-md transition-all">Administrators</TabsTrigger>
             <TabsTrigger value="settings" className="rounded-xl px-6 py-2.5 font-bold text-sm data-[state=active]:bg-primary data-[state=active]:text-white data-[state=active]:shadow-md transition-all">Settings</TabsTrigger>
           </TabsList>
@@ -582,8 +593,85 @@ export default function AdminDashboard() {
             </Card>
           </TabsContent>
 
-          <TabsContent value="users">
+          <TabsContent value="reviews">
             <Card className="border-none shadow-2xl shadow-slate-200/50 rounded-3xl overflow-hidden bg-white">
+              <CardHeader className="p-8 border-b border-slate-50">
+                <div className="flex items-center justify-between flex-wrap gap-3">
+                  <div>
+                    <CardTitle className="text-2xl font-headline font-bold text-slate-900 flex items-center gap-2">
+                      <Star className="h-5 w-5 text-amber-400 fill-amber-400" />
+                      Ratings &amp; Reviews
+                    </CardTitle>
+                    <CardDescription className="text-slate-500">All guest reviews across cottages and tours.</CardDescription>
+                  </div>
+                  {allReviews && allReviews.length > 0 && (
+                    <div className="flex items-center gap-2 bg-amber-50 border border-amber-100 rounded-full px-4 py-1.5">
+                      <Star className="h-4 w-4 text-amber-400 fill-amber-400" />
+                      <span className="text-sm font-bold text-amber-700">
+                        {(allReviews.reduce((s: number, r: any) => s + (r.rating ?? 0), 0) / allReviews.length).toFixed(1)} avg
+                      </span>
+                      <span className="text-xs text-amber-600">({allReviews.length} total)</span>
+                    </div>
+                  )}
+                </div>
+              </CardHeader>
+              <CardContent className="p-0">
+                {isReviewsLoading ? (
+                  <div className="flex justify-center py-24"><Spinner size="lg" /></div>
+                ) : !allReviews || allReviews.length === 0 ? (
+                  <div className="flex flex-col items-center justify-center py-24 gap-3 text-slate-400">
+                    <Star className="h-10 w-10 opacity-20" />
+                    <p className="text-sm italic">No reviews yet.</p>
+                  </div>
+                ) : (
+                  <div className="divide-y divide-slate-50">
+                    {allReviews.map((review: any) => {
+                      // parent doc id is "{itemType}_{itemId}"
+                      const parentId: string = review._parentPath?.split("/")[1] ?? "";
+                      const [itemType, ...rest] = parentId.split("_");
+                      const itemId = rest.join("_");
+                      return (
+                        <div key={review.id} className="flex items-start gap-4 px-8 py-5 hover:bg-slate-50/40 transition-colors">
+                          {/* Avatar */}
+                          <div className="h-9 w-9 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+                            <span className="text-xs font-bold text-primary uppercase">
+                              {(review.userName ?? "G").slice(0, 2)}
+                            </span>
+                          </div>
+                          <div className="flex-1 min-w-0 space-y-1">
+                            <div className="flex flex-wrap items-center gap-2">
+                              <span className="text-sm font-bold text-slate-800">{review.userName}</span>
+                              <Badge className="bg-slate-100 text-slate-500 border-none text-[10px] font-semibold capitalize px-2">
+                                {itemType === "room" ? "Cottage" : "Tour"}
+                              </Badge>
+                              {itemId && (
+                                <span className="text-[10px] text-slate-400 font-mono">{itemId.slice(0, 8)}</span>
+                              )}
+                            </div>
+                            {/* Stars */}
+                            <div className="flex items-center gap-0.5">
+                              {[1,2,3,4,5].map(s => (
+                                <Star key={s} className={cn("h-3.5 w-3.5", (review.rating ?? 0) >= s ? "fill-amber-400 text-amber-400" : "fill-none text-slate-200")} />
+                              ))}
+                              <span className="text-xs text-slate-400 ml-1">{review.rating}/5</span>
+                            </div>
+                            {review.comment && (
+                              <p className="text-sm text-slate-600 leading-relaxed">{review.comment}</p>
+                            )}
+                            <p className="text-[10px] text-slate-400">
+                              {review.createdAt ? new Date(review.createdAt).toLocaleDateString("en-PH", { year: "numeric", month: "short", day: "numeric" }) : ""}
+                            </p>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="users">            <Card className="border-none shadow-2xl shadow-slate-200/50 rounded-3xl overflow-hidden bg-white">
               <CardHeader className="p-8 border-b border-slate-50">
                 <CardTitle className="text-2xl font-headline font-bold text-slate-900">Administrator Overview</CardTitle>
                 <CardDescription className="text-slate-500">Authorized users with system-level access.</CardDescription>
