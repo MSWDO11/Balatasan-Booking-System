@@ -58,7 +58,8 @@ export default function LoginPage() {
       } else {
         await signInWithEmailAndPassword(auth, email, password);
       }
-      // On success useEffect will redirect via onAuthStateChanged
+      // Success — redirect handled by useEffect, but reset loading in case of delay
+      router.push("/");
     } catch (err: any) {
       const code = err?.code ?? "";
       if (code === "auth/email-already-in-use")      setErrorMsg("This email is already registered. Try signing in instead.");
