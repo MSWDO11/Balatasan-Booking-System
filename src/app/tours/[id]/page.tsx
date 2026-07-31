@@ -9,7 +9,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Calendar } from "@/components/ui/calendar";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Clock, Users, Shield, MapPin, Star, Calendar as CalendarIcon, Loader2, CreditCard, ShieldCheck, Tag, TrendingDown } from "lucide-react";
+import { Clock, Users, Shield, MapPin, Star, Calendar as CalendarIcon, Loader2, CreditCard, ShieldCheck, Tag, TrendingDown, ArrowLeft } from "lucide-react";
 import { Spinner } from "@/components/spinner";
 import { ReviewSection } from "@/components/review-section";
 import { useCollection } from "@/firebase";
@@ -145,6 +145,16 @@ export default function TourDetailsPage({ params }: { params: Promise<{ id: stri
       <SmartNavbar />
       <main className="flex-grow">
         <section className="container mx-auto py-10 px-4">
+          {/* Back to My Bookings */}
+          {user && (
+            <button
+              onClick={() => router.push("/my-bookings")}
+              className="flex items-center gap-2 text-sm font-semibold text-primary hover:text-primary/80 transition-colors mb-6 group"
+            >
+              <ArrowLeft className="h-4 w-4 transition-transform group-hover:-translate-x-1" />
+              Back to My Bookings
+            </button>
+          )}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-12">
             <div className="lg:col-span-2 space-y-8">
               <div className="relative h-[400px] md:h-[500px] rounded-3xl overflow-hidden shadow-2xl">
