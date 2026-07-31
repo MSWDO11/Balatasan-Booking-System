@@ -36,7 +36,7 @@ function NavbarInner() {
     return `${href}${sep}preview=user`;
   };
 
-  const handleSignOut = () => signOut(auth).then(() => router.push("/"));
+  const handleSignOut = () => signOut(auth).then(() => { router.push("/"); router.refresh(); });
 
   return (
     <>

@@ -14,7 +14,7 @@ export function AdminNavbar() {
   const router = useRouter();
 
   const handleSignOut = () => {
-    signOut(auth).then(() => router.push("/"));
+    signOut(auth).then(() => { router.push("/"); router.refresh(); });
   };
 
   return (
