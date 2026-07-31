@@ -9,7 +9,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Calendar, ShoppingBag, ChevronRight, CreditCard, Clock, Image as ImageIcon, CheckCircle, XCircle, PartyPopper, Bell } from "lucide-react";
+import { Calendar, ShoppingBag, ChevronRight, CreditCard, Clock, Image as ImageIcon, CheckCircle, XCircle, PartyPopper, Bell, MapPin, Heart } from "lucide-react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState, Suspense } from "react";
@@ -104,28 +104,63 @@ function MyBookingsContent() {
       <main className="flex-grow container mx-auto py-12 px-4">
         <div className="max-w-4xl mx-auto space-y-6">
 
-          {/* ── Just-booked confirmation banner ── */}
+          {/* ── Just-booked full thank-you card ── */}
           {justBooked && (
-            <div className="rounded-2xl bg-primary text-primary-foreground p-6 flex flex-col sm:flex-row items-start sm:items-center gap-4 shadow-lg">
-              <div className="bg-white/20 p-3 rounded-full shrink-0">
-                <PartyPopper className="h-7 w-7" />
+            <div className="rounded-3xl bg-white border border-primary/10 shadow-2xl overflow-hidden">
+              {/* Top teal stripe */}
+              <div className="h-2 w-full bg-primary" />
+              <div className="p-8 sm:p-12 flex flex-col items-center text-center gap-6">
+                {/* Icon */}
+                <div className="relative">
+                  <div className="bg-primary/10 rounded-full p-6">
+                    <PartyPopper className="h-14 w-14 text-primary" />
+                  </div>
+                  <span className="absolute -top-1 -right-1 text-2xl">🎉</span>
+                </div>
+
+                {/* Heading */}
+                <div className="space-y-2">
+                  <h2 className="text-3xl sm:text-4xl font-headline font-bold text-primary">
+                    Thank You for Booking!
+                  </h2>
+                  <p className="text-muted-foreground text-base max-w-md mx-auto leading-relaxed">
+                    Your reservation at <strong className="text-foreground">Balatasan Stay</strong> has been received.
+                    We&apos;re excited to host you!
+                  </p>
+                </div>
+
+                {/* Info steps */}
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 w-full max-w-xl mt-2">
+                  <div className="flex flex-col items-center gap-2 p-4 rounded-2xl bg-primary/5">
+                    <CreditCard className="h-6 w-6 text-primary" />
+                    <p className="text-xs font-bold text-slate-700">Complete Payment</p>
+                    <p className="text-[11px] text-muted-foreground">Send via GCash and upload your receipt below</p>
+                  </div>
+                  <div className="flex flex-col items-center gap-2 p-4 rounded-2xl bg-amber-50">
+                    <Clock className="h-6 w-6 text-amber-500" />
+                    <p className="text-xs font-bold text-slate-700">Wait for Confirmation</p>
+                    <p className="text-[11px] text-muted-foreground">Our team will confirm within <strong>24 hours</strong></p>
+                  </div>
+                  <div className="flex flex-col items-center gap-2 p-4 rounded-2xl bg-emerald-50">
+                    <MapPin className="h-6 w-6 text-emerald-500" />
+                    <p className="text-xs font-bold text-slate-700">Enjoy Your Stay</p>
+                    <p className="text-[11px] text-muted-foreground">Head to Balatasan, Bulalacao on your scheduled date</p>
+                  </div>
+                </div>
+
+                {/* Dismiss */}
+                <div className="flex flex-col items-center gap-2 pt-2">
+                  <Button
+                    size="lg"
+                    className="px-10 gap-2"
+                    onClick={() => router.replace("/my-bookings")}
+                  >
+                    <Heart className="h-4 w-4" />
+                    View My Booking & Pay
+                  </Button>
+                  <p className="text-xs text-muted-foreground">Scroll down to see your booking details and payment instructions</p>
+                </div>
               </div>
-              <div className="flex-1 space-y-1">
-                <p className="font-bold text-lg leading-tight">Booking Submitted!</p>
-                <p className="text-sm text-primary-foreground/85 leading-relaxed">
-                  Your reservation has been received. Our team will review it and get back to you
-                  <strong className="text-primary-foreground"> within 24 hours</strong> to confirm your booking.
-                  In the meantime, please complete your payment below.
-                </p>
-              </div>
-              <Button
-                size="sm"
-                variant="secondary"
-                className="shrink-0 bg-white/20 hover:bg-white/30 text-primary-foreground border-none"
-                onClick={() => router.replace("/my-bookings")}
-              >
-                Dismiss
-              </Button>
             </div>
           )}
 
