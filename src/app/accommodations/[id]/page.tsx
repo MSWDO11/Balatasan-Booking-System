@@ -8,6 +8,9 @@ import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
 import { Users, MapPin, Star, Loader2, CreditCard, ShieldCheck, Tag, TrendingDown } from "lucide-react";
 import { Spinner } from "@/components/spinner";
+import { ReviewSection } from "@/components/review-section";
+import { useCollection } from "@/firebase";
+import { query, orderBy } from "firebase/firestore";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -37,6 +40,13 @@ export default function RoomDetailsPage({ params }: { params: Promise<{ id: stri
 
   const roomRef = useMemoFirebase(() => firestore ? doc(firestore, "rooms", id) : null, [firestore, id]);
   const { data: room, isLoading: isRoomLoading } = useDoc(roomRef);
+
+  // Dynamic average rating
+  const reviewsRef = useMemoFirebase(() => firestore ? collection(firestore, "reviews", `room_${id}`, "entries") : null, [firestore, id]);
+  const reviewsQuery = useMemoFirebase(() => reviewsRef ? query(reviewsRef, orderBy("createdAt", "desc")) : null, [reviewsRef]);
+  const { data: reviews } = useCollection(reviewsQuery);
+  const avgRating = reviews?.length ? (reviews.reduce((s: number, r: any) => s + (r.rating ?? 0), 0) / reviews.length) : 0;
+  const reviewCount = reviews?.length ?? 0;
 
   // Load GCash settings so the payment alert stays in sync with admin settings
   const settingsRef = useMemoFirebase(() => firestore ? doc(firestore, "settings", "payment") : null, [firestore]);
@@ -130,7 +140,8 @@ export default function RoomDetailsPage({ params }: { params: Promise<{ id: stri
                     </div>
                   </div>
                   <div className="flex items-center gap-1 bg-accent/10 text-accent-foreground px-3 py-1.5 rounded-full font-bold">
-                    <Star className="h-4 w-4 fill-current" /><span>4.9 (New)</span>
+                    <Star className="h-4 w-4 fill-current text-amber-400" />
+                    <span>{reviewCount > 0 ? `${avgRating.toFixed(1)} (${reviewCount})` : "New"}</span>
                   </div>
                 </div>
 
@@ -184,6 +195,9 @@ export default function RoomDetailsPage({ params }: { params: Promise<{ id: stri
                     50% downpayment via G-Cash: <strong>{gcashNumber} ({gcashName})</strong>. Upload receipt in My Bookings to confirm.
                   </AlertDescription>
                 </Alert>
+
+                {/* Ratings & Reviews */}
+                <ReviewSection itemId={id} itemType="room" />
               </div>
             </div>
 

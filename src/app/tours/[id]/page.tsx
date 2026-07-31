@@ -11,6 +11,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Clock, Users, Shield, MapPin, Star, Calendar as CalendarIcon, Loader2, CreditCard, ShieldCheck, Tag, TrendingDown } from "lucide-react";
 import { Spinner } from "@/components/spinner";
+import { ReviewSection } from "@/components/review-section";
+import { useCollection } from "@/firebase";
+import { query, orderBy } from "firebase/firestore";
 import Image from "next/image";
 import { PlaceHolderImages } from "@/lib/placeholder-images";
 import { useUser, useFirestore, useDoc, useMemoFirebase, addDocumentNonBlocking } from "@/firebase";
@@ -38,6 +41,13 @@ export default function TourDetailsPage({ params }: { params: Promise<{ id: stri
 
   const tourRef = useMemoFirebase(() => firestore ? doc(firestore, "tours", id) : null, [firestore, id]);
   const { data: tour, isLoading: isTourLoading } = useDoc(tourRef);
+
+  // Dynamic average rating
+  const reviewsRef = useMemoFirebase(() => firestore ? collection(firestore, "reviews", `tour_${id}`, "entries") : null, [firestore, id]);
+  const reviewsQuery = useMemoFirebase(() => reviewsRef ? query(reviewsRef, orderBy("createdAt", "desc")) : null, [reviewsRef]);
+  const { data: reviews } = useCollection(reviewsQuery);
+  const avgRating = reviews?.length ? (reviews.reduce((s: number, r: any) => s + (r.rating ?? 0), 0) / reviews.length) : 0;
+  const reviewCount = reviews?.length ?? 0;
 
   const displayTitle = tour?.name || tour?.title || "";
   const isFlyingFish = displayTitle.toLowerCase().includes("flying fish");
@@ -156,8 +166,8 @@ export default function TourDetailsPage({ params }: { params: Promise<{ id: stri
                     </div>
                   </div>
                   <div className="flex items-center gap-1 bg-accent/10 text-accent-foreground px-3 py-1.5 rounded-full font-bold">
-                    <Star className="h-4 w-4 fill-current" />
-                    <span>5.0 (New)</span>
+                    <Star className="h-4 w-4 fill-current text-amber-400" />
+                    <span>{reviewCount > 0 ? `${avgRating.toFixed(1)} (${reviewCount})` : "New"}</span>
                   </div>
                 </div>
 
@@ -210,6 +220,9 @@ export default function TourDetailsPage({ params }: { params: Promise<{ id: stri
                     Full payment or 50% reservation fee is accepted via G-Cash or Bank Deposit. Upload your proof of payment in your dashboard to confirm.
                   </AlertDescription>
                 </Alert>
+
+                {/* Ratings & Reviews */}
+                <ReviewSection itemId={id} itemType="tour" />
               </div>
             </div>
 
