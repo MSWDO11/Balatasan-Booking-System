@@ -3,12 +3,13 @@
 import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
-import { Menu, X, Waves, ShoppingBag, LogOut } from "lucide-react";
+import { Menu, X, Waves, ShoppingBag, LogOut, Bell } from "lucide-react";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
 import { useUser, useAuth } from "@/firebase";
 import { signOut } from "firebase/auth";
 import { Suspense } from "react";
+import { NotificationBell } from "@/components/notification-bell";
 
 const navLinks = [
   { name: "Home", href: "/" },
@@ -86,6 +87,8 @@ function NavbarInner() {
                     My Bookings
                   </Button>
                 </Link>
+                {/* Notification bell — only for real users, not preview */}
+                {!isPreview && <NotificationBell />}
                 {!isPreview && (
                   <Button variant="ghost" size="icon" onClick={handleSignOut} title="Sign Out" className="rounded-full h-9 w-9 text-slate-400 hover:text-rose-500 hover:bg-rose-50">
                     <LogOut className="h-4 w-4" />
@@ -128,6 +131,12 @@ function NavbarInner() {
                   My Bookings
                 </Button>
               </Link>
+              {/* Inline notification row for mobile */}
+              <div className="flex items-center gap-3 px-3 py-2">
+                <Bell className="h-5 w-5 text-primary" />
+                <span className="font-bold text-slate-600 text-sm flex-1">Notifications</span>
+                <NotificationBell />
+              </div>
               <Button variant="ghost" className="w-full justify-start gap-3 font-bold text-rose-500 hover:bg-rose-50 rounded-xl" onClick={handleSignOut}>
                 <LogOut className="h-5 w-5" />
                 Sign Out

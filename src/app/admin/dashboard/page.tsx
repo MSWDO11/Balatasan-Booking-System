@@ -157,11 +157,26 @@ export default function AdminDashboard() {
     return data.filter(d => d.revenue > 0);
   }, [bookings, chartRange]);
 
-  const updateStatus = (userId: string, bookingId: string, status: string) => {
+  const updateStatus = (userId: string, bookingId: string, status: string, itemName?: string) => {
     if (!firestore) return;
     updateDocumentNonBlocking(doc(firestore, "users", userId, "bookings", bookingId), { status });
+
+    // Write a notification to the user's notifications subcollection
+    const messageMap: Record<string, string> = {
+      "Confirmed":  "Your booking has been confirmed! Please proceed to the resort on your scheduled date.",
+      "Cancelled":  "Your booking has been cancelled. Please contact us if you have questions.",
+      "Payment Uploaded": "Your payment receipt has been received and is under review.",
+    };
+    addDocumentNonBlocking(collection(firestore, "users", userId, "notifications"), {
+      itemName: itemName || "Booking",
+      status,
+      message: messageMap[status] ?? `Your booking status was updated to: ${status}.`,
+      read: false,
+      createdAt: new Date().toISOString(),
+    });
+
     toast({ title: `Booking ${status}`, description: `Status updated to ${status}.` });
-    if (selectedBooking?.id === bookingId) setSelectedBookingId((prev) => prev); // status updated via live bookings
+    if (selectedBooking?.id === bookingId) setSelectedBookingId((prev) => prev);
   };
 
   const handleSaveNote = () => {
@@ -368,8 +383,8 @@ export default function AdminDashboard() {
                   <Button size="sm" variant="outline" onClick={handleSaveNote} className="w-full">Save Note</Button>
                 </div>
                 <div className="flex gap-2 pt-2">
-                  <Button size="sm" onClick={() => { updateStatus(selectedBooking.userId, selectedBooking.id, "Confirmed"); setSelectedBookingId(null); }} className="flex-1">Confirm</Button>
-                  <Button size="sm" variant="outline" onClick={() => { updateStatus(selectedBooking.userId, selectedBooking.id, "Cancelled"); setSelectedBookingId(null); }} className="flex-1 text-rose-600 border-rose-200 hover:bg-rose-50">Cancel</Button>
+                  <Button size="sm" onClick={() => { updateStatus(selectedBooking.userId, selectedBooking.id, "Confirmed", selectedBooking.itemName); setSelectedBookingId(null); }} className="flex-1">Confirm</Button>
+                  <Button size="sm" variant="outline" onClick={() => { updateStatus(selectedBooking.userId, selectedBooking.id, "Cancelled", selectedBooking.itemName); setSelectedBookingId(null); }} className="flex-1 text-rose-600 border-rose-200 hover:bg-rose-50">Cancel</Button>
                 </div>
               </div>
             )}
@@ -550,8 +565,8 @@ export default function AdminDashboard() {
                                 </DropdownMenuTrigger>
                                 <DropdownMenuContent align="end" className="rounded-xl p-2 min-w-[160px]">
                                   <DropdownMenuItem onClick={() => { setSelectedBookingId(booking.id); setBookingNote(booking.adminNote || ""); }} className="rounded-lg cursor-pointer"><Eye className="mr-2 h-4 w-4 text-primary" /><span className="font-semibold">View Details</span></DropdownMenuItem>
-                                  <DropdownMenuItem onClick={() => updateStatus(booking.userId, booking.id, "Confirmed")} className="rounded-lg cursor-pointer"><Check className="mr-2 h-4 w-4 text-emerald-600" /><span className="font-semibold">Confirm</span></DropdownMenuItem>
-                                  <DropdownMenuItem onClick={() => updateStatus(booking.userId, booking.id, "Cancelled")} className="rounded-lg cursor-pointer text-rose-600 focus:bg-rose-50"><X className="mr-2 h-4 w-4" /><span className="font-semibold">Cancel</span></DropdownMenuItem>
+                                  <DropdownMenuItem onClick={() => updateStatus(booking.userId, booking.id, "Confirmed", booking.itemName)} className="rounded-lg cursor-pointer"><Check className="mr-2 h-4 w-4 text-emerald-600" /><span className="font-semibold">Confirm</span></DropdownMenuItem>
+                                  <DropdownMenuItem onClick={() => updateStatus(booking.userId, booking.id, "Cancelled", booking.itemName)} className="rounded-lg cursor-pointer text-rose-600 focus:bg-rose-50"><X className="mr-2 h-4 w-4" /><span className="font-semibold">Cancel</span></DropdownMenuItem>
                                 </DropdownMenuContent>
                               </DropdownMenu>
                             </div>
