@@ -8,9 +8,10 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
-import { Waves, Mail, Lock, Loader2, UserPlus, LogIn, Eye, EyeOff } from "lucide-react";
+import { Waves, Mail, Lock, Loader2, UserPlus, LogIn, Eye, EyeOff, KeyRound } from "lucide-react";
 import { useAuth } from "@/firebase";
 import { initiateEmailSignIn, initiateEmailSignUp } from "@/firebase/non-blocking-login";
+import { sendPasswordResetEmail } from "firebase/auth";
 import { useRouter } from "next/navigation";
 import { useUser } from "@/firebase";
 import { useEffect } from "react";
@@ -21,9 +22,25 @@ export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [errorMsg, setErrorMsg] = useState("");
+  const [resetSent, setResetSent] = useState(false);
   const auth = useAuth();
   const { user } = useUser();
   const router = useRouter();
+
+  const handleForgotPassword = async () => {
+    if (!email.trim()) {
+      setErrorMsg("Enter your email address above, then click Forgot Password.");
+      return;
+    }
+    try {
+      await sendPasswordResetEmail(auth, email.trim());
+      setResetSent(true);
+      setErrorMsg("");
+    } catch {
+      setErrorMsg("Could not send reset email. Check the address and try again.");
+    }
+  };
 
   useEffect(() => {
     if (user) {
@@ -115,6 +132,26 @@ export default function LoginPage() {
                   )}
                 </Button>
               </div>
+              {!isSignUp && (
+                <div className="text-center">
+                  <button
+                    type="button"
+                    onClick={handleForgotPassword}
+                    className="text-xs text-primary hover:underline font-medium"
+                  >
+                    <KeyRound className="inline h-3 w-3 mr-1" />
+                    Forgot password?
+                  </button>
+                  {resetSent && (
+                    <p className="text-xs text-green-600 mt-1 font-medium">
+                      Reset link sent — check your email.
+                    </p>
+                  )}
+                  {errorMsg && (
+                    <p className="text-xs text-destructive mt-1">{errorMsg}</p>
+                  )}
+                </div>
+              )}
             </form>
           </CardContent>
           <CardFooter className="flex flex-col space-y-4">
@@ -131,7 +168,7 @@ export default function LoginPage() {
                 variant="outline" 
                 size="lg"
                 className="w-full"
-                onClick={() => { setIsSignUp(!isSignUp); setErrorMsg(""); }}
+                onClick={() => { setIsSignUp(!isSignUp); setErrorMsg(""); setResetSent(false); }}
                 disabled={isLoading}
               >
                 {isSignUp ? "Already have an account? Sign In" : "New to Balatasan? Create an account"}

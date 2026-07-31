@@ -33,6 +33,7 @@ export default function TourDetailsPage({ params }: { params: Promise<{ id: stri
   const [date, setDate] = useState<Date | undefined>(new Date());
   const [guests, setGuests] = useState("1");
   const [durationMinutes, setDurationMinutes] = useState("15");
+  const [contactNumber, setContactNumber] = useState("");
   const [tourImgSrc, setTourImgSrc] = useState<string | null>(null);
 
   const tourRef = useMemoFirebase(() => firestore ? doc(firestore, "tours", id) : null, [firestore, id]);
@@ -84,12 +85,12 @@ export default function TourDetailsPage({ params }: { params: Promise<{ id: stri
       startDate: format(date, "yyyy-MM-dd"),
       endDate: format(date, "yyyy-MM-dd"),
       status: "Pending Payment",
-      totalPrice: totalPrice,
-      originalPrice: totalPrice,
+      totalPrice: pricing.finalPrice,
+      originalPrice: pricing.basePrice,
       guestCount: guestCount,
       duration: isJetSki ? `${minutes} Minutes` : (tour.duration || "Custom"),
       guestName: user.displayName || user.email?.split('@')[0] || "Guest",
-      contactNumber: "Not provided",
+      contactNumber: contactNumber.trim() || "Not provided",
       seasonApplied: pricing.seasonInfo?.label || null,
       groupDiscountApplied: pricing.groupDiscountInfo?.label || null,
       createdAt: new Date().toISOString()
@@ -312,12 +313,23 @@ export default function TourDetailsPage({ params }: { params: Promise<{ id: stri
                     )}
                   </div>
 
+                  {/* Contact number */}
+                  <div className="space-y-1">
+                    <label className="text-[10px] uppercase font-bold text-muted-foreground block">Contact Number</label>
+                    <input
+                      type="tel"
+                      placeholder="e.g. 09XX-XXX-XXXX"
+                      value={contactNumber}
+                      onChange={e => setContactNumber(e.target.value)}
+                      className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                    />
+                  </div>
+
                   <Button 
                     className="w-full" size="lg"
                     disabled={isBooking}
                     onClick={handleBookTour}
-                  >
-                    {isBooking ? <Loader2 className="h-5 w-5 animate-spin" /> : "Book Adventure"}
+                  >                    {isBooking ? <Loader2 className="h-5 w-5 animate-spin" /> : "Book Adventure"}
                   </Button>
 
                   {/* No seasonal badge — pricing is set directly by admin in inventory */}

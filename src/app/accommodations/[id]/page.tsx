@@ -32,10 +32,17 @@ export default function RoomDetailsPage({ params }: { params: Promise<{ id: stri
   const [checkIn, setCheckIn] = useState<Date | undefined>(new Date());
   const [checkOut, setCheckOut] = useState<Date | undefined>(addDays(new Date(), 1));
   const [guests, setGuests] = useState("1");
+  const [contactNumber, setContactNumber] = useState("");
   const [imgSrc, setImgSrc] = useState<string | null>(null);
 
   const roomRef = useMemoFirebase(() => firestore ? doc(firestore, "rooms", id) : null, [firestore, id]);
   const { data: room, isLoading: isRoomLoading } = useDoc(roomRef);
+
+  // Load GCash settings so the payment alert stays in sync with admin settings
+  const settingsRef = useMemoFirebase(() => firestore ? doc(firestore, "settings", "payment") : null, [firestore]);
+  const { data: paymentSettings } = useDoc(settingsRef);
+  const gcashNumber = paymentSettings?.gcashNumber || "0912-345-6789";
+  const gcashName = paymentSettings?.gcashName || "Balatasan Resort";
 
   const nights = checkIn && checkOut ? Math.max(0, differenceInDays(checkOut, checkIn)) : 0;
   const guestCount = parseInt(guests);
@@ -71,7 +78,7 @@ export default function RoomDetailsPage({ params }: { params: Promise<{ id: stri
       originalPrice: pricing.basePrice,
       guestCount,
       guestName: user.displayName || user.email?.split('@')[0] || "Guest",
-      contactNumber: "Not provided",
+      contactNumber: contactNumber.trim() || "Not provided",
       seasonApplied: pricing.seasonInfo?.label || null,
       groupDiscountApplied: pricing.groupDiscountInfo?.label || null,
       createdAt: new Date().toISOString(),
@@ -175,7 +182,7 @@ export default function RoomDetailsPage({ params }: { params: Promise<{ id: stri
                   <CreditCard className="h-4 w-4 text-primary" />
                   <AlertTitle className="text-primary font-bold">Payment Information</AlertTitle>
                   <AlertDescription className="text-sm text-muted-foreground">
-                    50% downpayment via G-Cash: <strong>0912-345-6789</strong>. Upload receipt in My Bookings to confirm.
+                    50% downpayment via G-Cash: <strong>{gcashNumber} ({gcashName})</strong>. Upload receipt in My Bookings to confirm.
                   </AlertDescription>
                 </Alert>
               </div>
@@ -247,6 +254,19 @@ export default function RoomDetailsPage({ params }: { params: Promise<{ id: stri
                         {pricing.groupDiscountInfo.label}
                       </div>
                     )}
+
+                    {/* Contact number */}
+                    <div className="space-y-1">
+                      <label className="text-[10px] uppercase font-bold text-muted-foreground block">Contact Number</label>
+                      <input
+                        type="tel"
+                        placeholder="e.g. 09XX-XXX-XXXX"
+                        value={contactNumber}
+                        onChange={e => setContactNumber(e.target.value)}
+                        className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                      />
+                    </div>
+
                   </div>
 
                   <Button className="w-full" size="lg" disabled={isBooking || nights <= 0} onClick={handleBookNow}>
