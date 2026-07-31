@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { AdminNavbar } from "@/components/admin-navbar";
 import { Footer } from "@/components/footer";
 import { Button } from "@/components/ui/button";
@@ -26,8 +26,21 @@ export default function AdminInventoryPage() {
   const [isSeeding, setIsSeeding] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
+  const [deleteCollectionName, setDeleteCollectionName] = useState<string>("tours");
   const [catalogSearch, setCatalogSearch] = useState("");
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
+  const [isDirty, setIsDirty] = useState(false);
+
+  // Reset form and dirty flag when tab changes
+  useEffect(() => {
+    setFormData({
+      id: "", name: "", capacity: "", pricePerPerson: "", description: "",
+      keyFeatures: "", imageUrl: "", duration: "", location: "", category: "",
+      isAvailable: true, discountPercent: "", includedItems: "", tags: "", sortOrder: "",
+    });
+    setFormErrors({});
+    setIsDirty(false);
+  }, [activeTab]);
 
   const adminDocRef = useMemoFirebase(() =>
     (firestore && user) ? doc(firestore, "roles_admin", user.uid) : null,
@@ -57,7 +70,10 @@ export default function AdminInventoryPage() {
     sortOrder: "",
   });
 
-  const roomsQuery = useMemoFirebase(() => firestore ? collection(firestore, "rooms") : null, [firestore]);
+  const setField = (patch: Partial<typeof formData>) => {
+    setFormData(prev => ({ ...prev, ...patch }));
+    setIsDirty(true);
+  };
   const toursQuery = useMemoFirebase(() => firestore ? collection(firestore, "tours") : null, [firestore]);
 
   const { data: rooms } = useCollection(roomsQuery);
@@ -74,14 +90,14 @@ export default function AdminInventoryPage() {
     reader.onload = (event) => {
       const img = new window.Image();
       img.onload = () => {
-        const maxWidth = 800;
+        const maxWidth = 600;
         const scale = Math.min(1, maxWidth / img.width);
         const canvas = document.createElement("canvas");
         canvas.width = img.width * scale;
         canvas.height = img.height * scale;
         const ctx = canvas.getContext("2d");
         ctx?.drawImage(img, 0, 0, canvas.width, canvas.height);
-        const base64 = canvas.toDataURL("image/jpeg", 0.8);
+        const base64 = canvas.toDataURL("image/jpeg", 0.65);
         setFormData(prev => ({ ...prev, imageUrl: base64 }));
         setIsUploading(false);
         toast({ title: "Image ready", description: "Image compressed and ready to save." });
@@ -114,7 +130,12 @@ export default function AdminInventoryPage() {
         updated++;
       }
     }
-    toast({ title: "Island Images Updated", description: `Updated ${updated} tour(s).` });
+    toast({
+      title: updated > 0 ? "Island Images Updated" : "No Matches Found",
+      description: updated > 0
+        ? `Updated ${updated} tour(s).`
+        : "No island hopping tours matched the name list.",
+    });
   };
 
   const handleSeedData = async () => {
@@ -268,9 +289,8 @@ export default function AdminInventoryPage() {
     toast({ title: "Cloned", description: "Edit the copy and save it as a new item." });
   };
 
-  const handleDelete = (id: string) => {
+  const handleDelete = (id: string, collectionName: string) => {
     if (!firestore) return;
-    const collectionName = activeTab === "rooms" ? "rooms" : "tours";
     deleteDocumentNonBlocking(doc(firestore, collectionName, id));
     toast({ title: "Deleted", description: "Item removed from inventory." });
     setDeleteConfirmId(null);
@@ -330,7 +350,7 @@ export default function AdminInventoryPage() {
           <p className="text-sm text-muted-foreground">This will permanently remove the item from the catalog. This action cannot be undone.</p>
           <div className="flex gap-3 pt-2">
             <button onClick={() => setDeleteConfirmId(null)} className="flex-1 h-10 rounded-md border border-input bg-background px-4 text-sm font-medium hover:bg-accent transition-colors">Keep It</button>
-            <button onClick={() => deleteConfirmId && handleDelete(deleteConfirmId)} className="flex-1 h-10 rounded-md bg-destructive text-destructive-foreground px-4 text-sm font-medium hover:bg-destructive/90 transition-colors">Yes, Delete</button>
+            <button onClick={() => deleteConfirmId && handleDelete(deleteConfirmId, deleteCollectionName)} className="flex-1 h-10 rounded-md bg-destructive text-destructive-foreground px-4 text-sm font-medium hover:bg-destructive/90 transition-colors">Yes, Delete</button>
           </div>
         </DialogContent>
       </Dialog>
@@ -347,11 +367,13 @@ export default function AdminInventoryPage() {
               <span className="hidden sm:inline">Update Island Images</span>
               <span className="sm:hidden">Islands</span>
             </Button>
-            <Button variant="outline" size="sm" className="gap-2" onClick={handleSeedData} disabled={isSeeding}>
-              <Database className="h-4 w-4" />
-              <span className="hidden sm:inline">Seed Demo Data</span>
-              <span className="sm:hidden">Seed</span>
-            </Button>
+            {(!rooms?.length && !tours?.length) && (
+              <Button variant="outline" size="sm" className="gap-2" onClick={handleSeedData} disabled={isSeeding}>
+                {isSeeding ? <Loader2 className="h-4 w-4 animate-spin" /> : <Database className="h-4 w-4" />}
+                <span className="hidden sm:inline">Seed Demo Data</span>
+                <span className="sm:hidden">Seed</span>
+              </Button>
+            )}
             <Button size="sm" className="gap-2" onClick={handleSave}>
               <Save className="h-4 w-4" />
               {formData.id ? "Update Item" : "Save New Item"}
@@ -382,7 +404,7 @@ export default function AdminInventoryPage() {
                       <Input
                         placeholder="e.g. Standard Cottage"
                         value={formData.name}
-                        onChange={e => { setFormData({...formData, name: e.target.value}); setFormErrors(p => ({...p, name: ""})); }}
+                        onChange={e => { setField({ name: e.target.value }); setFormErrors(p => ({...p, name: ""})); }}
                         className={formErrors.name ? "border-destructive" : ""}
                       />
                       {formErrors.name && <p className="text-xs text-destructive">{formErrors.name}</p>}
@@ -393,7 +415,7 @@ export default function AdminInventoryPage() {
                         type="number"
                         placeholder="e.g. 1500"
                         value={formData.pricePerPerson}
-                        onChange={e => { setFormData({...formData, pricePerPerson: e.target.value}); setFormErrors(p => ({...p, pricePerPerson: ""})); }}
+                        onChange={e => { setField({ pricePerPerson: e.target.value }); setFormErrors(p => ({...p, pricePerPerson: ""})); }}
                         className={formErrors.pricePerPerson ? "border-destructive" : ""}
                       />
                       {formErrors.pricePerPerson && <p className="text-xs text-destructive">{formErrors.pricePerPerson}</p>}
@@ -406,7 +428,7 @@ export default function AdminInventoryPage() {
                       type="number"
                       placeholder="e.g. 10"
                       value={formData.capacity}
-                      onChange={e => { setFormData({...formData, capacity: e.target.value}); setFormErrors(p => ({...p, capacity: ""})); }}
+                      onChange={e => { setField({ capacity: e.target.value }); setFormErrors(p => ({...p, capacity: ""})); }}
                       className={`max-w-xs ${formErrors.capacity ? "border-destructive" : ""}`}
                     />
                     {formErrors.capacity && <p className="text-xs text-destructive">{formErrors.capacity}</p>}
@@ -422,7 +444,7 @@ export default function AdminInventoryPage() {
                       <Input
                         placeholder="e.g. Full Day, 15 Minutes"
                         value={formData.duration}
-                        onChange={e => setFormData({...formData, duration: e.target.value})}
+                        onChange={e => setField({ duration: e.target.value })}
                       />
                     </div>
                     <div className="space-y-2">
@@ -433,7 +455,7 @@ export default function AdminInventoryPage() {
                       <Input
                         placeholder="e.g. Bulalacao, Oriental Mindoro"
                         value={formData.location}
-                        onChange={e => setFormData({...formData, location: e.target.value})}
+                        onChange={e => setField({ location: e.target.value })}
                       />
                     </div>
                   </div>
@@ -448,7 +470,7 @@ export default function AdminInventoryPage() {
                       <select
                         className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
                         value={formData.category || activeTab}
-                        onChange={e => setFormData({...formData, category: e.target.value})}
+                        onChange={e => setField({ category: e.target.value })}
                       >
                         <option value="rooms">Cottage</option>
                         <option value="island-hopping">Island Hopping</option>
@@ -462,7 +484,7 @@ export default function AdminInventoryPage() {
                       </label>
                       <button
                         type="button"
-                        onClick={() => setFormData({...formData, isAvailable: !formData.isAvailable})}
+                        onClick={() => setField({ isAvailable: !formData.isAvailable })}
                         className={`flex h-10 w-full items-center gap-2 rounded-md border px-3 text-sm font-medium transition-colors ${
                           formData.isAvailable
                             ? "border-green-200 bg-green-50 text-green-700 hover:bg-green-100"
@@ -482,7 +504,7 @@ export default function AdminInventoryPage() {
                       <Input
                         placeholder="Paste image URL or upload a photo"
                         value={formData.imageUrl.startsWith("data:") ? "(uploaded photo)" : formData.imageUrl}
-                        onChange={e => setFormData({...formData, imageUrl: e.target.value})}
+                        onChange={e => setField({ imageUrl: e.target.value })}
                         className="flex-1"
                         readOnly={formData.imageUrl.startsWith("data:")}
                       />
@@ -532,7 +554,7 @@ export default function AdminInventoryPage() {
                       placeholder="Write a compelling description..."
                       className="min-h-[120px]"
                       value={formData.description}
-                      onChange={e => setFormData({...formData, description: e.target.value})}
+                      onChange={e => setField({ description: e.target.value })}
                     />
                   </div>
 
@@ -541,7 +563,7 @@ export default function AdminInventoryPage() {
                     <Input
                       placeholder="e.g. Ocean view, Breakfast included"
                       value={formData.keyFeatures}
-                      onChange={e => setFormData({...formData, keyFeatures: e.target.value})}
+                      onChange={e => setField({ keyFeatures: e.target.value })}
                     />
                   </div>
 
@@ -555,7 +577,7 @@ export default function AdminInventoryPage() {
                         max="100"
                         placeholder="e.g. 10 — leave blank for no discount"
                         value={formData.discountPercent}
-                        onChange={e => setFormData({...formData, discountPercent: e.target.value})}
+                        onChange={e => setField({ discountPercent: e.target.value })}
                       />
                       <p className="text-[11px] text-muted-foreground">
                         Set by admin only. Shown as a badge on the listing (e.g. 10% OFF).
@@ -574,7 +596,7 @@ export default function AdminInventoryPage() {
                       <Input
                         placeholder="e.g. Life vest, Snorkeling gear, Lunch"
                         value={formData.includedItems}
-                        onChange={e => setFormData({...formData, includedItems: e.target.value})}
+                        onChange={e => setField({ includedItems: e.target.value })}
                       />
                       <p className="text-[11px] text-muted-foreground">Shown as a checklist on the listing page.</p>
                     </div>
@@ -583,7 +605,7 @@ export default function AdminInventoryPage() {
                       <Input
                         placeholder="e.g. Best Seller, Family Friendly, New"
                         value={formData.tags}
-                        onChange={e => setFormData({...formData, tags: e.target.value})}
+                        onChange={e => setField({ tags: e.target.value })}
                       />
                       <p className="text-[11px] text-muted-foreground">Tags appear as badges on cards and listing pages.</p>
                     </div>
@@ -593,7 +615,7 @@ export default function AdminInventoryPage() {
                         type="number"
                         placeholder="e.g. 1 (lower = shown first)"
                         value={formData.sortOrder}
-                        onChange={e => setFormData({...formData, sortOrder: e.target.value})}
+                        onChange={e => setField({ sortOrder: e.target.value })}
                         className="max-w-xs"
                       />
                     </div>
@@ -657,23 +679,27 @@ export default function AdminInventoryPage() {
                         <Button
                           variant="ghost" size="icon" className="h-7 w-7"
                           title="Edit"
-                          onClick={() => setFormData({
-                            id: item.id,
-                            name: item.name || item.title || "",
-                            capacity: item.capacity?.toString() || "",
-                            pricePerPerson: (item.pricePerPerson ?? item.price ?? 0).toString(),
-                            description: item.description || "",
-                            keyFeatures: Array.isArray(item.keyFeatures) ? item.keyFeatures.join(", ") : "",
-                            imageUrl: item.imageUrl || "",
-                            duration: item.duration || "",
-                            location: item.location || "",
-                            category: item.category || "",
-                            isAvailable: item.isAvailable !== false,
-                            discountPercent: item.discountPercent?.toString() || "",
-                            includedItems: Array.isArray(item.includedItems) ? item.includedItems.join(", ") : "",
-                            tags: Array.isArray(item.tags) ? item.tags.join(", ") : "",
-                            sortOrder: item.sortOrder?.toString() || "",
-                          })}
+                          onClick={() => {
+                            if (isDirty && !window.confirm("You have unsaved changes. Discard and edit this item?")) return;
+                            setIsDirty(false);
+                            setFormData({
+                              id: item.id,
+                              name: item.name || item.title || "",
+                              capacity: item.capacity?.toString() || "",
+                              pricePerPerson: (item.pricePerPerson ?? item.price ?? 0).toString(),
+                              description: item.description || "",
+                              keyFeatures: Array.isArray(item.keyFeatures) ? item.keyFeatures.join(", ") : "",
+                              imageUrl: item.imageUrl || "",
+                              duration: item.duration || "",
+                              location: item.location || "",
+                              category: item.category || "",
+                              isAvailable: item.isAvailable !== false,
+                              discountPercent: item.discountPercent?.toString() || "",
+                              includedItems: Array.isArray(item.includedItems) ? item.includedItems.join(", ") : "",
+                              tags: Array.isArray(item.tags) ? item.tags.join(", ") : "",
+                              sortOrder: item.sortOrder?.toString() || "",
+                            });
+                          }}
                         >
                           <Eye className="h-3.5 w-3.5 text-primary" />
                         </Button>
@@ -689,7 +715,11 @@ export default function AdminInventoryPage() {
                         <Button
                           variant="ghost" size="icon" className="h-7 w-7 text-destructive"
                           title="Delete"
-                          onClick={() => setDeleteConfirmId(item.id)}
+                          onClick={() => {
+                            const col = item.category === "rooms" || activeTab === "rooms" ? "rooms" : "tours";
+                            setDeleteCollectionName(col);
+                            setDeleteConfirmId(item.id);
+                          }}
                         >
                           <Trash2 className="h-3 w-3" />
                         </Button>
