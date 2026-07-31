@@ -10,8 +10,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter }
 import { Label } from "@/components/ui/label";
 import { Waves, Mail, Lock, Loader2, UserPlus, LogIn, Eye, EyeOff, KeyRound } from "lucide-react";
 import { useAuth } from "@/firebase";
-import { initiateEmailSignIn, initiateEmailSignUp } from "@/firebase/non-blocking-login";
-import { sendPasswordResetEmail } from "firebase/auth";
+import { createUserWithEmailAndPassword, signInWithEmailAndPassword, sendPasswordResetEmail } from "firebase/auth";
 import { useRouter } from "next/navigation";
 import { useUser } from "@/firebase";
 import { useEffect } from "react";
@@ -48,14 +47,29 @@ export default function LoginPage() {
     }
   }, [user, router]);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
-    
-    if (isSignUp) {
-      initiateEmailSignUp(auth, email, password);
-    } else {
-      initiateEmailSignIn(auth, email, password);
+    setErrorMsg("");
+
+    try {
+      if (isSignUp) {
+        await createUserWithEmailAndPassword(auth, email, password);
+      } else {
+        await signInWithEmailAndPassword(auth, email, password);
+      }
+      // On success useEffect will redirect via onAuthStateChanged
+    } catch (err: any) {
+      const code = err?.code ?? "";
+      if (code === "auth/email-already-in-use")      setErrorMsg("This email is already registered. Try signing in instead.");
+      else if (code === "auth/invalid-email")         setErrorMsg("That email address doesn't look right.");
+      else if (code === "auth/weak-password")         setErrorMsg("Password must be at least 6 characters.");
+      else if (code === "auth/wrong-password" ||
+               code === "auth/invalid-credential")   setErrorMsg("Incorrect email or password.");
+      else if (code === "auth/user-not-found")        setErrorMsg("No account found with that email.");
+      else if (code === "auth/too-many-requests")     setErrorMsg("Too many attempts. Please wait a moment and try again.");
+      else                                            setErrorMsg("Something went wrong. Please try again.");
+      setIsLoading(false);
     }
   };
 
@@ -147,10 +161,11 @@ export default function LoginPage() {
                       Reset link sent — check your email.
                     </p>
                   )}
-                  {errorMsg && (
-                    <p className="text-xs text-destructive mt-1">{errorMsg}</p>
-                  )}
                 </div>
+              )}
+              {/* Error message shown for both sign-in and sign-up */}
+              {errorMsg && (
+                <p className="text-xs text-destructive text-center font-medium">{errorMsg}</p>
               )}
             </form>
           </CardContent>
