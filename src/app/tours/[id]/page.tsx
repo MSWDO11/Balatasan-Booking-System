@@ -100,13 +100,7 @@ export default function TourDetailsPage({ params }: { params: Promise<{ id: stri
     
     addDocumentNonBlocking(bookingsRef, bookingData)
       .then(() => {
-        toast({
-          title: "Adventure Requested!",
-          description: isJetSki 
-            ? `Your ${minutes}-minute Jet Ski ride is requested. Check 'My Bookings' for payment.`
-            : "Please check 'My Bookings' for G-Cash payment instructions.",
-        });
-        router.push("/my-bookings");
+        router.push("/my-bookings?booked=1");
       })
       .finally(() => setIsBooking(false));
   };

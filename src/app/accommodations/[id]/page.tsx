@@ -85,8 +85,7 @@ export default function RoomDetailsPage({ params }: { params: Promise<{ id: stri
     };
     addDocumentNonBlocking(collection(firestore, "users", user.uid, "bookings"), bookingData)
       .then(() => {
-        toast({ title: "Booking Requested!", description: "Check 'My Bookings' for payment instructions." });
-        router.push("/my-bookings");
+        router.push("/my-bookings?booked=1");
       })
       .finally(() => setIsBooking(false));
   };

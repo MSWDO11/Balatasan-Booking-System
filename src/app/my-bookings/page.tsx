@@ -9,20 +9,22 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Calendar, ShoppingBag, ChevronRight, CreditCard, Clock, Image as ImageIcon, CheckCircle, XCircle } from "lucide-react";
+import { Calendar, ShoppingBag, ChevronRight, CreditCard, Clock, Image as ImageIcon, CheckCircle, XCircle, PartyPopper, Bell } from "lucide-react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { useEffect, useState, Suspense } from "react";
 import Image from "next/image";
 import { useToast } from "@/hooks/use-toast";
 import { Spinner } from "@/components/spinner";
 
-export default function MyBookingsPage() {
+function MyBookingsContent() {
   const { user, isUserLoading } = useUser();
   const firestore = useFirestore();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { toast } = useToast();
   const [cancelBookingId, setCancelBookingId] = useState<string | null>(null);
+  const justBooked = searchParams.get("booked") === "1";
 
   // Load payment settings from Firestore — admin can update gcashNumber there
   const settingsRef = useMemoFirebase(() => firestore ? doc(firestore, "settings", "payment") : null, [firestore]);
@@ -45,6 +47,8 @@ export default function MyBookingsPage() {
   }, [firestore, user]);
 
   const { data: bookings, isLoading: isBookingsLoading } = useCollection(bookingsQuery);
+
+  const hasPendingBookings = bookings?.some((b: any) => b.status === "Pending Payment");
 
   const handleFileUpload = (bookingId: string, event: React.ChangeEvent<HTMLInputElement>) => {
     if (!firestore || !user || !event.target.files?.[0]) return;
@@ -84,6 +88,7 @@ export default function MyBookingsPage() {
   return (
     <div className="flex min-h-screen flex-col bg-secondary/10">
       <SmartNavbar />
+
       {/* Cancel Confirmation Dialog */}
       <Dialog open={!!cancelBookingId} onOpenChange={() => setCancelBookingId(null)}>
         <DialogContent className="max-w-sm">
@@ -95,8 +100,49 @@ export default function MyBookingsPage() {
           </div>
         </DialogContent>
       </Dialog>
+
       <main className="flex-grow container mx-auto py-12 px-4">
-        <div className="max-w-4xl mx-auto space-y-8">
+        <div className="max-w-4xl mx-auto space-y-6">
+
+          {/* ── Just-booked confirmation banner ── */}
+          {justBooked && (
+            <div className="rounded-2xl bg-primary text-primary-foreground p-6 flex flex-col sm:flex-row items-start sm:items-center gap-4 shadow-lg">
+              <div className="bg-white/20 p-3 rounded-full shrink-0">
+                <PartyPopper className="h-7 w-7" />
+              </div>
+              <div className="flex-1 space-y-1">
+                <p className="font-bold text-lg leading-tight">Booking Submitted!</p>
+                <p className="text-sm text-primary-foreground/85 leading-relaxed">
+                  Your reservation has been received. Our team will review it and get back to you
+                  <strong className="text-primary-foreground"> within 24 hours</strong> to confirm your booking.
+                  In the meantime, please complete your payment below.
+                </p>
+              </div>
+              <Button
+                size="sm"
+                variant="secondary"
+                className="shrink-0 bg-white/20 hover:bg-white/30 text-primary-foreground border-none"
+                onClick={() => router.replace("/my-bookings")}
+              >
+                Dismiss
+              </Button>
+            </div>
+          )}
+
+          {/* ── Persistent 24-hour reminder for pending bookings ── */}
+          {!justBooked && hasPendingBookings && (
+            <div className="rounded-2xl bg-amber-50 border border-amber-200 p-4 flex items-start gap-3">
+              <Bell className="h-5 w-5 text-amber-600 shrink-0 mt-0.5" />
+              <div>
+                <p className="text-sm font-bold text-amber-800">Awaiting Confirmation</p>
+                <p className="text-xs text-amber-700 mt-0.5">
+                  You have pending bookings. Our team will confirm your reservation within <strong>24 hours</strong>.
+                  Please complete your GCash payment and upload the receipt to speed up the process.
+                </p>
+              </div>
+            </div>
+          )}
+
           <div className="flex justify-between items-end">
             <div>
               <h1 className="text-4xl font-headline font-bold text-primary">My Bookings</h1>
@@ -244,6 +290,20 @@ export default function MyBookingsPage() {
       </main>
       <Footer />
     </div>
+  );
+}
+
+export default function MyBookingsPage() {
+  return (
+    <Suspense fallback={
+      <div className="flex min-h-screen flex-col">
+        <SmartNavbar />
+        <main className="flex-grow flex items-center justify-center"><Spinner size="lg" /></main>
+        <Footer />
+      </div>
+    }>
+      <MyBookingsContent />
+    </Suspense>
   );
 }
 
