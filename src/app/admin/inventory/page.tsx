@@ -74,6 +74,8 @@ export default function AdminInventoryPage() {
     setFormData(prev => ({ ...prev, ...patch }));
     setIsDirty(true);
   };
+
+  const roomsQuery = useMemoFirebase(() => firestore ? collection(firestore, "rooms") : null, [firestore]);
   const toursQuery = useMemoFirebase(() => firestore ? collection(firestore, "tours") : null, [firestore]);
 
   const { data: rooms } = useCollection(roomsQuery);

@@ -88,7 +88,7 @@ export function NotificationBell() {
           {/* Header */}
           <div className="flex items-center justify-between px-4 py-3 border-b border-slate-50">
             <p className="text-sm font-bold text-slate-800">Notifications</p>
-            {unread === 0 && notifications?.length > 0 && (
+            {unread === 0 && (notifications?.length ?? 0) > 0 && (
               <span className="text-[10px] text-slate-400 font-medium">All caught up</span>
             )}
           </div>
@@ -136,8 +136,7 @@ export function NotificationBell() {
           </div>
 
           {/* Footer */}
-          {notifications && notifications.length > 0 && (
-            <div className="px-4 py-2.5 border-t border-slate-50 bg-slate-50/50">
+          {notifications && notifications.length > 0 && (            <div className="px-4 py-2.5 border-t border-slate-50 bg-slate-50/50">
               <p className="text-[10px] text-slate-400 text-center">
                 Notifications are cleared automatically after 30 days
               </p>
