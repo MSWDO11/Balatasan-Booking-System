@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Menu, X, Waves, ShoppingBag, LogOut, Bell } from "lucide-react";
 import { useState } from "react";
@@ -27,6 +28,7 @@ function NavbarInner() {
   const isPreview = searchParams.get("preview") === "user";
   const { user, isUserLoading } = useUser();
   const auth = useAuth();
+  const router = useRouter();
 
   const withPreview = (href: string) => {
     if (!isPreview) return href;
@@ -34,7 +36,7 @@ function NavbarInner() {
     return `${href}${sep}preview=user`;
   };
 
-  const handleSignOut = () => signOut(auth);
+  const handleSignOut = () => signOut(auth).then(() => router.push("/"));
 
   return (
     <>

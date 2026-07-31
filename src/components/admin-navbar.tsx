@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { Waves, LayoutDashboard, Database, LogOut, Eye } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/firebase";
@@ -10,9 +11,10 @@ import { signOut } from "firebase/auth";
 export function AdminNavbar() {
   const pathname = usePathname();
   const auth = useAuth();
+  const router = useRouter();
 
   const handleSignOut = () => {
-    signOut(auth);
+    signOut(auth).then(() => router.push("/"));
   };
 
   return (
