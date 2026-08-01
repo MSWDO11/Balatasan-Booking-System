@@ -18,7 +18,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from "recharts";
 import { useFirestore, useCollection, useMemoFirebase, updateDocumentNonBlocking, useUser, setDocumentNonBlocking, useDoc, addDocumentNonBlocking } from "@/firebase";
-import { collectionGroup, query, doc, collection, orderBy } from "firebase/firestore";
+import { collectionGroup, query, doc, collection } from "firebase/firestore";
 import { useToast } from "@/hooks/use-toast";
 import { useState, useMemo, useEffect } from "react";
 import { cn } from "@/lib/utils";
@@ -76,12 +76,18 @@ export default function AdminDashboard() {
   const { data: rawBookings, isLoading: isBookingsLoading } = useCollection(bookingsQuery);
   const { data: adminsList, isLoading: isAdminsLoading } = useCollection(adminsQuery);
 
-  // All reviews — flat collection for real-time admin view (no collectionGroup index needed)
+  // All reviews — no orderBy to avoid needing a Firestore index (sorted client-side)
   const allReviewsQuery = useMemoFirebase(() => {
     if (!firestore || !canLoadData) return null;
-    return query(collection(firestore, "allReviews"), orderBy("createdAt", "desc"));
+    return collection(firestore, "allReviews");
   }, [firestore, canLoadData]);
-  const { data: allReviews, isLoading: isReviewsLoading } = useCollection(allReviewsQuery);
+  const { data: rawAllReviews, isLoading: isReviewsLoading } = useCollection(allReviewsQuery);
+  // Sort client-side — newest first
+  const allReviews = rawAllReviews
+    ? [...rawAllReviews].sort((a: any, b: any) =>
+        (b.createdAt ?? "").localeCompare(a.createdAt ?? "")
+      )
+    : null;
 
   // Sync payment settings into local state for editing
   useEffect(() => {

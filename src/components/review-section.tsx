@@ -3,7 +3,7 @@
 import { useState, useMemo } from "react";
 import { Star, Send, Loader2 } from "lucide-react";
 import { useUser, useFirestore, useCollection, useMemoFirebase, addDocumentNonBlocking, setDocumentNonBlocking } from "@/firebase";
-import { collection, query, orderBy, doc, collectionGroup, where } from "firebase/firestore";
+import { collection, query, orderBy, doc, where } from "firebase/firestore";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { formatDistanceToNow } from "date-fns";
@@ -69,11 +69,18 @@ export function ReviewSection({ itemId, itemType }: ReviewSectionProps) {
     () => firestore ? collection(firestore, "reviews", `${itemType}_${itemId}`, "entries") : null,
     [firestore, itemId, itemType]
   );
+  // Reviews collection — no orderBy to avoid index requirement, sorted client-side
   const reviewsQuery = useMemoFirebase(
-    () => reviewsColRef ? query(reviewsColRef, orderBy("createdAt", "desc")) : null,
+    () => reviewsColRef ?? null,
     [reviewsColRef]
   );
-  const { data: reviews } = useCollection(reviewsQuery);
+  const { data: rawReviews } = useCollection(reviewsQuery);
+  // Sort client-side newest first
+  const reviews = rawReviews
+    ? [...rawReviews].sort((a: any, b: any) =>
+        (b.createdAt ?? "").localeCompare(a.createdAt ?? "")
+      )
+    : null;
 
   // Check if this user has a confirmed booking for this item
   const userBookingsRef = useMemoFirebase(
