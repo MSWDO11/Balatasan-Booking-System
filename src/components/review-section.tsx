@@ -104,9 +104,21 @@ export function ReviewSection({ itemId, itemType }: ReviewSectionProps) {
 
     setIsSubmitting(true);
     try {
-      // Use user uid as doc id so one review per user
+      // Save to subcollection (for detail page real-time)
       const reviewDocRef = doc(firestore, "reviews", `${itemType}_${itemId}`, "entries", user.uid);
       setDocumentNonBlocking(reviewDocRef, {
+        userId: user.uid,
+        userName: user.displayName || user.email?.split("@")[0] || "Guest",
+        rating,
+        comment: comment.trim(),
+        itemId,
+        itemType,
+        createdAt: new Date().toISOString(),
+      }, { merge: true });
+
+      // Also save to flat allReviews collection (for admin dashboard real-time)
+      const allReviewDocRef = doc(firestore, "allReviews", `${itemType}_${itemId}_${user.uid}`);
+      setDocumentNonBlocking(allReviewDocRef, {
         userId: user.uid,
         userName: user.displayName || user.email?.split("@")[0] || "Guest",
         rating,

@@ -18,8 +18,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from "recharts";
 import { useFirestore, useCollection, useMemoFirebase, updateDocumentNonBlocking, useUser, setDocumentNonBlocking, useDoc, addDocumentNonBlocking } from "@/firebase";
-import { collectionGroup, query, doc, collection, orderBy } from "firebase/firestore";
-import { useToast } from "@/hooks/use-toast";
+import { collectionGroup, query, doc, collection, orderBy } from "firebase/firestore";import { useToast } from "@/hooks/use-toast";
 import { useState, useMemo, useEffect } from "react";
 import { cn } from "@/lib/utils";
 import Image from "next/image";
@@ -76,10 +75,10 @@ export default function AdminDashboard() {
   const { data: rawBookings, isLoading: isBookingsLoading } = useCollection(bookingsQuery);
   const { data: adminsList, isLoading: isAdminsLoading } = useCollection(adminsQuery);
 
-  // All reviews across all items (collectionGroup on "entries")
+  // All reviews — flat collection for real-time admin view (no collectionGroup index needed)
   const allReviewsQuery = useMemoFirebase(() => {
     if (!firestore || !canLoadData) return null;
-    return query(collectionGroup(firestore, "entries"), orderBy("createdAt", "desc"));
+    return query(collection(firestore, "allReviews"), orderBy("createdAt", "desc"));
   }, [firestore, canLoadData]);
   const { data: allReviews, isLoading: isReviewsLoading } = useCollection(allReviewsQuery);
 
