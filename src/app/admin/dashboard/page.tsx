@@ -1,7 +1,6 @@
 "use client";
 
-import { AdminNavbar } from "@/components/admin-navbar";
-import { Footer } from "@/components/footer";
+import { AdminSidebar } from "@/components/admin-sidebar";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -264,15 +263,15 @@ export default function AdminDashboard() {
   };
 
   if (isUserLoading || isAdminRoleLoading) return (
-    <div className="flex min-h-screen flex-col"><AdminNavbar />
+    <div className="flex min-h-screen"><AdminSidebar />
       <main className="flex-grow flex items-center justify-center">
         <Spinner size="lg" />
       </main>
-    <Footer /></div>
+    </div>
   );
 
   if (!isMasterAdminEmail && !hasAdminRecord) return (
-    <div className="flex min-h-screen flex-col bg-slate-50"><AdminNavbar />
+    <div className="flex min-h-screen bg-slate-50"><AdminSidebar />
       <main className="flex-grow flex items-center justify-center p-4">
         <Card className="max-w-md text-center border-none shadow-2xl rounded-3xl overflow-hidden">
           <CardHeader className="pt-10 pb-6">
@@ -283,11 +282,11 @@ export default function AdminDashboard() {
           <CardContent className="pb-10"><Button onClick={() => window.location.href='/'}>Return Home</Button></CardContent>
         </Card>
       </main>
-    <Footer /></div>
+    </div>
   );
 
   if (isMasterAdminEmail && !hasAdminRecord) return (
-    <div className="flex min-h-screen flex-col bg-slate-50"><AdminNavbar />
+    <div className="flex min-h-screen bg-slate-50"><AdminSidebar />
       <main className="flex-grow flex items-center justify-center p-4">
         <Card className="max-w-md text-center border-none shadow-2xl rounded-3xl overflow-hidden">
           <CardHeader className="pt-10 pb-6">
@@ -302,7 +301,7 @@ export default function AdminDashboard() {
           </CardContent>
         </Card>
       </main>
-    <Footer /></div>
+    </div>
   );
 
   const stats = [
@@ -314,12 +313,13 @@ export default function AdminDashboard() {
   ];
 
   return (
-    <div className="flex min-h-screen flex-col bg-[#F8FBFB]">
-      <AdminNavbar />
+    <div className="flex min-h-screen bg-[#F8FBFB]">
+      <AdminSidebar />
+      <div className="flex flex-col flex-1 min-w-0">
       <main className="flex-grow">
-        {/* Page Header with gradient */}
-        <div className="bg-gradient-to-br from-primary/8 via-white to-transparent border-b border-slate-100 px-4 py-8">
-          <div className="container mx-auto flex flex-col md:flex-row md:items-center justify-between gap-4">
+        {/* Page Header */}
+        <div className="bg-gradient-to-br from-primary/8 via-white to-transparent border-b border-slate-100 px-6 py-8">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div className="space-y-1">
               <p className="text-xs font-bold text-primary uppercase tracking-widest">Admin Panel</p>
               <h1 className="text-4xl font-headline font-bold text-slate-900 tracking-tight">Dashboard</h1>
@@ -332,7 +332,7 @@ export default function AdminDashboard() {
           </div>
         </div>
 
-        <div className="container mx-auto py-8 px-4 space-y-8">
+        <div className="px-6 py-8 space-y-8">
 
         {/* Export Modal */}
         <Dialog open={showExport} onOpenChange={setShowExport}>
@@ -890,7 +890,7 @@ export default function AdminDashboard() {
         </Tabs>
         </div>{/* end container */}
       </main>
-      <Footer />
+      </div>
     </div>
   );
 }

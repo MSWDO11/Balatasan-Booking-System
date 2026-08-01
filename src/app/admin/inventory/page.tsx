@@ -1,8 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { AdminNavbar } from "@/components/admin-navbar";
-import { Footer } from "@/components/footer";
+import { AdminSidebar } from "@/components/admin-sidebar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -300,20 +299,19 @@ export default function AdminInventoryPage() {
 
   if (isUserLoading || isAdminRoleLoading) {
     return (
-      <div className="flex min-h-screen flex-col">
-        <AdminNavbar />
+      <div className="flex min-h-screen">
+        <AdminSidebar />
         <main className="flex-grow flex items-center justify-center">
           <Spinner size="lg" />
         </main>
-        <Footer />
       </div>
     );
   }
 
   if (!isMasterAdminEmail && !hasAdminRecord) {
     return (
-      <div className="flex min-h-screen flex-col bg-secondary/10">
-        <AdminNavbar />
+      <div className="flex min-h-screen bg-secondary/10">
+        <AdminSidebar />
         <main className="flex-grow flex items-center justify-center p-4">
           <Card className="max-w-md text-center border-none shadow-xl">
             <CardHeader>
@@ -328,7 +326,6 @@ export default function AdminInventoryPage() {
             </CardContent>
           </Card>
         </main>
-        <Footer />
       </div>
     );
   }
@@ -342,8 +339,9 @@ export default function AdminInventoryPage() {
       });
 
   return (
-    <div className="flex min-h-screen flex-col bg-secondary/10">
-      <AdminNavbar />
+    <div className="flex min-h-screen bg-secondary/10">
+      <AdminSidebar />
+      <div className="flex flex-col flex-1 min-w-0">
 
       {/* Delete Confirmation Dialog */}
       <Dialog open={!!deleteConfirmId} onOpenChange={() => setDeleteConfirmId(null)}>
@@ -357,7 +355,7 @@ export default function AdminInventoryPage() {
         </DialogContent>
       </Dialog>
 
-      <main className="flex-grow container mx-auto py-10 px-4">
+      <main className="flex-grow py-10 px-6">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 gap-4">
           <div>
             <h1 className="text-3xl font-headline font-bold text-primary">Inventory Management</h1>
@@ -734,7 +732,7 @@ export default function AdminInventoryPage() {
           </div>
         </Tabs>
       </main>
-      <Footer />
+      </div>
     </div>
   );
 }
