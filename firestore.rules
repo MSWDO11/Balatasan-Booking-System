@@ -8,8 +8,6 @@ service cloud.firestore {
       return request.auth != null;
     }
 
-    // Direct check for admin privileges. 
-    // We avoid recursion by not calling isAdmin() inside the roles_admin match block for 'get'
     function isAdmin() {
       return isSignedIn() && (
         request.auth.token.email == 'admin@gmail.com' || 
@@ -30,6 +28,18 @@ service cloud.firestore {
       allow write: if isAdmin();
     }
 
+    // Reviews — anyone can read, only signed-in users can write their own review
+    match /reviews/{itemKey}/entries/{userId} {
+      allow read: if true;
+      allow create, update: if isSignedIn() && request.auth.uid == userId;
+      allow delete: if isAdmin();
+    }
+
+    // CollectionGroup read for reviews (admin dashboard)
+    match /{path=**}/entries/{entryId} {
+      allow read: if true;
+    }
+
     // Global access to bookings for admins (Support for Collection Group Queries)
     match /{path=**}/bookings/{bookingId} {
       allow read, write: if isAdmin();
@@ -42,16 +52,24 @@ service cloud.firestore {
       allow update, delete: if isSignedIn() && (request.auth.uid == userId || isAdmin());
     }
 
+    // User notifications — only the user can read their own
+    match /users/{userId}/notifications/{notifId} {
+      allow read, write: if isSignedIn() && request.auth.uid == userId;
+      allow write: if isAdmin();
+    }
+
     // Admin role management
     match /roles_admin/{adminId} {
-      // Allow any signed in user to 'get' this to support the exists() check in isAdmin()
-      // without causing recursive rule evaluation.
       allow get: if isSignedIn();
-      
-      // Other operations require full admin or master admin
       allow list: if isAdmin();
       allow create: if isSignedIn() && (request.auth.token.email == 'admin@gmail.com' && request.auth.uid == adminId);
       allow update, delete: if isSignedIn() && request.auth.token.email == 'admin@gmail.com';
+    }
+
+    // Settings — public read, admin write
+    match /settings/{docId} {
+      allow read: if true;
+      allow write: if isAdmin();
     }
   }
 }
