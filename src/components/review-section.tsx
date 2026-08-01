@@ -1,9 +1,9 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import { Star, Send, Loader2 } from "lucide-react";
-import { useUser, useFirestore, useCollection, useMemoFirebase, addDocumentNonBlocking, setDocumentNonBlocking } from "@/firebase";
-import { collection, query, orderBy, doc, where } from "firebase/firestore";
+import { Star, Send, Loader2, Reply } from "lucide-react";
+import { useUser, useFirestore, useCollection, useMemoFirebase, setDocumentNonBlocking } from "@/firebase";
+import { collection, query, doc, where } from "firebase/firestore";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { formatDistanceToNow } from "date-fns";
@@ -13,6 +13,7 @@ import { useToast } from "@/hooks/use-toast";
 interface ReviewSectionProps {
   itemId: string;
   itemType: "room" | "tour";
+  itemName?: string; // passed from detail page so we can store it
 }
 
 function StarRating({
@@ -56,7 +57,7 @@ function StarRating({
   );
 }
 
-export function ReviewSection({ itemId, itemType }: ReviewSectionProps) {
+export function ReviewSection({ itemId, itemType, itemName }: ReviewSectionProps) {
   const { user } = useUser();
   const firestore = useFirestore();
   const { toast } = useToast();
@@ -64,40 +65,37 @@ export function ReviewSection({ itemId, itemType }: ReviewSectionProps) {
   const [comment, setComment] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Reviews collection path: reviews/{itemType}_{itemId}/entries
+  // Reviews subcollection — no orderBy (sorted client-side to avoid index requirement)
   const reviewsColRef = useMemoFirebase(
     () => firestore ? collection(firestore, "reviews", `${itemType}_${itemId}`, "entries") : null,
     [firestore, itemId, itemType]
   );
-  // Reviews collection — no orderBy to avoid index requirement, sorted client-side
-  const reviewsQuery = useMemoFirebase(
-    () => reviewsColRef ?? null,
-    [reviewsColRef]
-  );
-  const { data: rawReviews } = useCollection(reviewsQuery);
-  // Sort client-side newest first
-  const reviews = rawReviews
-    ? [...rawReviews].sort((a: any, b: any) =>
-        (b.createdAt ?? "").localeCompare(a.createdAt ?? "")
-      )
-    : null;
+  const { data: rawReviews } = useCollection(reviewsColRef);
 
-  // Check if this user has a confirmed booking for this item
+  // Filter hidden reviews for guests, sort newest first
+  const reviews = useMemo(() => {
+    if (!rawReviews) return null;
+    return [...rawReviews]
+      .filter((r: any) => !r.isHidden)
+      .sort((a: any, b: any) => (b.createdAt ?? "").localeCompare(a.createdAt ?? ""));
+  }, [rawReviews]);
+
+  // Check confirmed booking
   const userBookingsRef = useMemoFirebase(
     () => (firestore && user) ? collection(firestore, "users", user.uid, "bookings") : null,
     [firestore, user]
   );
   const userBookingsQuery = useMemoFirebase(
-    () => userBookingsRef ? query(userBookingsRef, where("itemId", "==", itemId), where("status", "==", "Confirmed")) : null,
+    () => userBookingsRef
+      ? query(userBookingsRef, where("itemId", "==", itemId), where("status", "==", "Confirmed"))
+      : null,
     [userBookingsRef, itemId]
   );
   const { data: confirmedBookings } = useCollection(userBookingsQuery);
   const hasConfirmedBooking = (confirmedBookings?.length ?? 0) > 0;
+  const alreadyReviewed = rawReviews?.some((r: any) => r.userId === user?.uid);
 
-  // Check if user already reviewed
-  const alreadyReviewed = reviews?.some((r: any) => r.userId === user?.uid);
-
-  // Average rating
+  // Average (visible reviews only)
   const { avgRating, totalCount } = useMemo(() => {
     if (!reviews || reviews.length === 0) return { avgRating: 0, totalCount: 0 };
     const sum = reviews.reduce((acc: number, r: any) => acc + (r.rating ?? 0), 0);
@@ -111,29 +109,26 @@ export function ReviewSection({ itemId, itemType }: ReviewSectionProps) {
 
     setIsSubmitting(true);
     try {
-      // Save to subcollection (for detail page real-time)
-      const reviewDocRef = doc(firestore, "reviews", `${itemType}_${itemId}`, "entries", user.uid);
-      setDocumentNonBlocking(reviewDocRef, {
+      const reviewData = {
         userId: user.uid,
         userName: user.displayName || user.email?.split("@")[0] || "Guest",
         rating,
         comment: comment.trim(),
         itemId,
         itemType,
+        itemName: itemName || "",
+        isHidden: false,
         createdAt: new Date().toISOString(),
-      }, { merge: true });
+      };
 
-      // Also save to flat allReviews collection (for admin dashboard real-time)
+      // Subcollection (detail page real-time)
+      const reviewDocRef = doc(firestore, "reviews", `${itemType}_${itemId}`, "entries", user.uid);
+      setDocumentNonBlocking(reviewDocRef, reviewData, { merge: true });
+
+      // Flat allReviews (admin dashboard real-time)
       const allReviewDocRef = doc(firestore, "allReviews", `${itemType}_${itemId}_${user.uid}`);
-      setDocumentNonBlocking(allReviewDocRef, {
-        userId: user.uid,
-        userName: user.displayName || user.email?.split("@")[0] || "Guest",
-        rating,
-        comment: comment.trim(),
-        itemId,
-        itemType,
-        createdAt: new Date().toISOString(),
-      }, { merge: true });
+      setDocumentNonBlocking(allReviewDocRef, reviewData, { merge: true });
+
       setRating(0);
       setComment("");
       toast({ title: "Review submitted!", description: "Thank you for your feedback." });
@@ -181,7 +176,6 @@ export function ReviewSection({ itemId, itemType }: ReviewSectionProps) {
         </div>
       )}
 
-      {/* Already reviewed */}
       {user && hasConfirmedBooking && alreadyReviewed && (
         <div className="p-4 rounded-2xl border border-emerald-100 bg-emerald-50 text-sm text-emerald-700 font-medium flex items-center gap-2">
           <Star className="h-4 w-4 fill-emerald-400 text-emerald-400" />
@@ -189,14 +183,12 @@ export function ReviewSection({ itemId, itemType }: ReviewSectionProps) {
         </div>
       )}
 
-      {/* Must be confirmed to review */}
       {user && !hasConfirmedBooking && (
         <p className="text-xs text-muted-foreground italic">
           Only guests with a confirmed booking can leave a review.
         </p>
       )}
 
-      {/* Not logged in */}
       {!user && (
         <p className="text-xs text-muted-foreground italic">
           Sign in and complete a booking to leave a review.
@@ -231,8 +223,19 @@ export function ReviewSection({ itemId, itemType }: ReviewSectionProps) {
                 </div>
                 <StarRating value={review.rating ?? 0} readonly size="sm" />
               </div>
+
               {review.comment && (
                 <p className="text-sm text-slate-600 leading-relaxed pl-10">{review.comment}</p>
+              )}
+
+              {/* Admin reply shown to guests */}
+              {review.adminReply && (
+                <div className="ml-10 pl-3 border-l-2 border-primary/30 bg-primary/5 rounded-r-xl p-3 mt-1">
+                  <p className="text-[10px] font-bold text-primary uppercase tracking-wide mb-1 flex items-center gap-1">
+                    <Reply className="h-3 w-3" /> Response from Balatasan Stay
+                  </p>
+                  <p className="text-xs text-slate-700">{review.adminReply}</p>
+                </div>
               )}
             </div>
           ))}

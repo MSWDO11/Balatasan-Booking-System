@@ -12,12 +12,13 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import {
   Clock, TrendingUp, MoreVertical, Check, X, Loader2, ShieldAlert,
   MapPin, Wallet, Users as UsersIcon, ShoppingBag, Download,
-  Search, Eye, UserPlus, Image as ImageIcon, Settings, Star, MessageSquare, Bell
+  Search, Eye, UserPlus, Image as ImageIcon, Settings, Star, MessageSquare, Bell,
+  Trash2, EyeOff, Reply
 } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from "recharts";
-import { useFirestore, useCollection, useMemoFirebase, updateDocumentNonBlocking, useUser, setDocumentNonBlocking, useDoc, addDocumentNonBlocking } from "@/firebase";
+import { useFirestore, useCollection, useMemoFirebase, updateDocumentNonBlocking, useUser, setDocumentNonBlocking, useDoc, addDocumentNonBlocking, deleteDocumentNonBlocking } from "@/firebase";
 import { collectionGroup, query, doc, collection } from "firebase/firestore";
 import { useToast } from "@/hooks/use-toast";
 import { useState, useMemo, useEffect } from "react";
@@ -88,6 +89,22 @@ export default function AdminDashboard() {
         (b.createdAt ?? "").localeCompare(a.createdAt ?? "")
       )
     : null;
+
+  // Rooms + tours for item name lookup in reviews tab
+  const roomsListQuery = useMemoFirebase(() => firestore ? collection(firestore, "rooms") : null, [firestore]);
+  const toursListQuery = useMemoFirebase(() => firestore ? collection(firestore, "tours") : null, [firestore]);
+  const { data: roomsList } = useCollection(roomsListQuery);
+  const { data: toursList } = useCollection(toursListQuery);
+  const itemNameMap = useMemo(() => {
+    const map: Record<string, string> = {};
+    roomsList?.forEach((r: any) => { map[r.id] = r.name || r.title || r.id; });
+    toursList?.forEach((t: any) => { map[t.id] = t.name || t.title || t.id; });
+    return map;
+  }, [roomsList, toursList]);
+
+  // Review management state
+  const [replyingReviewId, setReplyingReviewId] = useState<string | null>(null);
+  const [replyText, setReplyText] = useState("");
 
   // Sync payment settings into local state for editing
   useEffect(() => {
@@ -634,37 +651,117 @@ export default function AdminDashboard() {
                     {allReviews.map((review: any) => {
                       const itemType: string = review.itemType ?? "";
                       const itemId: string = review.itemId ?? "";
+                      const itemName = review.itemName || itemNameMap[itemId] || (itemId ? itemId.slice(0, 8) : "—");
+                      const isHidden = review.isHidden === true;
+                      const isReplying = replyingReviewId === review.id;
+
                       return (
-                        <div key={review.id} className="flex items-start gap-4 px-8 py-5 hover:bg-slate-50/40 transition-colors">
-                          {/* Avatar */}
-                          <div className="h-9 w-9 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
-                            <span className="text-xs font-bold text-primary uppercase">
-                              {(review.userName ?? "G").slice(0, 2)}
-                            </span>
-                          </div>
-                          <div className="flex-1 min-w-0 space-y-1">
-                            <div className="flex flex-wrap items-center gap-2">
-                              <span className="text-sm font-bold text-slate-800">{review.userName}</span>
-                              <Badge className="bg-slate-100 text-slate-500 border-none text-[10px] font-semibold capitalize px-2">
-                                {itemType === "room" ? "Cottage" : "Tour"}
-                              </Badge>
-                              {itemId && (
-                                <span className="text-[10px] text-slate-400 font-mono">{itemId.slice(0, 8)}</span>
+                        <div key={review.id} className={cn("px-8 py-5 transition-colors", isHidden ? "bg-slate-50 opacity-60" : "hover:bg-slate-50/40")}>
+                          <div className="flex items-start gap-4">
+                            {/* Avatar */}
+                            <div className="h-9 w-9 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+                              <span className="text-xs font-bold text-primary uppercase">
+                                {(review.userName ?? "G").slice(0, 2)}
+                              </span>
+                            </div>
+                            <div className="flex-1 min-w-0 space-y-1">
+                              <div className="flex flex-wrap items-center gap-2">
+                                <span className="text-sm font-bold text-slate-800">{review.userName}</span>
+                                <Badge className={cn("border-none text-[10px] font-semibold capitalize px-2", itemType === "room" ? "bg-emerald-100 text-emerald-700" : "bg-blue-100 text-blue-700")}>
+                                  {itemType === "room" ? "Cottage" : "Tour"}
+                                </Badge>
+                                {/* Item name instead of ID */}
+                                <span className="text-xs text-slate-600 font-semibold">{itemName}</span>
+                                {isHidden && (
+                                  <span className="text-[10px] bg-slate-200 text-slate-500 px-2 py-0.5 rounded-full font-semibold flex items-center gap-1">
+                                    <EyeOff className="h-3 w-3" /> Hidden
+                                  </span>
+                                )}
+                              </div>
+                              {/* Stars */}
+                              <div className="flex items-center gap-0.5">
+                                {[1,2,3,4,5].map(s => (
+                                  <Star key={s} className={cn("h-3.5 w-3.5", (review.rating ?? 0) >= s ? "fill-amber-400 text-amber-400" : "fill-none text-slate-200")} />
+                                ))}
+                                <span className="text-xs text-slate-400 ml-1">{review.rating}/5</span>
+                              </div>
+                              {review.comment && (
+                                <p className="text-sm text-slate-600 leading-relaxed">{review.comment}</p>
+                              )}
+                              <p className="text-[10px] text-slate-400">
+                                {review.createdAt ? new Date(review.createdAt).toLocaleDateString("en-PH", { year: "numeric", month: "short", day: "numeric" }) : ""}
+                              </p>
+
+                              {/* Admin reply display */}
+                              {review.adminReply && (
+                                <div className="mt-2 pl-3 border-l-2 border-primary/30 bg-primary/5 rounded-r-xl p-3">
+                                  <p className="text-[10px] font-bold text-primary uppercase tracking-wide mb-1">Admin Response</p>
+                                  <p className="text-xs text-slate-700">{review.adminReply}</p>
+                                </div>
+                              )}
+
+                              {/* Reply input */}
+                              {isReplying && (
+                                <div className="mt-2 space-y-2">
+                                  <Textarea
+                                    placeholder="Write a response visible to the guest..."
+                                    className="text-sm min-h-[70px]"
+                                    value={replyText}
+                                    onChange={e => setReplyText(e.target.value)}
+                                    autoFocus
+                                  />
+                                  <div className="flex gap-2">
+                                    <Button size="sm" className="gap-1.5" onClick={() => {
+                                      if (!firestore || !replyText.trim()) return;
+                                      updateDocumentNonBlocking(doc(firestore, "allReviews", review.id), { adminReply: replyText.trim() });
+                                      // Also update subcollection copy
+                                      const subDocId = `${review.itemType}_${review.itemId}`;
+                                      updateDocumentNonBlocking(doc(firestore, "reviews", subDocId, "entries", review.userId), { adminReply: replyText.trim() });
+                                      setReplyingReviewId(null);
+                                      setReplyText("");
+                                      toast({ title: "Reply saved", description: "Your response is now visible to guests." });
+                                    }}>
+                                      <Reply className="h-3.5 w-3.5" /> Save Reply
+                                    </Button>
+                                    <Button size="sm" variant="ghost" onClick={() => { setReplyingReviewId(null); setReplyText(""); }}>Cancel</Button>
+                                  </div>
+                                </div>
                               )}
                             </div>
-                            {/* Stars */}
-                            <div className="flex items-center gap-0.5">
-                              {[1,2,3,4,5].map(s => (
-                                <Star key={s} className={cn("h-3.5 w-3.5", (review.rating ?? 0) >= s ? "fill-amber-400 text-amber-400" : "fill-none text-slate-200")} />
-                              ))}
-                              <span className="text-xs text-slate-400 ml-1">{review.rating}/5</span>
+
+                            {/* Action buttons */}
+                            <div className="flex items-center gap-1 shrink-0">
+                              {/* Reply */}
+                              <Button variant="ghost" size="icon" className="h-7 w-7 text-primary" title="Reply"
+                                onClick={() => {
+                                  setReplyingReviewId(isReplying ? null : review.id);
+                                  setReplyText(review.adminReply || "");
+                                }}>
+                                <Reply className="h-3.5 w-3.5" />
+                              </Button>
+                              {/* Hide/Show toggle */}
+                              <Button variant="ghost" size="icon" className="h-7 w-7 text-slate-400" title={isHidden ? "Show" : "Hide"}
+                                onClick={() => {
+                                  if (!firestore) return;
+                                  updateDocumentNonBlocking(doc(firestore, "allReviews", review.id), { isHidden: !isHidden });
+                                  const subDocId = `${review.itemType}_${review.itemId}`;
+                                  updateDocumentNonBlocking(doc(firestore, "reviews", subDocId, "entries", review.userId), { isHidden: !isHidden });
+                                  toast({ title: isHidden ? "Review visible" : "Review hidden" });
+                                }}>
+                                {isHidden ? <Eye className="h-3.5 w-3.5" /> : <EyeOff className="h-3.5 w-3.5" />}
+                              </Button>
+                              {/* Delete */}
+                              <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" title="Delete"
+                                onClick={() => {
+                                  if (!firestore) return;
+                                  deleteDocumentNonBlocking(doc(firestore, "allReviews", review.id));
+                                  const subDocId = `${review.itemType}_${review.itemId}`;
+                                  deleteDocumentNonBlocking(doc(firestore, "reviews", subDocId, "entries", review.userId));
+                                  toast({ title: "Review deleted" });
+                                }}>
+                                <Trash2 className="h-3.5 w-3.5" />
+                              </Button>
                             </div>
-                            {review.comment && (
-                              <p className="text-sm text-slate-600 leading-relaxed">{review.comment}</p>
-                            )}
-                            <p className="text-[10px] text-slate-400">
-                              {review.createdAt ? new Date(review.createdAt).toLocaleDateString("en-PH", { year: "numeric", month: "short", day: "numeric" }) : ""}
-                            </p>
                           </div>
                         </div>
                       );

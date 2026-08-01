@@ -232,7 +232,7 @@ export default function TourDetailsPage({ params }: { params: Promise<{ id: stri
                 </Alert>
 
                 {/* Ratings & Reviews */}
-                <ReviewSection itemId={id} itemType="tour" />
+                <ReviewSection itemId={id} itemType="tour" itemName={tour?.name || tour?.title || ""} />
               </div>
             </div>
 

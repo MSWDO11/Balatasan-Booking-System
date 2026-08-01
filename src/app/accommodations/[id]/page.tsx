@@ -207,7 +207,7 @@ export default function RoomDetailsPage({ params }: { params: Promise<{ id: stri
                 </Alert>
 
                 {/* Ratings & Reviews */}
-                <ReviewSection itemId={id} itemType="room" />
+                <ReviewSection itemId={id} itemType="room" itemName={room.name} />
               </div>
             </div>
 
