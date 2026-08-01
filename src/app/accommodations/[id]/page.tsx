@@ -89,7 +89,7 @@ export default function RoomDetailsPage({ params }: { params: Promise<{ id: stri
       guestCount,
       guestName: user.displayName || user.email?.split('@')[0] || "Guest",
       contactNumber: contactNumber.trim() || "Not provided",
-      seasonApplied: pricing.seasonInfo?.label || null,
+      seasonApplied: null,
       groupDiscountApplied: pricing.groupDiscountInfo?.label || null,
       createdAt: new Date().toISOString(),
     };
