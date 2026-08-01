@@ -5,7 +5,7 @@ import { usePathname } from "next/navigation";
 import { useRouter } from "next/navigation";
 import { Waves, LayoutDashboard, Database, LogOut, Eye, Bell } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { useAuth, useFirestore, useCollection, useMemoFirebase } from "@/firebase";
+import { useAuth, useFirestoreNullable, useCollection, useMemoFirebase } from "@/firebase";
 import { signOut } from "firebase/auth";
 import { collectionGroup, query, where } from "firebase/firestore";
 import { useState, useEffect, useRef } from "react";
@@ -15,7 +15,7 @@ export function AdminNavbar() {
   const pathname = usePathname();
   const auth = useAuth();
   const router = useRouter();
-  const firestore = useFirestore();
+  const firestore = useFirestoreNullable();
   const [open, setOpen] = useState(false);
   const [seenIds, setSeenIds] = useState<Set<string>>(() => {
     if (typeof window === "undefined") return new Set();

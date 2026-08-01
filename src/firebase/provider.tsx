@@ -148,6 +148,12 @@ export const useFirestore = (): Firestore => {
   return firestore;
 };
 
+/** Safe version — returns null instead of throwing if Firebase isn't ready yet. */
+export const useFirestoreNullable = (): Firestore | null => {
+  const context = useContext(FirebaseContext);
+  return context?.firestore ?? null;
+};
+
 /** Hook to access Firebase App instance. */
 export const useFirebaseApp = (): FirebaseApp => {
   const { firebaseApp } = useFirebase();
