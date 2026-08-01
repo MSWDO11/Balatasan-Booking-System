@@ -106,13 +106,15 @@ export function ReviewSection({ itemId, itemType }: ReviewSectionProps) {
     try {
       // Use user uid as doc id so one review per user
       const reviewDocRef = doc(firestore, "reviews", `${itemType}_${itemId}`, "entries", user.uid);
-      await setDocumentNonBlocking(reviewDocRef, {
+      setDocumentNonBlocking(reviewDocRef, {
         userId: user.uid,
         userName: user.displayName || user.email?.split("@")[0] || "Guest",
         rating,
         comment: comment.trim(),
+        itemId,
+        itemType,
         createdAt: new Date().toISOString(),
-      });
+      }, { merge: true });
       setRating(0);
       setComment("");
       toast({ title: "Review submitted!", description: "Thank you for your feedback." });

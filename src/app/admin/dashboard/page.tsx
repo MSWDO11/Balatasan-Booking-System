@@ -626,10 +626,8 @@ export default function AdminDashboard() {
                 ) : (
                   <div className="divide-y divide-slate-50">
                     {allReviews.map((review: any) => {
-                      // parent doc id is "{itemType}_{itemId}"
-                      const parentId: string = review._parentPath?.split("/")[1] ?? "";
-                      const [itemType, ...rest] = parentId.split("_");
-                      const itemId = rest.join("_");
+                      const itemType: string = review.itemType ?? "";
+                      const itemId: string = review.itemId ?? "";
                       return (
                         <div key={review.id} className="flex items-start gap-4 px-8 py-5 hover:bg-slate-50/40 transition-colors">
                           {/* Avatar */}
