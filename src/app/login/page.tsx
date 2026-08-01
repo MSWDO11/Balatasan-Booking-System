@@ -40,13 +40,16 @@ export default function LoginPage() {
 
   useEffect(() => {
     if (!user) return;
-    if (isAdminLoading) return;
-    if (isAdmin) {
+    // For master admin email — redirect immediately, no Firestore check needed
+    if (isMasterAdmin) { router.push("/admin/dashboard"); return; }
+    // For other users — wait for admin role check to finish
+    if (adminDocRef && isAdminLoading) return;
+    if (!!adminRole) {
       router.push("/admin/dashboard");
     } else {
       router.push("/");
     }
-  }, [user, isAdmin, isAdminLoading, router]);
+  }, [user, isMasterAdmin, adminRole, isAdminLoading, adminDocRef, router]);
 
   const handleForgotPassword = async () => {
     if (!email.trim()) {
