@@ -23,10 +23,15 @@ export function AdminNavbar() {
   });
   const panelRef = useRef<HTMLDivElement>(null);
 
-  // Watch for Payment Uploaded bookings
+  // Watch for Payment Uploaded bookings — only attempt if firestore is ready
+  // Wrapped in a try via null guard so a permission error doesn't crash the app
   const uploadedQuery = useMemoFirebase(() => {
     if (!firestore) return null;
-    return query(collectionGroup(firestore, "bookings"), where("status", "==", "Payment Uploaded"));
+    try {
+      return query(collectionGroup(firestore, "bookings"), where("status", "==", "Payment Uploaded"));
+    } catch {
+      return null;
+    }
   }, [firestore]);
   const { data: uploadedBookings } = useCollection(uploadedQuery);
 
