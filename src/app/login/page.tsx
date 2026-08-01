@@ -9,11 +9,12 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Waves, Mail, Lock, Loader2, UserPlus, LogIn, Eye, EyeOff, KeyRound } from "lucide-react";
-import { useAuth } from "@/firebase";
+import { useAuth, useFirestore, useDoc, useMemoFirebase } from "@/firebase";
 import { createUserWithEmailAndPassword, signInWithEmailAndPassword, sendPasswordResetEmail } from "firebase/auth";
 import { useRouter } from "next/navigation";
 import { useUser } from "@/firebase";
 import { useEffect } from "react";
+import { doc } from "firebase/firestore";
 
 export default function LoginPage() {
   const [isSignUp, setIsSignUp] = useState(false);
@@ -25,7 +26,27 @@ export default function LoginPage() {
   const [resetSent, setResetSent] = useState(false);
   const auth = useAuth();
   const { user } = useUser();
+  const firestore = useFirestore();
   const router = useRouter();
+
+  // Check if logged-in user is admin
+  const adminDocRef = useMemoFirebase(
+    () => (firestore && user) ? doc(firestore, "roles_admin", user.uid) : null,
+    [firestore, user]
+  );
+  const { data: adminRole, isLoading: isAdminLoading } = useDoc(adminDocRef);
+  const isMasterAdmin = user?.email?.toLowerCase() === "admin@gmail.com";
+  const isAdmin = isMasterAdmin || !!adminRole;
+
+  useEffect(() => {
+    if (!user) return;
+    if (isAdminLoading) return;
+    if (isAdmin) {
+      router.push("/admin/dashboard");
+    } else {
+      router.push("/");
+    }
+  }, [user, isAdmin, isAdminLoading, router]);
 
   const handleForgotPassword = async () => {
     if (!email.trim()) {
@@ -41,12 +62,6 @@ export default function LoginPage() {
     }
   };
 
-  useEffect(() => {
-    if (user) {
-      router.push("/");
-    }
-  }, [user, router]);
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
@@ -58,8 +73,7 @@ export default function LoginPage() {
       } else {
         await signInWithEmailAndPassword(auth, email, password);
       }
-      // Success — redirect handled by useEffect, but reset loading in case of delay
-      router.push("/");
+      // Success — useEffect handles redirect based on admin role
     } catch (err: any) {
       const code = err?.code ?? "";
       if (code === "auth/email-already-in-use")      setErrorMsg("This email is already registered. Try signing in instead.");
