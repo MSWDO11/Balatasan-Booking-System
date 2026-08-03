@@ -113,30 +113,30 @@ function AdminSidebarInner() {
           </button>
         ))}
 
-        {isDashboard && (
-          <div className="pt-3">
-            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest px-3 mb-2">Sections</p>
-            {dashboardTabs.map(({ tab, icon: Icon, label }) => (
-              <button key={tab}
-                onClick={() => { onNav(); setTimeout(() => router.push(`/admin/dashboard?tab=${tab}`), 150); }}
-                className={cn(
-                  "w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold transition-all text-left",
-                  activeTab === tab ? "bg-primary text-white shadow-md shadow-primary/20"
+        {/* Dashboard sub-sections — show on all admin pages */}
+        <div className="pt-3">
+          <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest px-3 mb-2">Sections</p>
+          {dashboardTabs.map(({ tab, icon: Icon, label }) => (
+            <button key={tab}
+              onClick={() => { onNav(); setTimeout(() => router.push(`/admin/dashboard?tab=${tab}`), 150); }}
+              className={cn(
+                "w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold transition-all text-left",
+                isDashboard && activeTab === tab
+                  ? "bg-primary text-white shadow-md shadow-primary/20"
                   : "text-slate-600 hover:bg-slate-100 hover:text-slate-900"
-                )}
-              >
-                <Icon className="h-4 w-4 shrink-0" />
-                <span className="flex-1">{label}</span>
-                {tab === "reviews" && reviewCount > 0 && (
-                  <span className="bg-amber-100 text-amber-700 text-[10px] font-bold px-1.5 py-0.5 rounded-full">{reviewCount}</span>
-                )}
-                {tab === "bookings" && unread > 0 && (
-                  <span className="bg-rose-100 text-rose-600 text-[10px] font-bold px-1.5 py-0.5 rounded-full">{unread}</span>
-                )}
-              </button>
-            ))}
-          </div>
-        )}
+              )}
+            >
+              <Icon className="h-4 w-4 shrink-0" />
+              <span className="flex-1">{label}</span>
+              {tab === "reviews" && reviewCount > 0 && (
+                <span className="bg-amber-100 text-amber-700 text-[10px] font-bold px-1.5 py-0.5 rounded-full">{reviewCount}</span>
+              )}
+              {tab === "bookings" && unread > 0 && (
+                <span className="bg-rose-100 text-rose-600 text-[10px] font-bold px-1.5 py-0.5 rounded-full">{unread}</span>
+              )}
+            </button>
+          ))}
+        </div>
 
         <div className="pt-3">
           <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest px-3 mb-2">Quick Actions</p>
@@ -284,9 +284,8 @@ function AdminSidebarInner() {
         </div>
       )}
 
-      {/* ── Mobile bottom tab bar (dashboard only) ── */}
-      {isDashboard && (
-        <div className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-white border-t border-slate-100 shadow-[0_-4px_20px_rgba(0,0,0,0.06)] flex">
+      {/* ── Mobile bottom tab bar (all admin pages) ── */}
+      <div className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-white border-t border-slate-100 shadow-[0_-4px_20px_rgba(0,0,0,0.06)] flex">
           {dashboardTabs.map(({ tab, icon: Icon, label }) => (
             <Link
               key={tab}
@@ -313,7 +312,6 @@ function AdminSidebarInner() {
             </Link>
           ))}
         </div>
-      )}
     </>
   );
 }
