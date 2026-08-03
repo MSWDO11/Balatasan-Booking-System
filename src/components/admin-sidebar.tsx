@@ -74,6 +74,11 @@ function AdminSidebarInner() {
 
   const isDashboard = pathname === "/admin/dashboard";
 
+  // Close mobile drawer on route change
+  useEffect(() => {
+    setMobileOpen(false);
+  }, [pathname]);
+
   const SidebarContent = () => (
     <div className="flex flex-col h-full">
       <div className="px-6 py-6 border-b border-slate-100">
@@ -94,9 +99,9 @@ function AdminSidebarInner() {
           <Link key={href} href={href} onClick={() => setMobileOpen(false)}
             className={cn(
               "flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold transition-all",
-              pathname === href && !isDashboard ? "bg-primary text-white shadow-md shadow-primary/20"
-              : pathname === href ? "bg-primary/10 text-primary"
-              : "text-slate-600 hover:bg-slate-100 hover:text-slate-900"
+              pathname === href
+                ? "bg-primary text-white shadow-md shadow-primary/20"
+                : "text-slate-600 hover:bg-slate-100 hover:text-slate-900"
             )}
           >
             <Icon className="h-4 w-4 shrink-0" />{label}
