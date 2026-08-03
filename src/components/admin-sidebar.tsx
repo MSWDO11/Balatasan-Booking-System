@@ -79,10 +79,10 @@ function AdminSidebarInner() {
     setMobileOpen(false);
   }, [pathname]);
 
-  const SidebarContent = () => (
+  const SidebarContent = ({ onNav }: { onNav: () => void }) => (
     <div className="flex flex-col h-full">
       <div className="px-6 py-6 border-b border-slate-100">
-        <Link href="/admin/dashboard" className="flex items-center gap-2.5 group" onClick={() => setMobileOpen(false)}>
+        <Link href="/admin/dashboard" className="flex items-center gap-2.5 group" onClick={onNav}>
           <div className="bg-primary/10 p-2 rounded-xl transition-colors group-hover:bg-primary/20">
             <Waves className="h-5 w-5 text-primary" />
           </div>
@@ -96,7 +96,7 @@ function AdminSidebarInner() {
       <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
         <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest px-3 mb-2">Pages</p>
         {mainNav.map(({ href, icon: Icon, label }) => (
-          <Link key={href} href={href} onClick={() => setMobileOpen(false)}
+          <Link key={href} href={href} onClick={onNav}
             className={cn(
               "flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold transition-all",
               pathname === href
@@ -112,7 +112,7 @@ function AdminSidebarInner() {
           <div className="pt-3">
             <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest px-3 mb-2">Sections</p>
             {dashboardTabs.map(({ tab, icon: Icon, label }) => (
-              <Link key={tab} href={`/admin/dashboard?tab=${tab}`} onClick={() => setMobileOpen(false)}
+              <Link key={tab} href={`/admin/dashboard?tab=${tab}`} onClick={onNav}
                 className={cn(
                   "flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold transition-all",
                   activeTab === tab ? "bg-primary text-white shadow-md shadow-primary/20"
@@ -204,7 +204,7 @@ function AdminSidebarInner() {
     <>
       {/* ── Desktop sidebar ── */}
       <aside className="hidden md:flex flex-col w-56 shrink-0 bg-white border-r border-slate-100 min-h-screen sticky top-0 h-screen shadow-sm z-40">
-        <SidebarContent />
+        <SidebarContent onNav={() => {}} />
       </aside>
 
       {/* ── Mobile top bar ── */}
@@ -273,7 +273,7 @@ function AdminSidebarInner() {
                 <X className="h-5 w-5" />
               </button>
             </div>
-            <SidebarContent />
+            <SidebarContent onNav={() => setMobileOpen(false)} />
           </aside>
         </div>
       )}
