@@ -82,7 +82,8 @@ function AdminSidebarInner() {
   const SidebarContent = ({ onNav }: { onNav: () => void }) => (
     <div className="flex flex-col h-full">
       <div className="px-6 py-6 border-b border-slate-100">
-        <Link href="/admin/dashboard" className="flex items-center gap-2.5 group" onClick={onNav}>
+        <button onClick={() => { onNav(); router.push("/admin/dashboard"); }}
+          className="flex items-center gap-2.5 group text-left">
           <div className="bg-primary/10 p-2 rounded-xl transition-colors group-hover:bg-primary/20">
             <Waves className="h-5 w-5 text-primary" />
           </div>
@@ -90,31 +91,33 @@ function AdminSidebarInner() {
             <p className="font-headline text-base font-bold text-primary leading-tight">Balatasan</p>
             <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-widest leading-tight">Admin Panel</p>
           </div>
-        </Link>
+        </button>
       </div>
 
       <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
         <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest px-3 mb-2">Pages</p>
         {mainNav.map(({ href, icon: Icon, label }) => (
-          <Link key={href} href={href} onClick={onNav}
+          <button key={href}
+            onClick={() => { onNav(); router.push(href); }}
             className={cn(
-              "flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold transition-all",
+              "w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold transition-all text-left",
               pathname === href
                 ? "bg-primary text-white shadow-md shadow-primary/20"
                 : "text-slate-600 hover:bg-slate-100 hover:text-slate-900"
             )}
           >
             <Icon className="h-4 w-4 shrink-0" />{label}
-          </Link>
+          </button>
         ))}
 
         {isDashboard && (
           <div className="pt-3">
             <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest px-3 mb-2">Sections</p>
             {dashboardTabs.map(({ tab, icon: Icon, label }) => (
-              <Link key={tab} href={`/admin/dashboard?tab=${tab}`} onClick={onNav}
+              <button key={tab}
+                onClick={() => { onNav(); router.push(`/admin/dashboard?tab=${tab}`); }}
                 className={cn(
-                  "flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold transition-all",
+                  "w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold transition-all text-left",
                   activeTab === tab ? "bg-primary text-white shadow-md shadow-primary/20"
                   : "text-slate-600 hover:bg-slate-100 hover:text-slate-900"
                 )}
@@ -127,7 +130,7 @@ function AdminSidebarInner() {
                 {tab === "bookings" && unread > 0 && (
                   <span className="bg-rose-100 text-rose-600 text-[10px] font-bold px-1.5 py-0.5 rounded-full">{unread}</span>
                 )}
-              </Link>
+              </button>
             ))}
           </div>
         )}
