@@ -9,8 +9,10 @@ import Image from "next/image";
 import Link from "next/link";
 import { ArrowRight, Compass, Waves, Anchor } from "lucide-react";
 import { PlaceHolderImages } from "@/lib/placeholder-images";
-import { useFirestore, useCollection, useMemoFirebase } from "@/firebase";
-import { collection, limit, query, where } from "firebase/firestore";
+import { useFirestore, useCollection, useMemoFirebase, useUser, useDoc } from "@/firebase";
+import { collection, limit, query, where, doc } from "firebase/firestore";
+import { useRouter } from "next/navigation";
+import { useEffect } from "react";
 
 /* -------------------------------------------------------
    Reusable wave SVG divider
@@ -47,6 +49,22 @@ function WaveDivider({
 export default function Home() {
   const firestore = useFirestore();
   const heroImage = PlaceHolderImages.find((img) => img.id === "hero-beach");
+  const { user } = useUser();
+  const adminDocRef = useMemoFirebase(
+    () => (firestore && user) ? doc(collection(firestore, "roles_admin"), user.uid) : null,
+    [firestore, user]
+  );
+  const { data: adminRole, isLoading: isAdminLoading } = useDoc(adminDocRef);
+  const isMasterAdmin = user?.email?.toLowerCase() === "admin@gmail.com";
+  const isAdmin = isMasterAdmin || !!adminRole;
+  const router = useRouter();
+
+  // Redirect admin to dashboard immediately
+  useEffect(() => {
+    if (!user) return;
+    if (isMasterAdmin) { router.replace("/admin/dashboard"); return; }
+    if (!isAdminLoading && isAdmin) router.replace("/admin/dashboard");
+  }, [user, isAdmin, isAdminLoading, isMasterAdmin, router]);
 
   const featuredRoomsQuery = useMemoFirebase(() => {
     if (!firestore) return null;
