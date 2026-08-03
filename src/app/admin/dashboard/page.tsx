@@ -339,8 +339,20 @@ function AdminDashboardContent() {
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div className="space-y-1">
               <p className="text-xs font-bold text-primary uppercase tracking-widest">Admin Panel</p>
-              <h1 className="text-4xl font-headline font-bold text-slate-900 tracking-tight">Dashboard</h1>
-              <p className="text-slate-500">Manage reservations and monitor resort growth.</p>
+              <h1 className="text-4xl font-headline font-bold text-slate-900 tracking-tight">
+                {activeTab === "bookings" ? "Dashboard"
+                : activeTab === "reviews" ? "Reviews"
+                : activeTab === "users" ? "Administrators"
+                : activeTab === "settings" ? "Settings"
+                : "Dashboard"}
+              </h1>
+              <p className="text-slate-500">
+                {activeTab === "bookings" ? "Manage reservations and monitor resort growth."
+                : activeTab === "reviews" ? "View and manage guest reviews."
+                : activeTab === "users" ? "Manage admin access."
+                : activeTab === "settings" ? "Configure payment and resort settings."
+                : ""}
+              </p>
             </div>
             <button type="button" onClick={handleExportCSV} className="self-start md:self-auto flex items-center gap-2 px-5 py-2.5 rounded-full bg-white border border-slate-200 text-slate-600 font-semibold shadow-sm hover:bg-slate-50 transition-colors text-sm cursor-pointer">
               <Download className="h-4 w-4" />
@@ -438,7 +450,8 @@ function AdminDashboardContent() {
           </DialogContent>
         </Dialog>
 
-        {/* Stats */}
+        {/* Stats + Chart — only on Reservations tab */}
+        {activeTab === "bookings" && (<>
         <div className="grid grid-cols-2 lg:grid-cols-5 gap-5">
           {stats.map((stat, i) => (
             <Card key={i} className="border-none shadow-md rounded-2xl overflow-hidden bg-white group hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200">
@@ -504,6 +517,7 @@ function AdminDashboardContent() {
             </CardContent>
           </Card>
         )}
+        </>)}
 
         <div className="w-full space-y-6">
           {activeTab === "bookings" && (
