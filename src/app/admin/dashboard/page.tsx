@@ -373,14 +373,14 @@ function AdminDashboardContent() {
             <div className="space-y-1">
               <p className="text-xs font-bold text-primary uppercase tracking-widest">Admin Panel</p>
               <h1 className="text-4xl font-headline font-bold text-slate-900 tracking-tight">
-                {activeTab === "bookings" ? "Dashboard"
+                {activeTab === "bookings" ? "Reservations"
                 : activeTab === "reviews" ? "Reviews"
                 : activeTab === "users" ? "Administrators"
                 : activeTab === "settings" ? "Settings"
-                : "Dashboard"}
+                : "Reservations"}
               </h1>
               <p className="text-slate-500">
-                {activeTab === "bookings" ? "Manage reservations and monitor resort growth."
+                {activeTab === "bookings" ? "Manage and monitor all guest reservations."
                 : activeTab === "reviews" ? "View and manage guest reviews."
                 : activeTab === "users" ? "Manage admin access."
                 : activeTab === "settings" ? "Configure payment and resort settings."
@@ -394,6 +394,22 @@ function AdminDashboardContent() {
                 : `Export (${bookings.length})`}
             </button>
           </div>
+          {/* Search + Filter — only on Reservations tab */}
+          {activeTab === "bookings" && (
+            <div className="flex flex-col sm:flex-row gap-3 mt-5">
+              <div className="relative flex-1">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input placeholder="Search by guest or item..." className="pl-9 bg-white" value={searchQuery} onChange={e => setSearchQuery(e.target.value)} />
+              </div>
+              <div className="flex gap-2 flex-wrap">
+                {["All","Pending Payment","Payment Uploaded","Confirmed","Cancelled"].map(s => (
+                  <button key={s} onClick={() => setStatusFilter(s)} className={cn("px-3 py-1.5 rounded-full text-xs font-semibold border transition-colors", statusFilter === s ? "bg-primary text-white border-primary" : "bg-white text-slate-600 border-slate-200 hover:border-primary/40")}>
+                    {s === "Pending Payment" ? "Pending" : s === "Payment Uploaded" ? "Receipt ✓" : s}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
 
         <div className="px-6 py-8 pb-24 md:pb-8 space-y-8">
@@ -622,31 +638,6 @@ function AdminDashboardContent() {
         <div className="w-full space-y-6">
           {activeTab === "bookings" && (
             <Card className="border-none shadow-2xl shadow-slate-200/50 rounded-3xl overflow-hidden bg-white">
-              <CardHeader className="p-8 border-b border-slate-50">
-                <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
-                  <div>
-                    <CardTitle className="text-2xl font-headline font-bold text-slate-900">Recent Reservations</CardTitle>
-                    <CardDescription className="text-slate-500">Click a row to view full details.</CardDescription>
-                  </div>
-                  <div className="bg-primary/5 px-4 py-2 rounded-xl flex items-center gap-2">
-                    <Wallet className="h-4 w-4 text-primary" /><span className="text-sm font-bold text-primary">Live Updates</span>
-                  </div>
-                </div>
-                {/* Search + Filter */}
-                <div className="flex flex-col sm:flex-row gap-3 mt-4">
-                  <div className="relative flex-1">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                    <Input placeholder="Search by guest or item..." className="pl-9" value={searchQuery} onChange={e => setSearchQuery(e.target.value)} />
-                  </div>
-                  <div className="flex gap-2 flex-wrap">
-                    {["All","Pending Payment","Payment Uploaded","Confirmed","Cancelled"].map(s => (
-                      <button key={s} onClick={() => setStatusFilter(s)} className={cn("px-3 py-1.5 rounded-full text-xs font-semibold border transition-colors", statusFilter === s ? "bg-primary text-white border-primary" : "bg-white text-slate-600 border-slate-200 hover:border-primary/40")}>
-                        {s === "Pending Payment" ? "Pending" : s === "Payment Uploaded" ? "Receipt ✓" : s}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              </CardHeader>
               <CardContent className="p-0">
                 {isBookingsLoading ? (
                   <div className="flex justify-center py-24"><Spinner size="lg" /></div>
