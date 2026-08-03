@@ -74,10 +74,18 @@ function AdminSidebarInner() {
 
   const isDashboard = pathname === "/admin/dashboard";
 
-  // Close mobile drawer on route change
+  const [lastActiveTab, setLastActiveTab] = useState(() => {
+    if (typeof window === "undefined") return "bookings";
+    return localStorage.getItem("admin_active_tab") ?? "bookings";
+  });
+
+  // Keep lastActiveTab in sync when on dashboard
   useEffect(() => {
-    setMobileOpen(false);
-  }, [pathname]);
+    if (isDashboard) {
+      setLastActiveTab(activeTab);
+      localStorage.setItem("admin_active_tab", activeTab);
+    }
+  }, [isDashboard, activeTab]);
 
   const SidebarContent = ({ onNav }: { onNav: () => void }) => (
     <div className="flex flex-col h-full">
@@ -118,10 +126,15 @@ function AdminSidebarInner() {
           <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest px-3 mb-2">Sections</p>
           {dashboardTabs.map(({ tab, icon: Icon, label }) => (
             <button key={tab}
-              onClick={() => { onNav(); setTimeout(() => router.push(`/admin/dashboard?tab=${tab}`), 150); }}
+              onClick={() => { 
+                setLastActiveTab(tab);
+                localStorage.setItem("admin_active_tab", tab);
+                onNav(); 
+                setTimeout(() => router.push(`/admin/dashboard?tab=${tab}`), 150); 
+              }}
               className={cn(
                 "w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold transition-all text-left",
-                isDashboard && activeTab === tab
+                lastActiveTab === tab
                   ? "bg-primary text-white shadow-md shadow-primary/20"
                   : "text-slate-600 hover:bg-slate-100 hover:text-slate-900"
               )}
@@ -290,13 +303,17 @@ function AdminSidebarInner() {
             <Link
               key={tab}
               href={`/admin/dashboard?tab=${tab}`}
-              onClick={() => setMobileOpen(false)}
+              onClick={() => { 
+                setLastActiveTab(tab);
+                localStorage.setItem("admin_active_tab", tab);
+                setMobileOpen(false); 
+              }}
               className={cn(
                 "flex-1 flex flex-col items-center justify-center gap-0.5 py-2.5 text-[10px] font-bold transition-colors relative",
-                activeTab === tab ? "text-primary" : "text-slate-400"
+                lastActiveTab === tab ? "text-primary" : "text-slate-400"
               )}
             >
-              {activeTab === tab && (
+              {lastActiveTab === tab && (
                 <span className="absolute top-0 left-1/2 -translate-x-1/2 h-0.5 w-8 bg-primary rounded-full" />
               )}
               <div className="relative">
