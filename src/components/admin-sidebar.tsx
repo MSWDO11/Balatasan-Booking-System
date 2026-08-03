@@ -75,14 +75,14 @@ function AdminSidebarInner() {
 
   const isDashboard = pathname === "/admin/dashboard";
 
-  const [lastActiveTab, setLastActiveTab] = useState(() => {
-    if (typeof window === "undefined") return "overview";
-    return localStorage.getItem("admin_active_tab") ?? "overview";
+  const [lastActiveTab, setLastActiveTab] = useState<string | null>(() => {
+    if (typeof window === "undefined") return null;
+    return localStorage.getItem("admin_active_tab") ?? null;
   });
 
-  // Keep lastActiveTab in sync when on dashboard
+  // Sync lastActiveTab from URL when on dashboard
   useEffect(() => {
-    if (isDashboard) {
+    if (isDashboard && activeTab) {
       setLastActiveTab(activeTab);
       localStorage.setItem("admin_active_tab", activeTab);
     }
@@ -140,12 +140,12 @@ function AdminSidebarInner() {
                 onNav(); 
                 setTimeout(() => router.push(`/admin/dashboard?tab=${tab}`), 150); 
               }}
-              className={cn(
-                "w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold transition-all text-left",
-                lastActiveTab === tab
-                  ? "bg-primary text-white shadow-md shadow-primary/20"
-                  : "text-slate-600 hover:bg-slate-100 hover:text-slate-900"
-              )}
+                className={cn(
+                  "w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold transition-all text-left",
+                  lastActiveTab === tab
+                    ? "bg-primary text-white shadow-md shadow-primary/20"
+                    : "text-slate-600 hover:bg-slate-100 hover:text-slate-900"
+                )}
             >
               <Icon className="h-4 w-4 shrink-0" />
               <span className="flex-1">{label}</span>
