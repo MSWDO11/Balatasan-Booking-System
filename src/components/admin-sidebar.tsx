@@ -16,7 +16,6 @@ const mainNav = [
 ];
 
 const dashboardTabs = [
-  { tab: "overview",  icon: LayoutDashboard, label: "Overview" },
   { tab: "bookings",  icon: ShoppingBag,     label: "Reservations" },
   { tab: "reviews",   icon: Star,             label: "Reviews" },
   { tab: "users",     icon: Users,            label: "Administrators" },
