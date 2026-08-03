@@ -280,7 +280,7 @@ function AdminDashboardContent() {
   };
 
   if (isUserLoading || isAdminRoleLoading) return (
-    <div className="flex min-h-screen"><AdminSidebar />
+    <div className="flex flex-col md:flex-row min-h-screen"><AdminSidebar />
       <main className="flex-grow flex items-center justify-center">
         <Spinner size="lg" />
       </main>
@@ -288,7 +288,7 @@ function AdminDashboardContent() {
   );
 
   if (!isMasterAdminEmail && !hasAdminRecord) return (
-    <div className="flex min-h-screen bg-slate-50"><AdminSidebar />
+    <div className="flex flex-col md:flex-row min-h-screen bg-slate-50"><AdminSidebar />
       <main className="flex-grow flex items-center justify-center p-4">
         <Card className="max-w-md text-center border-none shadow-2xl rounded-3xl overflow-hidden">
           <CardHeader className="pt-10 pb-6">
@@ -303,7 +303,7 @@ function AdminDashboardContent() {
   );
 
   if (isMasterAdminEmail && !hasAdminRecord) return (
-    <div className="flex min-h-screen bg-slate-50"><AdminSidebar />
+    <div className="flex flex-col md:flex-row min-h-screen bg-slate-50"><AdminSidebar />
       <main className="flex-grow flex items-center justify-center p-4">
         <Card className="max-w-md text-center border-none shadow-2xl rounded-3xl overflow-hidden">
           <CardHeader className="pt-10 pb-6">
@@ -330,7 +330,7 @@ function AdminDashboardContent() {
   ];
 
   return (
-    <div className="flex min-h-screen bg-[#F8FBFB]">
+    <div className="flex flex-col md:flex-row min-h-screen bg-[#F8FBFB]">
       <AdminSidebar />
       <div className="flex flex-col flex-1 min-w-0">
       <main className="flex-grow">

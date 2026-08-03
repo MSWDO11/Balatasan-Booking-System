@@ -299,7 +299,7 @@ export default function AdminInventoryPage() {
 
   if (isUserLoading || isAdminRoleLoading) {
     return (
-      <div className="flex min-h-screen">
+      <div className="flex flex-col md:flex-row min-h-screen">
         <AdminSidebar />
         <main className="flex-grow flex items-center justify-center">
           <Spinner size="lg" />
@@ -310,7 +310,7 @@ export default function AdminInventoryPage() {
 
   if (!isMasterAdminEmail && !hasAdminRecord) {
     return (
-      <div className="flex min-h-screen bg-secondary/10">
+      <div className="flex flex-col md:flex-row min-h-screen bg-secondary/10">
         <AdminSidebar />
         <main className="flex-grow flex items-center justify-center p-4">
           <Card className="max-w-md text-center border-none shadow-xl">
@@ -339,7 +339,7 @@ export default function AdminInventoryPage() {
       });
 
   return (
-    <div className="flex min-h-screen bg-secondary/10">
+    <div className="flex flex-col md:flex-row min-h-screen bg-secondary/10">
       <AdminSidebar />
       <div className="flex flex-col flex-1 min-w-0">
 
