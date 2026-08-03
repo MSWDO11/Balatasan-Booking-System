@@ -11,7 +11,7 @@ import {
   Clock, TrendingUp, MoreVertical, Check, X, Loader2, ShieldAlert,
   MapPin, Wallet, Users as UsersIcon, ShoppingBag, Download,
   Search, Eye, UserPlus, Image as ImageIcon, Settings, Star, MessageSquare, Bell,
-  Trash2, EyeOff, Reply
+  Trash2, EyeOff, Reply, Calendar, Sun
 } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
@@ -232,7 +232,7 @@ function AdminDashboardContent() {
   };
 
   const handleExportCSV = () => {
-    const exportData = bookings.length ? bookings : (rawBookings ?? []);
+    const exportData = filteredBookings.length ? filteredBookings : (rawBookings ?? []);
     if (!exportData.length) { toast({ title: "No bookings" }); return; }
     const headers = ["Ref ID","Guest Name","Contact","Item","Start Date","End Date","Guests","Status","Total Price","Created At"];
     const rows = (exportData as any[]).map(b => [
@@ -321,12 +321,45 @@ function AdminDashboardContent() {
     </div>
   );
 
+  // Revenue growth calculation (improvement 4)
+  const now = new Date();
+  const currentMonthRevenue = bookings
+    .filter(b => b.status === "Confirmed" && b.startDate)
+    .filter(b => {
+      const d = new Date(b.startDate);
+      return d.getFullYear() === now.getFullYear() && d.getMonth() === now.getMonth();
+    })
+    .reduce((acc, b) => acc + (b.totalPrice || 0), 0);
+  const prevMonthDate = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+  const prevMonthRevenue = bookings
+    .filter(b => b.status === "Confirmed" && b.startDate)
+    .filter(b => {
+      const d = new Date(b.startDate);
+      return d.getFullYear() === prevMonthDate.getFullYear() && d.getMonth() === prevMonthDate.getMonth();
+    })
+    .reduce((acc, b) => acc + (b.totalPrice || 0), 0);
+  const revenueGrowthPct = prevMonthRevenue === 0
+    ? (currentMonthRevenue > 0 ? null : 0)
+    : Math.round(((currentMonthRevenue - prevMonthRevenue) / prevMonthRevenue) * 100);
+  const totalRevenue = bookings.filter(b => b.status === "Confirmed").reduce((acc, b) => acc + (b.totalPrice || 0), 0);
+
   const stats = [
-    { label: "Total Bookings", value: bookings.length.toString(), icon: ShoppingBag, color: "text-blue-600", bg: "bg-blue-50" },
-    { label: "Confirmed", value: bookings.filter(b => b.status === "Confirmed").length.toString(), icon: Check, color: "text-emerald-600", bg: "bg-emerald-50" },
-    { label: "Pending", value: bookings.filter(b => b.status === "Pending Payment" || b.status === "Payment Uploaded").length.toString(), icon: Clock, color: "text-amber-600", bg: "bg-amber-50" },
-    { label: "Cancelled", value: bookings.filter(b => b.status === "Cancelled").length.toString(), icon: X, color: "text-rose-600", bg: "bg-rose-50" },
-    { label: "Revenue", value: `₱${bookings.filter(b=>b.status==="Confirmed").reduce((acc,b) => acc+(b.totalPrice||0), 0).toLocaleString()}`, icon: TrendingUp, color: "text-primary", bg: "bg-primary/10" },
+    { label: "Total Bookings", value: bookings.length.toString(), icon: ShoppingBag, color: "text-blue-600", bg: "bg-blue-50", sub: null },
+    { label: "Confirmed", value: bookings.filter(b => b.status === "Confirmed").length.toString(), icon: Check, color: "text-emerald-600", bg: "bg-emerald-50", sub: null },
+    { label: "Pending", value: bookings.filter(b => b.status === "Pending Payment" || b.status === "Payment Uploaded").length.toString(), icon: Clock, color: "text-amber-600", bg: "bg-amber-50", sub: null },
+    { label: "Cancelled", value: bookings.filter(b => b.status === "Cancelled").length.toString(), icon: X, color: "text-rose-600", bg: "bg-rose-50", sub: null },
+    {
+      label: "Revenue",
+      value: `₱${totalRevenue.toLocaleString()}`,
+      icon: TrendingUp,
+      color: "text-primary",
+      bg: "bg-primary/10",
+      sub: revenueGrowthPct === null
+        ? <span className="text-xs font-semibold text-emerald-600 mt-0.5">New this month</span>
+        : revenueGrowthPct === 0 && currentMonthRevenue === 0
+        ? null
+        : <span className={`text-xs font-semibold mt-0.5 ${revenueGrowthPct >= 0 ? "text-emerald-600" : "text-rose-500"}`}>{revenueGrowthPct >= 0 ? "+" : ""}{revenueGrowthPct}% vs last month</span>,
+    },
   ];
 
   return (
@@ -356,7 +389,9 @@ function AdminDashboardContent() {
             </div>
             <button type="button" onClick={handleExportCSV} className="self-start md:self-auto flex items-center gap-2 px-5 py-2.5 rounded-full bg-white border border-slate-200 text-slate-600 font-semibold shadow-sm hover:bg-slate-50 transition-colors text-sm cursor-pointer">
               <Download className="h-4 w-4" />
-              Export Data
+              {filteredBookings.length < bookings.length
+                ? `Export (${filteredBookings.length} filtered)`
+                : `Export (${bookings.length})`}
             </button>
           </div>
         </div>
@@ -382,6 +417,36 @@ function AdminDashboardContent() {
             <DialogHeader><DialogTitle>Booking Details</DialogTitle></DialogHeader>
             {selectedBooking && (
               <div className="space-y-4">
+                {/* Status progress indicator (improvement 3) */}
+                {(() => {
+                  const isCancelled = selectedBooking.status === "Cancelled";
+                  const steps = isCancelled
+                    ? ["Pending Payment", "Payment Uploaded", "Cancelled"]
+                    : ["Pending Payment", "Payment Uploaded", "Confirmed"];
+                  const stepColors = isCancelled
+                    ? ["bg-amber-400", "bg-blue-400", "bg-rose-500"]
+                    : ["bg-amber-400", "bg-blue-400", "bg-emerald-500"];
+                  const currentIdx = steps.indexOf(selectedBooking.status);
+                  return (
+                    <div className="flex items-center gap-0 mb-2">
+                      {steps.map((step, idx) => {
+                        const isActive = idx === currentIdx;
+                        const isPast = idx < currentIdx;
+                        return (
+                          <div key={step} className="flex items-center flex-1 min-w-0">
+                            <div className="flex flex-col items-center min-w-0">
+                              <div className={`h-3 w-3 rounded-full border-2 shrink-0 transition-all ${isActive || isPast ? stepColors[idx] + " border-transparent" : "bg-slate-200 border-slate-300"}`} />
+                              <span className={`text-[9px] font-semibold mt-1 text-center leading-tight max-w-[56px] truncate ${isActive ? "text-slate-800" : isPast ? "text-slate-500" : "text-slate-300"}`}>{step}</span>
+                            </div>
+                            {idx < steps.length - 1 && (
+                              <div className={`h-0.5 flex-1 mx-1 rounded ${isPast ? stepColors[idx] : "bg-slate-200"}`} />
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  );
+                })()}
                 <div className="grid grid-cols-2 gap-3 text-sm">
                   <div><p className="text-muted-foreground text-xs">Ref ID</p><p className="font-bold">{selectedBooking.id?.slice(0,8).toUpperCase()}</p></div>
                   <div><p className="text-muted-foreground text-xs">Status</p><Badge className={cn("text-xs border", getStatusColor(selectedBooking.status))}>{selectedBooking.status}</Badge></div>
@@ -452,6 +517,36 @@ function AdminDashboardContent() {
 
         {/* Stats + Chart — only on Reservations tab */}
         {activeTab === "bookings" && (<>
+        {/* Today's Check-ins Widget (improvement 1) */}
+        {(() => {
+          const todayStr = new Date().toISOString().slice(0, 10);
+          const todayBookings = bookings.filter(b => b.startDate === todayStr);
+          return (
+            <Card className="border-none shadow-md rounded-2xl overflow-hidden bg-gradient-to-br from-teal-50 to-amber-50 border border-teal-100">
+              <CardContent className="p-5">
+                <div className="flex items-center gap-4">
+                  <div className="p-3 rounded-xl bg-teal-100 shrink-0">
+                    <Sun className="h-6 w-6 text-teal-600" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-xs font-bold text-teal-600 uppercase tracking-widest mb-0.5">Today&apos;s Check-ins</p>
+                    <p className="text-2xl font-bold text-slate-900 leading-none">{todayBookings.length}</p>
+                    {todayBookings.length > 0 ? (
+                      <p className="text-xs text-slate-500 mt-1 truncate">
+                        {todayBookings.map(b => b.guestName).filter(Boolean).join(", ")}
+                      </p>
+                    ) : (
+                      <p className="text-xs text-slate-400 mt-1">No check-ins scheduled for today.</p>
+                    )}
+                  </div>
+                  <div className="shrink-0">
+                    <Calendar className="h-8 w-8 text-amber-400 opacity-60" />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          );
+        })()}
         <div className="grid grid-cols-2 lg:grid-cols-5 gap-5">
           {stats.map((stat, i) => (
             <Card key={i} className="border-none shadow-md rounded-2xl overflow-hidden bg-white group hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200">
@@ -461,6 +556,7 @@ function AdminDashboardContent() {
                   <div>
                     <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-1">{stat.label}</p>
                     <p className="text-3xl font-bold text-slate-900 leading-none">{stat.value}</p>
+                    {stat.sub && <div className="mt-1">{stat.sub}</div>}
                   </div>
                   <div className={cn("p-3 rounded-xl shrink-0", stat.bg)}>
                     <stat.icon className={cn("h-5 w-5", stat.color)} />
@@ -492,7 +588,11 @@ function AdminDashboardContent() {
             </CardHeader>
             <CardContent className="px-2 pb-4 pt-2">
               {revenueChartData.length === 0 ? (
-                <div className="flex items-center justify-center h-[180px] text-slate-400 text-sm italic">No confirmed revenue in this period.</div>
+                <div className="flex flex-col items-center justify-center h-[180px] gap-3 text-slate-400">
+                  <TrendingUp className="h-10 w-10 opacity-20" />
+                  <p className="text-sm font-semibold">No confirmed revenue in this period yet.</p>
+                  <p className="text-xs opacity-70">Revenue will appear here once bookings are confirmed.</p>
+                </div>
               ) : (
               <ResponsiveContainer width="100%" height={180}>
                 <BarChart data={revenueChartData} margin={{ top: 5, right: 10, left: 0, bottom: 0 }}>
@@ -577,7 +677,10 @@ function AdminDashboardContent() {
                                 </div>
                                 <div>
                                   <div className="font-bold text-slate-900 text-sm">{booking.guestName}</div>
-                                  <div className="text-xs text-slate-400">{booking.contactNumber || "No contact"}</div>
+                                  {booking.contactNumber && booking.contactNumber !== "Not provided"
+                                    ? <div className="text-xs font-semibold text-slate-600">{booking.contactNumber}</div>
+                                    : <div className="text-xs text-slate-400">No contact</div>
+                                  }
                                 </div>
                               </div>
                             </TableCell>
@@ -592,8 +695,15 @@ function AdminDashboardContent() {
                             <TableCell className="px-6 py-5">
                               <div className="flex items-center gap-2 flex-wrap">
                                 <div>
-                                  <div className="text-sm font-bold text-slate-700">{booking.startDate}</div>
-                                  {booking.endDate !== booking.startDate && <div className="text-xs text-slate-400 italic">to {booking.endDate}</div>}
+                                  {booking.endDate && booking.endDate !== booking.startDate ? (
+                                    <div className="text-sm font-bold text-slate-700">
+                                      {new Date(booking.startDate + "T00:00:00").toLocaleDateString("en-US", { month: "short", day: "numeric" })}
+                                      {" → "}
+                                      {new Date(booking.endDate + "T00:00:00").toLocaleDateString("en-US", { month: "short", day: "numeric" })}
+                                    </div>
+                                  ) : (
+                                    <div className="text-sm font-bold text-slate-700">{booking.startDate}</div>
+                                  )}
                                 </div>
                                 {isToday && <Badge className="bg-amber-100 text-amber-700 border-amber-200 text-[10px] px-2 py-0.5 font-bold border">Today</Badge>}
                               </div>
@@ -613,6 +723,26 @@ function AdminDashboardContent() {
                                   <span title="No proof uploaded yet">
                                     <ImageIcon className="h-4 w-4 text-slate-300" />
                                   </span>
+                                )}
+                                {/* Inline Confirm/Cancel for Payment Uploaded rows (improvement 2) */}
+                                {booking.status === "Payment Uploaded" && (
+                                  <>
+                                    <Button
+                                      size="sm"
+                                      className="h-7 px-2.5 text-xs bg-emerald-500 hover:bg-emerald-600 text-white rounded-lg"
+                                      onClick={() => updateStatus(booking.userId, booking.id, "Confirmed", booking.itemName)}
+                                    >
+                                      <Check className="h-3 w-3 mr-1" />Confirm
+                                    </Button>
+                                    <Button
+                                      size="sm"
+                                      variant="outline"
+                                      className="h-7 px-2.5 text-xs text-rose-600 border-rose-200 hover:bg-rose-50 rounded-lg"
+                                      onClick={() => updateStatus(booking.userId, booking.id, "Cancelled", booking.itemName)}
+                                    >
+                                      <X className="h-3 w-3 mr-1" />Cancel
+                                    </Button>
+                                  </>
                                 )}
                               <DropdownMenu>
                                 <DropdownMenuTrigger asChild>
