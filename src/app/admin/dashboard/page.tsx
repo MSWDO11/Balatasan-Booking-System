@@ -56,7 +56,7 @@ function AdminDashboardContent() {
   const [isSavingPolicy, setIsSavingPolicy] = useState(false);
   const [chartRange, setChartRange] = useState<"month" | "3months" | "all">("all");
   const searchParams = useSearchParams();
-  const activeTab = searchParams.get("tab") ?? "bookings";
+  const activeTab = searchParams.get("tab") ?? "overview";
 
   const adminDocRef = useMemoFirebase(() =>
     (firestore && user) ? doc(firestore, "roles_admin", user.uid) : null,
@@ -373,14 +373,16 @@ function AdminDashboardContent() {
             <div className="space-y-1">
               <p className="text-xs font-bold text-primary uppercase tracking-widest">Admin Panel</p>
               <h1 className="text-4xl font-headline font-bold text-slate-900 tracking-tight">
-                {activeTab === "bookings" ? "Reservations"
+                {activeTab === "overview" ? "Dashboard"
+                : activeTab === "bookings" ? "Reservations"
                 : activeTab === "reviews" ? "Reviews"
                 : activeTab === "users" ? "Administrators"
                 : activeTab === "settings" ? "Settings"
-                : "Reservations"}
+                : "Dashboard"}
               </h1>
               <p className="text-slate-500">
-                {activeTab === "bookings" ? "Manage and monitor all guest reservations."
+                {activeTab === "overview" ? "Monitor resort performance at a glance."
+                : activeTab === "bookings" ? "Manage and monitor all guest reservations."
                 : activeTab === "reviews" ? "View and manage guest reviews."
                 : activeTab === "users" ? "Manage admin access."
                 : activeTab === "settings" ? "Configure payment and resort settings."
@@ -531,8 +533,8 @@ function AdminDashboardContent() {
           </DialogContent>
         </Dialog>
 
-        {/* Stats + Chart — only on Reservations tab */}
-        {activeTab === "bookings" && (<>
+        {/* Stats + Chart — only on Overview (Dashboard) tab */}
+        {activeTab === "overview" && (<>
         {/* Today's Check-ins Widget (improvement 1) */}
         {(() => {
           const todayStr = new Date().toISOString().slice(0, 10);

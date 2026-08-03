@@ -16,10 +16,11 @@ const mainNav = [
 ];
 
 const dashboardTabs = [
-  { tab: "bookings", icon: ShoppingBag, label: "Reservations" },
-  { tab: "reviews",  icon: Star,        label: "Reviews" },
-  { tab: "users",    icon: Users,        label: "Administrators" },
-  { tab: "settings", icon: Settings,     label: "Settings" },
+  { tab: "overview",  icon: LayoutDashboard, label: "Overview" },
+  { tab: "bookings",  icon: ShoppingBag,     label: "Reservations" },
+  { tab: "reviews",   icon: Star,             label: "Reviews" },
+  { tab: "users",     icon: Users,            label: "Administrators" },
+  { tab: "settings",  icon: Settings,         label: "Settings" },
 ];
 
 function AdminSidebarInner() {
@@ -75,8 +76,8 @@ function AdminSidebarInner() {
   const isDashboard = pathname === "/admin/dashboard";
 
   const [lastActiveTab, setLastActiveTab] = useState(() => {
-    if (typeof window === "undefined") return "bookings";
-    return localStorage.getItem("admin_active_tab") ?? "bookings";
+    if (typeof window === "undefined") return "overview";
+    return localStorage.getItem("admin_active_tab") ?? "overview";
   });
 
   // Keep lastActiveTab in sync when on dashboard
@@ -90,7 +91,7 @@ function AdminSidebarInner() {
   const SidebarContent = ({ onNav }: { onNav: () => void }) => (
     <div className="flex flex-col h-full">
       <div className="px-6 py-6 border-b border-slate-100">
-        <button onClick={() => { onNav(); setTimeout(() => router.push("/admin/dashboard"), 150); }}
+        <button onClick={() => { onNav(); setTimeout(() => router.push("/admin/dashboard?tab=overview"), 150); }}
           className="flex items-center gap-2.5 group text-left">
           <div className="bg-primary/10 p-2 rounded-xl transition-colors group-hover:bg-primary/20">
             <Waves className="h-5 w-5 text-primary" />
@@ -107,8 +108,15 @@ function AdminSidebarInner() {
         {mainNav.map(({ href, icon: Icon, label }) => (
           <button key={href}
             onClick={() => {
-              onNav();
-              setTimeout(() => router.push(href), 150);
+              if (href === "/admin/dashboard") {
+                setLastActiveTab("overview");
+                localStorage.setItem("admin_active_tab", "overview");
+                onNav();
+                setTimeout(() => router.push("/admin/dashboard?tab=overview"), 150);
+              } else {
+                onNav();
+                setTimeout(() => router.push(href), 150);
+              }
             }}
             className={cn(
               "w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold transition-all text-left",
