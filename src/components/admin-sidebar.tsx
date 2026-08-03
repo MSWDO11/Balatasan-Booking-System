@@ -1,19 +1,288 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
-import { Waves, LayoutDashboard, Database, LogOut, Eye, Bell, Menu, X } from "lucide-react";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { Waves, LayoutDashboard, Database, LogOut, Eye, Bell, Menu, X, ShoppingBag, Star, Users, Settings } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth, useFirestoreNullable, useCollection, useMemoFirebase } from "@/firebase";
 import { signOut } from "firebase/auth";
 import { collectionGroup, query, where } from "firebase/firestore";
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, Suspense } from "react";
 import { formatDistanceToNow } from "date-fns";
 
-const navItems = [
+const mainNav = [
   { href: "/admin/dashboard", icon: LayoutDashboard, label: "Dashboard" },
   { href: "/admin/inventory", icon: Database, label: "Inventory" },
 ];
+
+const dashboardTabs = [
+  { tab: "bookings", icon: ShoppingBag, label: "Reservations" },
+  { tab: "reviews",  icon: Star,        label: "Reviews" },
+  { tab: "users",    icon: Users,        label: "Administrators" },
+  { tab: "settings", icon: Settings,     label: "Settings" },
+];
+
+function AdminSidebarInner() {
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const activeTab = searchParams.get("tab") ?? "bookings";
+  const auth = useAuth();
+  const router = useRouter();
+  const firestore = useFirestoreNullable();
+  const [mobileOpen, setMobileOpen] = useState(false);
+  const [bellOpen, setBellOpen] = useState(false);
+  const [seenIds, setSeenIds] = useState<Set<string>>(() => {
+    if (typeof window === "undefined") return new Set();
+    try { return new Set(JSON.parse(localStorage.getItem("admin_seen_notifs") ?? "[]")); } catch { return new Set(); }
+  });
+  const bellRef = useRef<HTMLDivElement>(null);
+
+  const uploadedQuery = useMemoFirebase(() => {
+    if (!firestore) return null;
+    try { return query(collectionGroup(firestore, "bookings"), where("status", "==", "Payment Uploaded")); }
+    catch { return null; }
+  }, [firestore]);
+  const { data: uploadedBookings } = useCollection(uploadedQuery);
+  const unread = uploadedBookings?.filter((b: any) => !seenIds.has(b.id)).length ?? 0;
+
+  // All reviews count for badge
+  const allReviewsQuery = useMemoFirebase(() => firestore ? firestore && { type: "collection" } && null : null, [firestore]);
+  // We get review count from props passed via the dashboard — use a simple localStorage approach
+  const [reviewCount, setReviewCount] = useState(0);
+  useEffect(() => {
+    const stored = localStorage.getItem("admin_review_count");
+    if (stored) setReviewCount(Number(stored));
+  }, []);
+
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (bellRef.current && !bellRef.current.contains(e.target as Node)) setBellOpen(false);
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, []);
+
+  const handleBellOpen = () => {
+    setBellOpen(prev => !prev);
+    if (!bellOpen && uploadedBookings) {
+      const newSeen = new Set([...seenIds, ...uploadedBookings.map((b: any) => b.id)]);
+      setSeenIds(newSeen);
+      localStorage.setItem("admin_seen_notifs", JSON.stringify([...newSeen]));
+    }
+  };
+
+  const handleSignOut = () => {
+    signOut(auth).then(() => { router.push("/"); router.refresh(); });
+  };
+
+  const isDashboard = pathname === "/admin/dashboard";
+
+  const SidebarContent = () => (
+    <div className="flex flex-col h-full">
+      {/* Logo */}
+      <div className="px-6 py-6 border-b border-slate-100">
+        <Link href="/admin/dashboard" className="flex items-center gap-2.5 group" onClick={() => setMobileOpen(false)}>
+          <div className="bg-primary/10 p-2 rounded-xl transition-colors group-hover:bg-primary/20">
+            <Waves className="h-5 w-5 text-primary" />
+          </div>
+          <div>
+            <p className="font-headline text-base font-bold text-primary leading-tight">Balatasan</p>
+            <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-widest leading-tight">Admin Panel</p>
+          </div>
+        </Link>
+      </div>
+
+      <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
+        {/* Main pages */}
+        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest px-3 mb-2">Pages</p>
+        {mainNav.map(({ href, icon: Icon, label }) => (
+          <Link
+            key={href}
+            href={href}
+            onClick={() => setMobileOpen(false)}
+            className={cn(
+              "flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold transition-all",
+              pathname === href && !isDashboard
+                ? "bg-primary text-white shadow-md shadow-primary/20"
+                : pathname === href && isDashboard
+                ? "bg-primary/10 text-primary"
+                : "text-slate-600 hover:bg-slate-100 hover:text-slate-900"
+            )}
+          >
+            <Icon className="h-4 w-4 shrink-0" />
+            {label}
+          </Link>
+        ))}
+
+        {/* Dashboard sub-sections */}
+        {isDashboard && (
+          <div className="pt-3">
+            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest px-3 mb-2">Sections</p>
+            {dashboardTabs.map(({ tab, icon: Icon, label }) => (
+              <Link
+                key={tab}
+                href={`/admin/dashboard?tab=${tab}`}
+                onClick={() => setMobileOpen(false)}
+                className={cn(
+                  "flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold transition-all",
+                  activeTab === tab
+                    ? "bg-primary text-white shadow-md shadow-primary/20"
+                    : "text-slate-600 hover:bg-slate-100 hover:text-slate-900"
+                )}
+              >
+                <Icon className="h-4 w-4 shrink-0" />
+                <span className="flex-1">{label}</span>
+                {tab === "reviews" && reviewCount > 0 && (
+                  <span className="bg-amber-100 text-amber-700 text-[10px] font-bold px-1.5 py-0.5 rounded-full">{reviewCount}</span>
+                )}
+                {tab === "bookings" && unread > 0 && (
+                  <span className="bg-rose-100 text-rose-600 text-[10px] font-bold px-1.5 py-0.5 rounded-full">{unread}</span>
+                )}
+              </Link>
+            ))}
+          </div>
+        )}
+
+        {/* Quick actions */}
+        <div className="pt-3">
+          <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest px-3 mb-2">Quick Actions</p>
+          <Link
+            href="/?preview=user"
+            target="_blank"
+            className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold text-teal-600 hover:bg-teal-50 transition-colors"
+          >
+            <Eye className="h-4 w-4 shrink-0" />
+            View as User
+          </Link>
+        </div>
+      </nav>
+
+      {/* Bottom: Bell + Sign Out */}
+      <div className="px-3 py-4 border-t border-slate-100 space-y-1">
+        <div className="relative" ref={bellRef}>
+          <button
+            onClick={handleBellOpen}
+            className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold text-slate-600 hover:bg-slate-100 transition-colors"
+          >
+            <div className="relative">
+              <Bell className="h-4 w-4" />
+              {unread > 0 && (
+                <span className="absolute -top-1 -right-1 flex h-3.5 w-3.5 items-center justify-center rounded-full bg-rose-500 text-[8px] font-bold text-white">
+                  {unread > 9 ? "9+" : unread}
+                </span>
+              )}
+            </div>
+            <span>Notifications</span>
+            {unread > 0 && (
+              <span className="ml-auto bg-rose-100 text-rose-600 text-[10px] font-bold px-1.5 py-0.5 rounded-full">{unread}</span>
+            )}
+          </button>
+
+          {bellOpen && (
+            <div className="absolute bottom-full left-0 mb-2 z-50 w-72 rounded-2xl border border-slate-100 bg-white shadow-2xl overflow-hidden">
+              <div className="flex items-center justify-between px-4 py-3 border-b border-slate-50">
+                <p className="text-sm font-bold text-slate-800">Payment Receipts</p>
+                <span className="text-[10px] text-slate-400">{uploadedBookings?.length ?? 0} uploaded</span>
+              </div>
+              <div className="max-h-64 overflow-y-auto divide-y divide-slate-50">
+                {!uploadedBookings || uploadedBookings.length === 0 ? (
+                  <div className="flex flex-col items-center justify-center py-8 gap-2 text-slate-400">
+                    <Bell className="h-6 w-6 opacity-30" />
+                    <p className="text-xs">No receipts yet</p>
+                  </div>
+                ) : uploadedBookings.map((b: any) => (
+                  <div
+                    key={b.id}
+                    className={cn("flex items-start gap-3 px-4 py-3 cursor-pointer hover:bg-slate-50 transition-colors", !seenIds.has(b.id) && "bg-primary/5")}
+                    onClick={() => { router.push("/admin/dashboard?tab=bookings"); setBellOpen(false); setMobileOpen(false); }}
+                  >
+                    <div className="h-2 w-2 rounded-full bg-amber-400 mt-2 shrink-0" />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs font-bold text-slate-800 truncate">{b.itemName}</p>
+                      <p className="text-xs text-amber-700 font-semibold">Receipt uploaded</p>
+                      <p className="text-[10px] text-slate-400">
+                        {b.createdAt ? formatDistanceToNow(new Date(b.createdAt), { addSuffix: true }) : ""}
+                      </p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+              <div className="px-4 py-2.5 border-t bg-slate-50/50">
+                <button className="text-xs text-primary font-semibold hover:underline w-full text-center"
+                  onClick={() => { router.push("/admin/dashboard?tab=bookings"); setBellOpen(false); }}>
+                  View all in Dashboard →
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+
+        <button
+          onClick={handleSignOut}
+          className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold text-rose-500 hover:bg-rose-50 transition-colors"
+        >
+          <LogOut className="h-4 w-4 shrink-0" />
+          Sign Out
+        </button>
+      </div>
+    </div>
+  );
+
+  return (
+    <>
+      {/* Desktop sidebar */}
+      <aside className="hidden md:flex flex-col w-56 shrink-0 bg-white border-r border-slate-100 min-h-screen sticky top-0 h-screen shadow-sm z-40">
+        <SidebarContent />
+      </aside>
+
+      {/* Mobile top bar */}
+      <div className="md:hidden sticky top-0 z-50 flex items-center justify-between px-4 h-14 bg-white border-b border-slate-100 shadow-sm">
+        <Link href="/admin/dashboard" className="flex items-center gap-2">
+          <div className="bg-primary/10 p-1.5 rounded-lg">
+            <Waves className="h-5 w-5 text-primary" />
+          </div>
+          <span className="font-headline text-base font-bold text-primary">Balatasan <span className="text-slate-400 text-xs font-medium">Admin</span></span>
+        </Link>
+        <button onClick={() => setMobileOpen(true)} className="p-2 rounded-xl text-slate-500 hover:bg-slate-100">
+          <Menu className="h-5 w-5" />
+        </button>
+      </div>
+
+      {/* Mobile drawer */}
+      {mobileOpen && (
+        <div className="md:hidden fixed inset-0 z-50 flex">
+          <div className="absolute inset-0 bg-black/30 backdrop-blur-sm" onClick={() => setMobileOpen(false)} />
+          <aside className="relative flex flex-col w-64 bg-white h-full shadow-2xl">
+            <button onClick={() => setMobileOpen(false)} className="absolute top-4 right-4 p-1.5 rounded-lg text-slate-400 hover:bg-slate-100">
+              <X className="h-5 w-5" />
+            </button>
+            <SidebarContent />
+          </aside>
+        </div>
+      )}
+    </>
+  );
+}
+
+export function AdminSidebar() {
+  return (
+    <Suspense fallback={
+      <aside className="hidden md:flex flex-col w-56 shrink-0 bg-white border-r border-slate-100 min-h-screen sticky top-0 h-screen shadow-sm z-40">
+        <div className="px-6 py-6 border-b border-slate-100">
+          <div className="flex items-center gap-2.5">
+            <div className="bg-primary/10 p-2 rounded-xl"><Waves className="h-5 w-5 text-primary" /></div>
+            <div>
+              <div className="h-4 w-20 bg-primary/10 rounded animate-pulse" />
+              <div className="h-2.5 w-16 bg-slate-100 rounded animate-pulse mt-1" />
+            </div>
+          </div>
+        </div>
+      </aside>
+    }>
+      <AdminSidebarInner />
+    </Suspense>
+  );
+}
 
 export function AdminSidebar() {
   const pathname = usePathname();

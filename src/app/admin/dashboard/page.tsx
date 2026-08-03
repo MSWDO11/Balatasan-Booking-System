@@ -6,7 +6,6 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import {
   Clock, TrendingUp, MoreVertical, Check, X, Loader2, ShieldAlert,
@@ -20,13 +19,22 @@ import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGri
 import { useFirestore, useCollection, useMemoFirebase, updateDocumentNonBlocking, useUser, setDocumentNonBlocking, useDoc, addDocumentNonBlocking, deleteDocumentNonBlocking } from "@/firebase";
 import { collectionGroup, query, doc, collection } from "firebase/firestore";
 import { useToast } from "@/hooks/use-toast";
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, Suspense } from "react";
+import { useSearchParams } from "next/navigation";
 import { cn } from "@/lib/utils";
 import Image from "next/image";
 import Link from "next/link";
 import { Spinner } from "@/components/spinner";
 
 export default function AdminDashboard() {
+  return (
+    <Suspense fallback={null}>
+      <AdminDashboardContent />
+    </Suspense>
+  );
+}
+
+function AdminDashboardContent() {
   const firestore = useFirestore();
   const { user, isUserLoading } = useUser();
   const { toast } = useToast();
@@ -47,6 +55,8 @@ export default function AdminDashboard() {
   const [resortAddress, setResortAddress] = useState("");
   const [isSavingPolicy, setIsSavingPolicy] = useState(false);
   const [chartRange, setChartRange] = useState<"month" | "3months" | "all">("all");
+  const searchParams = useSearchParams();
+  const activeTab = searchParams.get("tab") ?? "bookings";
 
   const adminDocRef = useMemoFirebase(() =>
     (firestore && user) ? doc(firestore, "roles_admin", user.uid) : null,
@@ -88,6 +98,13 @@ export default function AdminDashboard() {
         (b.createdAt ?? "").localeCompare(a.createdAt ?? "")
       )
     : null;
+
+  // Sync review count to localStorage so sidebar badge stays updated
+  useEffect(() => {
+    if (allReviews !== null) {
+      localStorage.setItem("admin_review_count", String(allReviews.length));
+    }
+  }, [allReviews]);
 
   // Rooms + tours for item name lookup in reviews tab
   const roomsListQuery = useMemoFirebase(() => firestore ? collection(firestore, "rooms") : null, [firestore]);
@@ -488,18 +505,8 @@ export default function AdminDashboard() {
           </Card>
         )}
 
-        <Tabs defaultValue="bookings" className="w-full space-y-6">
-          <TabsList className="bg-white p-1.5 rounded-2xl shadow-md border border-slate-100 w-fit gap-1">
-            <TabsTrigger value="bookings" className="rounded-xl px-6 py-2.5 font-bold text-sm data-[state=active]:bg-primary data-[state=active]:text-white data-[state=active]:shadow-md transition-all">Reservations</TabsTrigger>
-            <TabsTrigger value="reviews" className="rounded-xl px-6 py-2.5 font-bold text-sm data-[state=active]:bg-primary data-[state=active]:text-white data-[state=active]:shadow-md transition-all flex items-center gap-1.5">
-              <Star className="h-3.5 w-3.5" />Reviews
-              {allReviews && allReviews.length > 0 && <span className="bg-amber-100 text-amber-700 text-[10px] font-bold px-1.5 py-0.5 rounded-full">{allReviews.length}</span>}
-            </TabsTrigger>
-            <TabsTrigger value="users" className="rounded-xl px-6 py-2.5 font-bold text-sm data-[state=active]:bg-primary data-[state=active]:text-white data-[state=active]:shadow-md transition-all">Administrators</TabsTrigger>
-            <TabsTrigger value="settings" className="rounded-xl px-6 py-2.5 font-bold text-sm data-[state=active]:bg-primary data-[state=active]:text-white data-[state=active]:shadow-md transition-all">Settings</TabsTrigger>
-          </TabsList>
-
-          <TabsContent value="bookings">
+        <div className="w-full space-y-6">
+          {activeTab === "bookings" && (
             <Card className="border-none shadow-2xl shadow-slate-200/50 rounded-3xl overflow-hidden bg-white">
               <CardHeader className="p-8 border-b border-slate-50">
                 <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
@@ -614,9 +621,8 @@ export default function AdminDashboard() {
                 )}
               </CardContent>
             </Card>
-          </TabsContent>
-
-          <TabsContent value="reviews">
+          )}
+          {activeTab === "reviews" && (
             <Card className="border-none shadow-2xl shadow-slate-200/50 rounded-3xl overflow-hidden bg-white">
               <CardHeader className="p-8 border-b border-slate-50">
                 <div className="flex items-center justify-between flex-wrap gap-3">
@@ -770,9 +776,8 @@ export default function AdminDashboard() {
                 )}
               </CardContent>
             </Card>
-          </TabsContent>
-
-          <TabsContent value="users">            <Card className="border-none shadow-2xl shadow-slate-200/50 rounded-3xl overflow-hidden bg-white">
+          )}
+          {activeTab === "users" && (            <Card className="border-none shadow-2xl shadow-slate-200/50 rounded-3xl overflow-hidden bg-white">
               <CardHeader className="p-8 border-b border-slate-50">
                 <CardTitle className="text-2xl font-headline font-bold text-slate-900">Administrator Overview</CardTitle>
                 <CardDescription className="text-slate-500">Authorized users with system-level access.</CardDescription>
@@ -811,9 +816,8 @@ export default function AdminDashboard() {
                 )}
               </CardContent>
             </Card>
-          </TabsContent>
-
-          <TabsContent value="settings">
+          )}
+          {activeTab === "settings" && (
             <Card className="border-none shadow-2xl shadow-slate-200/50 rounded-3xl overflow-hidden bg-white">
               <CardHeader className="p-8 border-b border-slate-50">
                 <div className="flex items-center gap-3">
@@ -885,9 +889,8 @@ export default function AdminDashboard() {
                 </div>
               </CardContent>
             </Card>
-          </TabsContent>
-
-        </Tabs>
+          )}
+        </div>
         </div>{/* end container */}
       </main>
       </div>
