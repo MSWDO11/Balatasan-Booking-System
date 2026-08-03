@@ -355,7 +355,7 @@ export default function AdminInventoryPage() {
         </DialogContent>
       </Dialog>
 
-      <main className="flex-grow py-10 px-6">
+      <main className="flex-grow py-10 px-6 pb-24 md:pb-10">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 gap-4">
           <div>
             <h1 className="text-3xl font-headline font-bold text-primary">Inventory Management</h1>

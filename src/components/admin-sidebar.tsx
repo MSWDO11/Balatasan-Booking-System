@@ -197,29 +197,110 @@ function AdminSidebarInner() {
 
   return (
     <>
+      {/* ── Desktop sidebar ── */}
       <aside className="hidden md:flex flex-col w-56 shrink-0 bg-white border-r border-slate-100 min-h-screen sticky top-0 h-screen shadow-sm z-40">
         <SidebarContent />
       </aside>
 
+      {/* ── Mobile top bar ── */}
       <div className="md:hidden sticky top-0 z-50 flex items-center justify-between px-4 h-14 bg-white border-b border-slate-100 shadow-sm">
         <Link href="/admin/dashboard" className="flex items-center gap-2">
           <div className="bg-primary/10 p-1.5 rounded-lg"><Waves className="h-5 w-5 text-primary" /></div>
-          <span className="font-headline text-base font-bold text-primary">Balatasan <span className="text-slate-400 text-xs font-medium">Admin</span></span>
+          <span className="font-headline text-base font-bold text-primary">
+            Balatasan <span className="text-slate-400 text-xs font-medium">Admin</span>
+          </span>
         </Link>
-        <button onClick={() => setMobileOpen(true)} className="p-2 rounded-xl text-slate-500 hover:bg-slate-100">
-          <Menu className="h-5 w-5" />
-        </button>
+        <div className="flex items-center gap-1">
+          {/* Bell on mobile top bar */}
+          <div className="relative" ref={bellRef}>
+            <button onClick={handleBellOpen} className="relative flex items-center justify-center h-9 w-9 rounded-full text-slate-500 hover:bg-slate-100 transition-colors">
+              <Bell className="h-[18px] w-[18px]" />
+              {unread > 0 && (
+                <span className="absolute top-0.5 right-0.5 flex h-3.5 w-3.5 items-center justify-center rounded-full bg-rose-500 text-[8px] font-bold text-white">
+                  {unread > 9 ? "9+" : unread}
+                </span>
+              )}
+            </button>
+            {bellOpen && (
+              <div className="absolute right-0 top-11 z-50 w-72 rounded-2xl border border-slate-100 bg-white shadow-2xl overflow-hidden">
+                <div className="flex items-center justify-between px-4 py-3 border-b border-slate-50">
+                  <p className="text-sm font-bold text-slate-800">Payment Receipts</p>
+                  <span className="text-[10px] text-slate-400">{uploadedBookings?.length ?? 0} uploaded</span>
+                </div>
+                <div className="max-h-56 overflow-y-auto divide-y divide-slate-50">
+                  {!uploadedBookings || uploadedBookings.length === 0 ? (
+                    <div className="flex flex-col items-center justify-center py-8 gap-2 text-slate-400">
+                      <Bell className="h-6 w-6 opacity-30" /><p className="text-xs">No receipts yet</p>
+                    </div>
+                  ) : uploadedBookings.map((b: any) => (
+                    <div key={b.id}
+                      className={cn("flex items-start gap-3 px-4 py-3 cursor-pointer hover:bg-slate-50", !seenIds.has(b.id) && "bg-primary/5")}
+                      onClick={() => { router.push("/admin/dashboard?tab=bookings"); setBellOpen(false); }}>
+                      <div className="h-2 w-2 rounded-full bg-amber-400 mt-2 shrink-0" />
+                      <div className="flex-1 min-w-0">
+                        <p className="text-xs font-bold text-slate-800 truncate">{b.itemName}</p>
+                        <p className="text-xs text-amber-700 font-semibold">Receipt uploaded</p>
+                        <p className="text-[10px] text-slate-400">{b.createdAt ? formatDistanceToNow(new Date(b.createdAt), { addSuffix: true }) : ""}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+          <button onClick={() => setMobileOpen(true)} className="p-2 rounded-xl text-slate-500 hover:bg-slate-100">
+            <Menu className="h-5 w-5" />
+          </button>
+        </div>
       </div>
 
+      {/* ── Mobile drawer ── */}
       {mobileOpen && (
         <div className="md:hidden fixed inset-0 z-50 flex">
           <div className="absolute inset-0 bg-black/30 backdrop-blur-sm" onClick={() => setMobileOpen(false)} />
-          <aside className="relative flex flex-col w-64 bg-white h-full shadow-2xl">
-            <button onClick={() => setMobileOpen(false)} className="absolute top-4 right-4 p-1.5 rounded-lg text-slate-400 hover:bg-slate-100">
-              <X className="h-5 w-5" />
-            </button>
+          <aside className="relative flex flex-col w-72 bg-white h-full shadow-2xl overflow-y-auto">
+            <div className="flex items-center justify-between px-4 py-4 border-b border-slate-100">
+              <Link href="/admin/dashboard" className="flex items-center gap-2" onClick={() => setMobileOpen(false)}>
+                <div className="bg-primary/10 p-1.5 rounded-lg"><Waves className="h-5 w-5 text-primary" /></div>
+                <span className="font-headline text-base font-bold text-primary">Balatasan <span className="text-slate-400 text-xs font-medium">Admin</span></span>
+              </Link>
+              <button onClick={() => setMobileOpen(false)} className="p-1.5 rounded-lg text-slate-400 hover:bg-slate-100">
+                <X className="h-5 w-5" />
+              </button>
+            </div>
             <SidebarContent />
           </aside>
+        </div>
+      )}
+
+      {/* ── Mobile bottom tab bar (dashboard only) ── */}
+      {isDashboard && (
+        <div className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-white border-t border-slate-100 shadow-[0_-4px_20px_rgba(0,0,0,0.06)] flex">
+          {dashboardTabs.map(({ tab, icon: Icon, label }) => (
+            <Link
+              key={tab}
+              href={`/admin/dashboard?tab=${tab}`}
+              onClick={() => setMobileOpen(false)}
+              className={cn(
+                "flex-1 flex flex-col items-center justify-center gap-0.5 py-2.5 text-[10px] font-bold transition-colors relative",
+                activeTab === tab ? "text-primary" : "text-slate-400"
+              )}
+            >
+              {activeTab === tab && (
+                <span className="absolute top-0 left-1/2 -translate-x-1/2 h-0.5 w-8 bg-primary rounded-full" />
+              )}
+              <div className="relative">
+                <Icon className="h-5 w-5" />
+                {tab === "reviews" && reviewCount > 0 && (
+                  <span className="absolute -top-1 -right-1 h-3.5 w-3.5 flex items-center justify-center rounded-full bg-amber-400 text-white text-[8px] font-bold">{reviewCount}</span>
+                )}
+                {tab === "bookings" && unread > 0 && (
+                  <span className="absolute -top-1 -right-1 h-3.5 w-3.5 flex items-center justify-center rounded-full bg-rose-500 text-white text-[8px] font-bold">{unread}</span>
+                )}
+              </div>
+              <span className="leading-tight">{label}</span>
+            </Link>
+          ))}
         </div>
       )}
     </>
