@@ -82,7 +82,7 @@ function AdminSidebarInner() {
   const SidebarContent = ({ onNav }: { onNav: () => void }) => (
     <div className="flex flex-col h-full">
       <div className="px-6 py-6 border-b border-slate-100">
-        <button onClick={() => { onNav(); router.push("/admin/dashboard"); }}
+        <button onClick={() => { onNav(); setTimeout(() => router.push("/admin/dashboard"), 150); }}
           className="flex items-center gap-2.5 group text-left">
           <div className="bg-primary/10 p-2 rounded-xl transition-colors group-hover:bg-primary/20">
             <Waves className="h-5 w-5 text-primary" />
@@ -98,7 +98,10 @@ function AdminSidebarInner() {
         <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest px-3 mb-2">Pages</p>
         {mainNav.map(({ href, icon: Icon, label }) => (
           <button key={href}
-            onClick={() => { onNav(); router.push(href); }}
+            onClick={() => {
+              onNav();
+              setTimeout(() => router.push(href), 150);
+            }}
             className={cn(
               "w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold transition-all text-left",
               pathname === href
@@ -115,7 +118,7 @@ function AdminSidebarInner() {
             <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest px-3 mb-2">Sections</p>
             {dashboardTabs.map(({ tab, icon: Icon, label }) => (
               <button key={tab}
-                onClick={() => { onNav(); router.push(`/admin/dashboard?tab=${tab}`); }}
+                onClick={() => { onNav(); setTimeout(() => router.push(`/admin/dashboard?tab=${tab}`), 150); }}
                 className={cn(
                   "w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold transition-all text-left",
                   activeTab === tab ? "bg-primary text-white shadow-md shadow-primary/20"
