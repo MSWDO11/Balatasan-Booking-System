@@ -119,8 +119,7 @@ function AdminSidebarInner() {
             }}
             className={cn(
               "w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold transition-all text-left",
-              // Only highlight Inventory (non-dashboard pages), never highlight Dashboard in Pages
-              pathname === href && href !== "/admin/dashboard"
+              (pathname === href && (href !== "/admin/dashboard" || activeTab === "home"))
                 ? "bg-primary text-white shadow-md shadow-primary/20"
                 : "text-slate-600 hover:bg-slate-100 hover:text-slate-900"
             )}
