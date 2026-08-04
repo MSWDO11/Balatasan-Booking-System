@@ -533,8 +533,8 @@ function AdminDashboardContent() {
           </DialogContent>
         </Dialog>
 
-        {/* Stats + Chart — shown on Overview tab only */}
-        {activeTab === "overview" && (<>
+        {/* Stats + Chart — always visible */}
+        {(<>
         {/* Today's Check-ins Widget (improvement 1) */}
         {(() => {
           const todayStr = new Date().toISOString().slice(0, 10);
