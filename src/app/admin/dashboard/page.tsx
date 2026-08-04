@@ -650,7 +650,7 @@ function AdminDashboardContent() {
                     <Table>
                       <TableHeader className="bg-slate-50/50">
                         <TableRow className="border-none">
-                          {["Guest Details","Experience","Booking Dates","Status","Amount","Actions"].map(h => (
+                          {["Experience","Booking Dates","Status","Amount","Actions"].map(h => (
                             <TableHead key={h} className="px-6 py-5 font-bold text-slate-400 uppercase tracking-widest text-[11px]">{h}</TableHead>
                           ))}
                         </TableRow>
@@ -661,22 +661,6 @@ function AdminDashboardContent() {
                           const isToday = booking.startDate === todayStr;
                           return (
                           <TableRow key={booking.id} className={cn("hover:bg-slate-50/40 transition-colors border-slate-50 cursor-pointer", isToday && "bg-amber-50/50")} onClick={() => { setSelectedBookingId(booking.id); setBookingNote(booking.adminNote || ""); }}>
-                            <TableCell className="px-6 py-5">
-                              <div className="flex items-center gap-3">
-                                <div className="h-9 w-9 rounded-full bg-primary/20 flex items-center justify-center shrink-0">
-                                  <span className="text-xs font-bold text-primary uppercase leading-none">
-                                    {(booking.guestName ?? "??").slice(0, 2)}
-                                  </span>
-                                </div>
-                                <div>
-                                  <div className="font-bold text-slate-900 text-sm">{booking.guestName}</div>
-                                  {booking.contactNumber && booking.contactNumber !== "Not provided"
-                                    ? <div className="text-xs font-semibold text-slate-600">{booking.contactNumber}</div>
-                                    : <div className="text-xs text-slate-400">No contact</div>
-                                  }
-                                </div>
-                              </div>
-                            </TableCell>
                             <TableCell className="px-6 py-5">
                               <div className="flex items-center gap-1.5 flex-wrap">
                                 <MapPin className="h-3 w-3 text-primary/50 shrink-0" />
