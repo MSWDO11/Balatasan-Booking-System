@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { Waves, LayoutDashboard, Database, LogOut, Eye, Bell, Menu, X, ShoppingBag, Star, Users, Settings } from "lucide-react";
+import { Waves, LayoutDashboard, Database, LogOut, Eye, Bell, Menu, X, ShoppingBag, Star, Settings } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth, useFirestoreNullable, useCollection, useMemoFirebase } from "@/firebase";
 import { signOut } from "firebase/auth";
@@ -18,7 +18,6 @@ const mainNav = [
 const dashboardTabs = [
   { tab: "bookings",  icon: ShoppingBag,     label: "Reservations" },
   { tab: "reviews",   icon: Star,             label: "Reviews" },
-  { tab: "users",     icon: Users,            label: "Administrators" },
   { tab: "settings",  icon: Settings,         label: "Settings" },
 ];
 
