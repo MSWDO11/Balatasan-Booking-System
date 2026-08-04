@@ -376,7 +376,7 @@ function AdminDashboardContent() {
                 {activeTab === "home" ? "Dashboard"
                 : activeTab === "bookings" ? "Reservations"
                 : activeTab === "reviews" ? "Reviews"
-                : activeTab === "users" ? "Administrators"
+                : activeTab === "users" ? "Users"
                 : activeTab === "settings" ? "Settings"
                 : "Dashboard"}
               </h1>
@@ -384,7 +384,7 @@ function AdminDashboardContent() {
                 {activeTab === "home" ? "Monitor resort performance at a glance."
                 : activeTab === "bookings" ? "Manage and monitor all guest reservations."
                 : activeTab === "reviews" ? "View and manage guest reviews."
-                : activeTab === "users" ? "Manage admin access."
+                : activeTab === "users" ? "View all guests who have made bookings."
                 : activeTab === "settings" ? "Configure payment and resort settings."
                 : ""}
               </p>
@@ -961,46 +961,76 @@ function AdminDashboardContent() {
               </CardContent>
             </Card>
           )}
-          {activeTab === "users" && (            <Card className="border-none shadow-2xl shadow-slate-200/50 rounded-3xl overflow-hidden bg-white">
-              <CardHeader className="p-8 border-b border-slate-50">
-                <CardTitle className="text-2xl font-headline font-bold text-slate-900">Administrator Overview</CardTitle>
-                <CardDescription className="text-slate-500">Authorized users with system-level access.</CardDescription>
-                {/* Add Admin */}
-                <div className="flex gap-3 mt-4">
-                  <Input placeholder="Enter email to invite as admin..." value={newAdminEmail} onChange={e => setNewAdminEmail(e.target.value)} className="flex-1" />
-                  <Button size="sm" onClick={handleAddAdmin} disabled={isAddingAdmin || !newAdminEmail.trim()} className="gap-2">
-                    <UserPlus className="h-4 w-4" /> Invite Admin
-                  </Button>
-                </div>
-                <p className="text-xs text-muted-foreground mt-2">The invited user must sign up then you manually assign their role in Firestore.</p>
-              </CardHeader>
-              <CardContent className="p-0">
-                {isAdminsLoading ? (
-                  <div className="flex justify-center py-24"><Spinner size="lg" /></div>
-                ) : (
-                  <Table>
-                    <TableHeader className="bg-slate-50/50">
-                      <TableRow className="border-none">
-                        {["Admin Email","Assigned Date","Role","ID"].map(h => (
-                          <TableHead key={h} className="px-8 py-5 font-bold text-slate-400 uppercase tracking-widest text-[11px]">{h}</TableHead>
-                        ))}
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {adminsList?.map((adm) => (
-                        <TableRow key={adm.id} className="hover:bg-slate-50/40 transition-colors border-slate-50">
-                          <TableCell className="px-8 py-6 font-semibold text-slate-700">{adm.email}</TableCell>
-                          <TableCell className="py-6 text-slate-500">{adm.assignedAt ? new Date(adm.assignedAt).toLocaleDateString() : 'N/A'}</TableCell>
-                          <TableCell className="py-6"><Badge className="bg-primary/10 text-primary border-none font-bold uppercase tracking-widest text-[10px] px-3 py-1">{adm.role || 'Admin'}</Badge></TableCell>
-                          <TableCell className="px-8 py-6 text-right font-mono text-[11px] text-slate-300">{adm.id}</TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                )}
-              </CardContent>
-            </Card>
-          )}
+          {activeTab === "users" && (() => {
+            // Derive unique guests from bookings
+            const guestMap = new Map<string, { name: string; contact: string; bookingCount: number; totalSpent: number; lastDate: string; }>();
+            bookings.forEach((b: any) => {
+              const key = b.userId || b.guestName;
+              if (!key) return;
+              const existing = guestMap.get(key);
+              if (existing) {
+                existing.bookingCount++;
+                existing.totalSpent += b.totalPrice || 0;
+                if ((b.startDate || "") > existing.lastDate) existing.lastDate = b.startDate || "";
+              } else {
+                guestMap.set(key, {
+                  name: b.guestName || "Unknown",
+                  contact: b.contactNumber || "No contact",
+                  bookingCount: 1,
+                  totalSpent: b.totalPrice || 0,
+                  lastDate: b.startDate || "",
+                });
+              }
+            });
+            const guests = Array.from(guestMap.values()).sort((a, b) => b.totalSpent - a.totalSpent);
+            return (
+              <Card className="border-none shadow-2xl shadow-slate-200/50 rounded-3xl overflow-hidden bg-white">
+                <CardHeader className="p-8 border-b border-slate-50">
+                  <CardTitle className="text-2xl font-headline font-bold text-slate-900">Guest Overview</CardTitle>
+                  <CardDescription className="text-slate-500">{guests.length} unique guest{guests.length !== 1 ? "s" : ""} who have made bookings.</CardDescription>
+                </CardHeader>
+                <CardContent className="p-0">
+                  {isBookingsLoading ? (
+                    <div className="flex justify-center py-24"><Spinner size="lg" /></div>
+                  ) : guests.length === 0 ? (
+                    <div className="text-center py-24 text-slate-400 italic">No guests yet.</div>
+                  ) : (
+                    <div className="overflow-x-auto">
+                      <Table>
+                        <TableHeader className="bg-slate-50/50">
+                          <TableRow className="border-none">
+                            {["Guest", "Contact", "Bookings", "Total Spent", "Last Visit"].map(h => (
+                              <TableHead key={h} className="px-8 py-5 font-bold text-slate-400 uppercase tracking-widest text-[11px]">{h}</TableHead>
+                            ))}
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {guests.map((g, i) => (
+                            <TableRow key={i} className="hover:bg-slate-50/40 transition-colors border-slate-50">
+                              <TableCell className="px-8 py-5">
+                                <div className="flex items-center gap-3">
+                                  <div className="h-9 w-9 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+                                    <span className="text-xs font-bold text-primary uppercase">{g.name.slice(0,2)}</span>
+                                  </div>
+                                  <span className="font-bold text-slate-800">{g.name}</span>
+                                </div>
+                              </TableCell>
+                              <TableCell className="py-5 text-slate-500">{g.contact}</TableCell>
+                              <TableCell className="py-5">
+                                <Badge className="bg-blue-50 text-blue-700 border-none font-bold px-3 py-1">{g.bookingCount} booking{g.bookingCount !== 1 ? "s" : ""}</Badge>
+                              </TableCell>
+                              <TableCell className="py-5 font-bold text-primary">₱{g.totalSpent.toLocaleString()}</TableCell>
+                              <TableCell className="px-8 py-5 text-slate-500 text-sm">{g.lastDate || "—"}</TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            );
+          })()}
           {activeTab === "settings" && (
             <Card className="border-none shadow-2xl shadow-slate-200/50 rounded-3xl overflow-hidden bg-white">
               <CardHeader className="p-8 border-b border-slate-50">
