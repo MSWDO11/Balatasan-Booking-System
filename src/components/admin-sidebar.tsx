@@ -90,7 +90,7 @@ function AdminSidebarInner() {
   const SidebarContent = ({ onNav }: { onNav: () => void }) => (
     <div className="flex flex-col h-full">
       <div className="px-6 py-6 border-b border-slate-100">
-        <button onClick={() => { onNav(); setTimeout(() => router.push("/admin/dashboard"), 150); }}
+        <button onClick={() => { onNav(); setTimeout(() => router.push("/admin/dashboard?tab=home"), 150); }}
           className="flex items-center gap-2.5 group text-left">
           <div className="bg-primary/10 p-2 rounded-xl transition-colors group-hover:bg-primary/20">
             <Waves className="h-5 w-5 text-primary" />
@@ -108,10 +108,10 @@ function AdminSidebarInner() {
           <button key={href}
             onClick={() => {
               if (href === "/admin/dashboard") {
-                setLastActiveTab("bookings");
-                localStorage.setItem("admin_active_tab", "bookings");
+                setLastActiveTab("home");
+                localStorage.setItem("admin_active_tab", "home");
                 onNav();
-                setTimeout(() => router.push("/admin/dashboard?tab=bookings"), 150);
+                setTimeout(() => router.push("/admin/dashboard?tab=home"), 150);
               } else {
                 onNav();
                 setTimeout(() => router.push(href), 150);
