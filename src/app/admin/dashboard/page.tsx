@@ -56,7 +56,7 @@ function AdminDashboardContent() {
   const [isSavingPolicy, setIsSavingPolicy] = useState(false);
   const [chartRange, setChartRange] = useState<"month" | "3months" | "all">("all");
   const searchParams = useSearchParams();
-  const activeTab = searchParams.get("tab") ?? "overview";
+  const activeTab = searchParams.get("tab") ?? "bookings";
 
   const adminDocRef = useMemoFirebase(() =>
     (firestore && user) ? doc(firestore, "roles_admin", user.uid) : null,

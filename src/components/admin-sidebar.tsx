@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { Waves, Database, LogOut, Eye, Bell, Menu, X, ShoppingBag, Star, Users, Settings } from "lucide-react";
+import { Waves, LayoutDashboard, Database, LogOut, Eye, Bell, Menu, X, ShoppingBag, Star, Users, Settings } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth, useFirestoreNullable, useCollection, useMemoFirebase } from "@/firebase";
 import { signOut } from "firebase/auth";
@@ -11,6 +11,7 @@ import { useState, useEffect, useRef, Suspense } from "react";
 import { formatDistanceToNow } from "date-fns";
 
 const mainNav = [
+  { href: "/admin/dashboard", icon: LayoutDashboard, label: "Dashboard" },
   { href: "/admin/inventory", icon: Database, label: "Inventory" },
 ];
 
@@ -106,12 +107,20 @@ function AdminSidebarInner() {
         {mainNav.map(({ href, icon: Icon, label }) => (
           <button key={href}
             onClick={() => {
-              onNav();
-              setTimeout(() => router.push(href), 150);
+              if (href === "/admin/dashboard") {
+                setLastActiveTab("bookings");
+                localStorage.setItem("admin_active_tab", "bookings");
+                onNav();
+                setTimeout(() => router.push("/admin/dashboard?tab=bookings"), 150);
+              } else {
+                onNav();
+                setTimeout(() => router.push(href), 150);
+              }
             }}
             className={cn(
               "w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold transition-all text-left",
-              pathname === href
+              // Only highlight Inventory (non-dashboard pages), never highlight Dashboard in Pages
+              pathname === href && href !== "/admin/dashboard"
                 ? "bg-primary text-white shadow-md shadow-primary/20"
                 : "text-slate-600 hover:bg-slate-100 hover:text-slate-900"
             )}
