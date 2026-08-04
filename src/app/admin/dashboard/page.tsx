@@ -535,59 +535,72 @@ function AdminDashboardContent() {
 
         {/* Stats + Chart — only on home/dashboard view */}
         {activeTab === "home" && (<>
-        {/* Today's Check-ins Widget (improvement 1) */}
-        {(() => {
-          const todayStr = new Date().toISOString().slice(0, 10);
-          const todayBookings = bookings.filter(b => b.startDate === todayStr);
-          return (
-            <Card className="border-none shadow-md rounded-2xl overflow-hidden bg-gradient-to-br from-teal-50 to-amber-50 border border-teal-100">
-              <CardContent className="p-5">
-                <div className="flex items-center gap-4">
-                  <div className="p-3 rounded-xl bg-teal-100 shrink-0">
-                    <Sun className="h-6 w-6 text-teal-600" />
+
+        {/* Top row: Today's Check-ins + Quick Stats */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
+          {/* Today's Check-ins */}
+          {(() => {
+            const todayStr = new Date().toISOString().slice(0, 10);
+            const todayBookings = bookings.filter(b => b.startDate === todayStr);
+            const tomorrowStr = new Date(Date.now() + 86400000).toISOString().slice(0, 10);
+            const tomorrowBookings = bookings.filter(b => b.startDate === tomorrowStr);
+            return (
+              <Card className="border-none shadow-md rounded-2xl overflow-hidden bg-gradient-to-br from-teal-500 to-teal-600 text-white lg:col-span-1">
+                <CardContent className="p-6">
+                  <div className="flex items-start justify-between mb-4">
+                    <div>
+                      <p className="text-teal-100 text-xs font-bold uppercase tracking-widest mb-1">Today&apos;s Check-ins</p>
+                      <p className="text-5xl font-bold leading-none">{todayBookings.length}</p>
+                    </div>
+                    <div className="bg-white/20 p-3 rounded-xl">
+                      <Sun className="h-6 w-6 text-white" />
+                    </div>
                   </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-xs font-bold text-teal-600 uppercase tracking-widest mb-0.5">Today&apos;s Check-ins</p>
-                    <p className="text-2xl font-bold text-slate-900 leading-none">{todayBookings.length}</p>
-                    {todayBookings.length > 0 ? (
-                      <p className="text-xs text-slate-500 mt-1 truncate">
-                        {todayBookings.map(b => b.guestName).filter(Boolean).join(", ")}
-                      </p>
-                    ) : (
-                      <p className="text-xs text-slate-400 mt-1">No check-ins scheduled for today.</p>
-                    )}
+                  {todayBookings.length > 0 ? (
+                    <div className="space-y-1">
+                      {todayBookings.slice(0, 2).map(b => (
+                        <p key={b.id} className="text-teal-100 text-xs truncate">• {b.guestName} — {b.itemName}</p>
+                      ))}
+                      {todayBookings.length > 2 && <p className="text-teal-200 text-xs">+{todayBookings.length - 2} more</p>}
+                    </div>
+                  ) : (
+                    <p className="text-teal-100 text-xs">No check-ins scheduled for today.</p>
+                  )}
+                  <div className="mt-4 pt-4 border-t border-white/20 flex items-center gap-2">
+                    <Calendar className="h-3.5 w-3.5 text-teal-200" />
+                    <p className="text-teal-100 text-xs">{tomorrowBookings.length} check-in{tomorrowBookings.length !== 1 ? "s" : ""} tomorrow</p>
                   </div>
-                  <div className="shrink-0">
-                    <Calendar className="h-8 w-8 text-amber-400 opacity-60" />
+                </CardContent>
+              </Card>
+            );
+          })()}
+
+          {/* Stats grid */}
+          <div className="lg:col-span-2 grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-2 xl:grid-cols-4 gap-4">
+            {stats.map((stat, i) => (
+              <Card key={i} className="border-none shadow-md rounded-2xl overflow-hidden bg-white group hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200">
+                <CardContent className="p-0">
+                  <div className={cn("h-1 w-full", stat.color.replace("text-", "bg-").replace("-600","-400").replace("-500","-400"))} />
+                  <div className="p-4 flex flex-col gap-2">
+                    <div className="flex items-center justify-between">
+                      <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{stat.label}</p>
+                      <div className={cn("p-2 rounded-lg shrink-0", stat.bg)}>
+                        <stat.icon className={cn("h-4 w-4", stat.color)} />
+                      </div>
+                    </div>
+                    <p className="text-2xl font-bold text-slate-900 leading-none">{stat.value}</p>
+                    {stat.sub && <div>{stat.sub}</div>}
                   </div>
-                </div>
-              </CardContent>
-            </Card>
-          );
-        })()}
-        <div className="grid grid-cols-2 lg:grid-cols-5 gap-5">
-          {stats.map((stat, i) => (
-            <Card key={i} className="border-none shadow-md rounded-2xl overflow-hidden bg-white group hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200">
-              <CardContent className="p-0">
-                <div className={cn("h-1 w-full", stat.color.replace("text-", "bg-").replace("-600","-400").replace("-500","-400"))} />
-                <div className="p-5 flex items-start justify-between gap-3">
-                  <div>
-                    <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-1">{stat.label}</p>
-                    <p className="text-3xl font-bold text-slate-900 leading-none">{stat.value}</p>
-                    {stat.sub && <div className="mt-1">{stat.sub}</div>}
-                  </div>
-                  <div className={cn("p-3 rounded-xl shrink-0", stat.bg)}>
-                    <stat.icon className={cn("h-5 w-5", stat.color)} />
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
+                </CardContent>
+              </Card>
+            ))}
+          </div>
         </div>
 
-        {/* Revenue Chart */}
-        {(revenueChartData.length > 0 || chartRange !== "all") && (
-          <Card className="border-none shadow-md rounded-2xl bg-white">
+        {/* Bottom row: Revenue Chart + Recent Activity */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
+          {/* Revenue Chart */}
+          <Card className="border-none shadow-md rounded-2xl bg-white lg:col-span-2">
             <CardHeader className="pb-0 pt-6 px-6">
               <div className="flex items-center justify-between flex-wrap gap-3">
                 <div>
@@ -595,46 +608,80 @@ function AdminDashboardContent() {
                   <CardDescription className="text-xs text-slate-400">Confirmed bookings only</CardDescription>
                 </div>
                 <div className="flex items-center gap-2">
-                  {([["month","This Month"],["3months","Last 3 Months"],["all","All Time"]] as const).map(([val, label]) => (
+                  {([["month","This Month"],["3months","3 Months"],["all","All Time"]] as const).map(([val, label]) => (
                     <button key={val} onClick={() => setChartRange(val)} className={cn("px-3 py-1.5 rounded-full text-xs font-semibold border transition-colors", chartRange === val ? "bg-primary text-white border-primary" : "bg-white text-slate-600 border-slate-200 hover:border-primary/40")}>
                       {label}
                     </button>
                   ))}
-                  <TrendingUp className="h-5 w-5 text-primary opacity-60 ml-2" />
                 </div>
               </div>
             </CardHeader>
             <CardContent className="px-2 pb-4 pt-2">
               {revenueChartData.length === 0 ? (
-                <div className="flex flex-col items-center justify-center h-[180px] gap-3 text-slate-400">
+                <div className="flex flex-col items-center justify-center h-[200px] gap-3 text-slate-400">
                   <TrendingUp className="h-10 w-10 opacity-20" />
-                  <p className="text-sm font-semibold">No confirmed revenue in this period yet.</p>
-                  <p className="text-xs opacity-70">Revenue will appear here once bookings are confirmed.</p>
+                  <p className="text-sm font-semibold">No confirmed revenue yet.</p>
                 </div>
               ) : (
-              <ResponsiveContainer width="100%" height={180}>
-                <BarChart data={revenueChartData} margin={{ top: 5, right: 10, left: 0, bottom: 0 }}>
-                  <defs>
-                    <linearGradient id="revenueGrad" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="0%" stopColor="#12AFAB" stopOpacity={1} />
-                      <stop offset="100%" stopColor="#12AFAB" stopOpacity={0.4} />
-                    </linearGradient>
-                  </defs>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#f5f5f5" vertical={false} />
-                  <XAxis dataKey="month" tick={{ fontSize: 11, fill: "#94a3b8" }} axisLine={false} tickLine={false} />
-                  <YAxis tick={{ fontSize: 11, fill: "#94a3b8" }} tickFormatter={(v: number) => `\u20B1${(v/1000).toFixed(0)}k`} axisLine={false} tickLine={false} />
-                  <Tooltip
-                    cursor={{ fill: "rgba(18,175,171,0.05)" }}
-                    contentStyle={{ borderRadius: "12px", border: "1px solid #e2e8f0", boxShadow: "0 4px 20px rgba(0,0,0,0.08)", fontSize: "12px" }}
-                    formatter={(v: number) => [`\u20B1${Number(v).toLocaleString()}`, "Revenue"]}
-                  />
-                  <Bar dataKey="revenue" fill="url(#revenueGrad)" radius={[8,8,0,0]} maxBarSize={50} />
-                </BarChart>
-              </ResponsiveContainer>
+                <ResponsiveContainer width="100%" height={200}>
+                  <BarChart data={revenueChartData} margin={{ top: 5, right: 10, left: 0, bottom: 0 }}>
+                    <defs>
+                      <linearGradient id="revenueGrad" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stopColor="#12AFAB" stopOpacity={1} />
+                        <stop offset="100%" stopColor="#12AFAB" stopOpacity={0.3} />
+                      </linearGradient>
+                    </defs>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#f5f5f5" vertical={false} />
+                    <XAxis dataKey="month" tick={{ fontSize: 11, fill: "#94a3b8" }} axisLine={false} tickLine={false} />
+                    <YAxis tick={{ fontSize: 11, fill: "#94a3b8" }} tickFormatter={(v: number) => `₱${(v/1000).toFixed(0)}k`} axisLine={false} tickLine={false} />
+                    <Tooltip
+                      cursor={{ fill: "rgba(18,175,171,0.05)" }}
+                      contentStyle={{ borderRadius: "12px", border: "1px solid #e2e8f0", boxShadow: "0 4px 20px rgba(0,0,0,0.08)", fontSize: "12px" }}
+                      formatter={(v: number) => [`₱${Number(v).toLocaleString()}`, "Revenue"]}
+                    />
+                    <Bar dataKey="revenue" fill="url(#revenueGrad)" radius={[8,8,0,0]} maxBarSize={50} />
+                  </BarChart>
+                </ResponsiveContainer>
               )}
             </CardContent>
           </Card>
-        )}
+
+          {/* Recent Bookings */}
+          <Card className="border-none shadow-md rounded-2xl bg-white">
+            <CardHeader className="pb-3 pt-6 px-6">
+              <div className="flex items-center justify-between">
+                <CardTitle className="text-base font-headline font-bold text-slate-900">Recent Bookings</CardTitle>
+                <button onClick={() => router.push("/admin/dashboard?tab=bookings")} className="text-xs text-primary font-semibold hover:underline">View all →</button>
+              </div>
+            </CardHeader>
+            <CardContent className="px-4 pb-4">
+              {bookings.length === 0 ? (
+                <div className="flex flex-col items-center justify-center py-8 text-slate-400 gap-2">
+                  <ShoppingBag className="h-8 w-8 opacity-20" />
+                  <p className="text-xs">No bookings yet.</p>
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  {bookings.slice(0, 6).map(b => (
+                    <div key={b.id} onClick={() => { setSelectedBookingId(b.id); setBookingNote(b.adminNote || ""); }} className="flex items-center gap-3 p-2.5 rounded-xl hover:bg-slate-50 cursor-pointer transition-colors">
+                      <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+                        <span className="text-[10px] font-bold text-primary uppercase">{(b.guestName ?? "??").slice(0,2)}</span>
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-xs font-bold text-slate-800 truncate">{b.itemName}</p>
+                        <p className="text-[10px] text-slate-400 truncate">{b.guestName} · {b.startDate}</p>
+                      </div>
+                      <span className={cn("text-[10px] font-bold px-2 py-0.5 rounded-full border shrink-0", getStatusColor(b.status))}>
+                        {b.status === "Confirmed" ? "✓" : b.status === "Cancelled" ? "✗" : b.status === "Payment Uploaded" ? "📎" : "…"}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </div>
+
         </>)}
 
         <div className="w-full space-y-6">
