@@ -4,7 +4,7 @@ import { useUser, useDoc, useMemoFirebase, useFirestore } from "@/firebase";
 import { doc } from "firebase/firestore";
 import { AdminNavbar } from "@/components/admin-navbar";
 import { Navbar } from "@/components/navbar";
-import { useSearchParams } from "next/navigation";
+import { useSearchParams, usePathname } from "next/navigation";
 import { Suspense } from "react";
 
 /** Skeleton navbar shown while auth state resolves — prevents black-screen flash */
@@ -31,6 +31,7 @@ function SmartNavbarInner() {
   const { user, isUserLoading } = useUser();
   const firestore = useFirestore();
   const searchParams = useSearchParams();
+  const pathname = usePathname();
 
   // Check ?preview=user in URL - this is synchronous so no flash
   const isPreview = searchParams.get("preview") === "user";
@@ -47,6 +48,9 @@ function SmartNavbarInner() {
 
   // Preview mode — always show regular user navbar regardless of admin status
   if (isPreview) return <Navbar />;
+
+  // On admin pages the sidebar handles all navigation — hide the top navbar
+  if (pathname.startsWith("/admin")) return null;
 
   // Show skeleton while auth resolves instead of null (prevents black-screen)
   if (isUserLoading) return <NavbarSkeleton />;
