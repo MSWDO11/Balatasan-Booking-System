@@ -141,7 +141,7 @@ function AdminSidebarInner() {
               }}
                 className={cn(
                   "w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold transition-all text-left",
-                  isDashboard && lastActiveTab === tab
+                  isDashboard && activeTab === tab
                     ? "bg-primary text-white shadow-md shadow-primary/20"
                     : "text-slate-600 hover:bg-slate-100 hover:text-slate-900"
                 )}
@@ -317,10 +317,10 @@ function AdminSidebarInner() {
               }}
               className={cn(
                 "flex-1 flex flex-col items-center justify-center gap-0.5 py-2.5 text-[10px] font-bold transition-colors relative",
-                lastActiveTab === tab ? "text-primary" : "text-slate-400"
+                activeTab === tab ? "text-primary" : "text-slate-400"
               )}
             >
-              {lastActiveTab === tab && (
+              {activeTab === tab && (
                 <span className="absolute top-0 left-1/2 -translate-x-1/2 h-0.5 w-8 bg-primary rounded-full" />
               )}
               <div className="relative">
