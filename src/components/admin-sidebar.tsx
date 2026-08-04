@@ -25,7 +25,7 @@ const dashboardTabs = [
 function AdminSidebarInner() {
   const pathname = usePathname();
   const searchParams = useSearchParams();
-  const activeTab = searchParams.get("tab") ?? "bookings";
+  const activeTab = searchParams.get("tab") ?? "home";
   const auth = useAuth();
   const router = useRouter();
   const firestore = useFirestoreNullable();
