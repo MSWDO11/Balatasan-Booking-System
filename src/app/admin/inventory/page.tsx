@@ -8,7 +8,6 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Loader2, Save, Trash2, Eye, Database, ShieldAlert, Upload, ImageIcon, ToggleLeft, ToggleRight, MapPin, Clock, Tag, Copy, AlertTriangle, Search } from "lucide-react";
-import { Spinner } from "@/components/spinner";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 import { useFirestore, useCollection, useMemoFirebase, addDocumentNonBlocking, deleteDocumentNonBlocking, setDocumentNonBlocking, useUser, useDoc } from "@/firebase";
@@ -299,10 +298,63 @@ export default function AdminInventoryPage() {
 
   if (isUserLoading || isAdminRoleLoading) {
     return (
-      <div className="flex flex-col md:flex-row min-h-screen">
+      <div className="flex flex-col md:flex-row min-h-screen bg-secondary/10">
         <AdminSidebar />
-        <main className="flex-grow flex items-center justify-center">
-          <Spinner size="lg" />
+        <main className="flex-grow py-10 px-6">
+          {/* Header skeleton */}
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 gap-4">
+            <div className="space-y-2">
+              <div className="h-8 w-56 rounded-lg bg-slate-200 animate-pulse" />
+              <div className="h-4 w-80 rounded-md bg-slate-100 animate-pulse" />
+            </div>
+            <div className="flex gap-2">
+              <div className="h-9 w-36 rounded-lg bg-slate-200 animate-pulse" />
+              <div className="h-9 w-28 rounded-lg bg-slate-200 animate-pulse" />
+            </div>
+          </div>
+
+          {/* Tabs skeleton */}
+          <div className="flex gap-2 mb-8 max-w-2xl">
+            {[1, 2, 3].map(i => (
+              <div key={i} className="h-10 flex-1 rounded-lg bg-slate-200 animate-pulse" />
+            ))}
+          </div>
+
+          {/* Content skeleton */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            {/* Form skeleton */}
+            <div className="lg:col-span-2 space-y-4">
+              <div className="rounded-2xl border bg-white p-6 space-y-4">
+                <div className="h-5 w-32 rounded bg-slate-200 animate-pulse" />
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="h-10 rounded-lg bg-slate-100 animate-pulse" />
+                  <div className="h-10 rounded-lg bg-slate-100 animate-pulse" />
+                </div>
+                <div className="h-10 w-1/2 rounded-lg bg-slate-100 animate-pulse" />
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="h-10 rounded-lg bg-slate-100 animate-pulse" />
+                  <div className="h-10 rounded-lg bg-slate-100 animate-pulse" />
+                </div>
+                <div className="h-40 w-full rounded-xl bg-slate-100 animate-pulse" />
+                <div className="h-24 rounded-lg bg-slate-100 animate-pulse" />
+              </div>
+            </div>
+
+            {/* Catalog skeleton */}
+            <div className="space-y-3">
+              <div className="h-10 w-full rounded-lg bg-slate-200 animate-pulse" />
+              {[1, 2, 3, 4].map(i => (
+                <div key={i} className="rounded-2xl border bg-white p-4 flex gap-3">
+                  <div className="h-16 w-16 rounded-xl bg-slate-100 animate-pulse shrink-0" />
+                  <div className="flex-1 space-y-2">
+                    <div className="h-4 w-3/4 rounded bg-slate-200 animate-pulse" />
+                    <div className="h-3 w-1/2 rounded bg-slate-100 animate-pulse" />
+                    <div className="h-3 w-1/3 rounded bg-slate-100 animate-pulse" />
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
         </main>
       </div>
     );

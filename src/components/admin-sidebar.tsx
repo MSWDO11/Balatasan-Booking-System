@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { Waves, LayoutDashboard, Database, LogOut, Eye, Bell, Menu, X, ShoppingBag, Star, Users, Settings } from "lucide-react";
+import { Waves, Database, LogOut, Eye, Bell, Menu, X, ShoppingBag, Star, Users, Settings } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth, useFirestoreNullable, useCollection, useMemoFirebase } from "@/firebase";
 import { signOut } from "firebase/auth";
@@ -11,7 +11,6 @@ import { useState, useEffect, useRef, Suspense } from "react";
 import { formatDistanceToNow } from "date-fns";
 
 const mainNav = [
-  { href: "/admin/dashboard", icon: LayoutDashboard, label: "Dashboard" },
   { href: "/admin/inventory", icon: Database, label: "Inventory" },
 ];
 
@@ -90,7 +89,7 @@ function AdminSidebarInner() {
   const SidebarContent = ({ onNav }: { onNav: () => void }) => (
     <div className="flex flex-col h-full">
       <div className="px-6 py-6 border-b border-slate-100">
-        <button onClick={() => { onNav(); setTimeout(() => router.push("/admin/dashboard?tab=overview"), 150); }}
+        <button onClick={() => { onNav(); setTimeout(() => router.push("/admin/dashboard"), 150); }}
           className="flex items-center gap-2.5 group text-left">
           <div className="bg-primary/10 p-2 rounded-xl transition-colors group-hover:bg-primary/20">
             <Waves className="h-5 w-5 text-primary" />
@@ -107,20 +106,12 @@ function AdminSidebarInner() {
         {mainNav.map(({ href, icon: Icon, label }) => (
           <button key={href}
             onClick={() => {
-              if (href === "/admin/dashboard") {
-                setLastActiveTab("overview");
-                localStorage.setItem("admin_active_tab", "overview");
-                onNav();
-                setTimeout(() => router.push("/admin/dashboard?tab=overview"), 150);
-              } else {
-                onNav();
-                setTimeout(() => router.push(href), 150);
-              }
+              onNav();
+              setTimeout(() => router.push(href), 150);
             }}
             className={cn(
               "w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold transition-all text-left",
-              // Only highlight Inventory (non-dashboard pages), never highlight Dashboard in Pages
-              pathname === href && href !== "/admin/dashboard"
+              pathname === href
                 ? "bg-primary text-white shadow-md shadow-primary/20"
                 : "text-slate-600 hover:bg-slate-100 hover:text-slate-900"
             )}
