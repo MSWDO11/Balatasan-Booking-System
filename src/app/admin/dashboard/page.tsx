@@ -533,8 +533,8 @@ function AdminDashboardContent() {
           </DialogContent>
         </Dialog>
 
-        {/* Stats + Chart — always visible */}
-        {(<>
+        {/* Stats + Chart — shown on Reservations tab */}
+        {activeTab === "bookings" && (<>
         {/* Today's Check-ins Widget (improvement 1) */}
         {(() => {
           const todayStr = new Date().toISOString().slice(0, 10);
