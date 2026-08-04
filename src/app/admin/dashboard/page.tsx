@@ -54,6 +54,14 @@ function AdminDashboardContent() {
   const [contactNumber, setContactNumber] = useState("");
   const [resortAddress, setResortAddress] = useState("");
   const [isSavingPolicy, setIsSavingPolicy] = useState(false);
+  const [resortName, setResortName] = useState("");
+  const [resortDescription, setResortDescription] = useState("");
+  const [openingTime, setOpeningTime] = useState("");
+  const [closingTime, setClosingTime] = useState("");
+  const [facebookUrl, setFacebookUrl] = useState("");
+  const [instagramUrl, setInstagramUrl] = useState("");
+  const [confirmationMessage, setConfirmationMessage] = useState("");
+  const [isSavingGeneral, setIsSavingGeneral] = useState(false);
   const [chartRange, setChartRange] = useState<"month" | "3months" | "all">("all");
   const searchParams = useSearchParams();
   const activeTab = searchParams.get("tab") ?? "home";
@@ -82,6 +90,9 @@ function AdminDashboardContent() {
 
   const policyRef = useMemoFirebase(() => firestore ? doc(firestore, "settings", "policy") : null, [firestore]);
   const { data: policySettings } = useDoc(policyRef);
+
+  const generalRef = useMemoFirebase(() => firestore ? doc(firestore, "settings", "general") : null, [firestore]);
+  const { data: generalSettings } = useDoc(generalRef);
 
   const { data: rawBookings, isLoading: isBookingsLoading } = useCollection(bookingsQuery);
   const { data: adminsList, isLoading: isAdminsLoading } = useCollection(adminsQuery);
@@ -127,6 +138,7 @@ function AdminDashboardContent() {
     if (paymentSettings) {
       setGcashNumber(paymentSettings.gcashNumber || "");
       setGcashName(paymentSettings.gcashName || "");
+      setConfirmationMessage(paymentSettings.confirmationMessage || "");
     }
   }, [paymentSettings]);
 
@@ -139,10 +151,35 @@ function AdminDashboardContent() {
     }
   }, [policySettings]);
 
+  useEffect(() => {
+    if (generalSettings) {
+      setResortName(generalSettings.resortName || "");
+      setResortDescription(generalSettings.description || "");
+      setOpeningTime(generalSettings.openingTime || "");
+      setClosingTime(generalSettings.closingTime || "");
+      setFacebookUrl(generalSettings.facebookUrl || "");
+      setInstagramUrl(generalSettings.instagramUrl || "");
+      setConfirmationMessage(generalSettings.confirmationMessage || "");
+    }
+  }, [generalSettings]);
+
+  const handleSaveGeneral = () => {
+    if (!firestore) return;
+    setIsSavingGeneral(true);
+    setDocumentNonBlocking(doc(firestore, "settings", "general"), {
+      resortName, description: resortDescription,
+      openingTime, closingTime,
+      facebookUrl, instagramUrl,
+      confirmationMessage,
+    }, { merge: true });
+    toast({ title: "General settings saved" });
+    setIsSavingGeneral(false);
+  };
+
   const handleSaveSettings = () => {
     if (!firestore) return;
     setIsSavingSettings(true);
-    setDocumentNonBlocking(doc(firestore, "settings", "payment"), { gcashNumber, gcashName }, { merge: true });
+    setDocumentNonBlocking(doc(firestore, "settings", "payment"), { gcashNumber, gcashName, confirmationMessage }, { merge: true });
     toast({ title: "Settings saved", description: "GCash details updated." });
     setIsSavingSettings(false);
   };
@@ -152,6 +189,9 @@ function AdminDashboardContent() {
     setIsSavingPolicy(true);
     setDocumentNonBlocking(doc(firestore, "settings", "policy"), {
       cancellationHours: cancellationHours === "" ? "" : Number(cancellationHours),
+    }, { merge: true });
+    // Also persist contact + address under general
+    setDocumentNonBlocking(doc(firestore, "settings", "general"), {
       contactNumber,
       address: resortAddress,
     }, { merge: true });
@@ -1032,77 +1072,125 @@ function AdminDashboardContent() {
             );
           })()}
           {activeTab === "settings" && (
-            <Card className="border-none shadow-2xl shadow-slate-200/50 rounded-3xl overflow-hidden bg-white">
-              <CardHeader className="p-8 border-b border-slate-50">
-                <div className="flex items-center gap-3">
-                  <div className="bg-primary/10 p-3 rounded-2xl"><Settings className="h-5 w-5 text-primary" /></div>
-                  <div>
-                    <CardTitle className="text-2xl font-headline font-bold text-slate-900">Payment Settings</CardTitle>
-                    <CardDescription className="text-slate-500">Update the GCash number shown to guests on My Bookings.</CardDescription>
-                  </div>
-                </div>
-              </CardHeader>
-              <CardContent className="p-8 space-y-6 max-w-lg">
-                <div className="space-y-2">
-                  <label className="text-sm font-bold text-slate-600">GCash Number</label>
-                  <Input
-                    placeholder="e.g. 0912-345-6789"
-                    value={gcashNumber}
-                    onChange={e => setGcashNumber(e.target.value)}
-                  />
-                  <p className="text-xs text-muted-foreground">This number is shown to guests when they need to pay.</p>
-                </div>
-                <div className="space-y-2">
-                  <label className="text-sm font-bold text-slate-600">Account Name</label>
-                  <Input
-                    placeholder="e.g. Balatasan Resort"
-                    value={gcashName}
-                    onChange={e => setGcashName(e.target.value)}
-                  />
-                </div>
-                <Button onClick={handleSaveSettings} disabled={isSavingSettings} className="w-full sm:w-auto">
-                  {isSavingSettings && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
-                  Save Payment Settings
-                </Button>
+            <div className="space-y-6">
 
-                <div className="border-t border-slate-100 pt-6 mt-2 space-y-6">
-                  <div>
-                    <p className="text-base font-bold text-slate-700 mb-1">Resort Policy</p>
-                    <p className="text-xs text-muted-foreground">Configure cancellation policy and contact information.</p>
+              {/* General Info */}
+              <Card className="border-none shadow-md rounded-2xl overflow-hidden bg-white">
+                <CardHeader className="p-6 border-b border-slate-50">
+                  <div className="flex items-center gap-3">
+                    <div className="bg-primary/10 p-2.5 rounded-xl"><Settings className="h-5 w-5 text-primary" /></div>
+                    <div>
+                      <CardTitle className="text-lg font-headline font-bold text-slate-900">General Information</CardTitle>
+                      <CardDescription className="text-slate-500 text-xs">Basic resort details shown to guests.</CardDescription>
+                    </div>
                   </div>
-                  <div className="space-y-2">
-                    <label className="text-sm font-bold text-slate-600">Cancellation Policy (hours)</label>
-                    <Input
-                      type="number"
-                      placeholder="e.g. 24"
-                      value={cancellationHours}
-                      onChange={e => setCancellationHours(e.target.value)}
-                    />
-                    <p className="text-xs text-muted-foreground">Number of hours before check-in that guests can cancel.</p>
+                </CardHeader>
+                <CardContent className="p-6 space-y-4 max-w-2xl">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div className="space-y-1.5">
+                      <label className="text-sm font-bold text-slate-600">Resort Name</label>
+                      <Input placeholder="e.g. Balatasan Beach Resort" value={resortName} onChange={e => setResortName(e.target.value)} />
+                    </div>
+                    <div className="space-y-1.5">
+                      <label className="text-sm font-bold text-slate-600">Contact Number</label>
+                      <Input placeholder="e.g. +63 912 345 6789" value={contactNumber} onChange={e => setContactNumber(e.target.value)} />
+                    </div>
                   </div>
-                  <div className="space-y-2">
-                    <label className="text-sm font-bold text-slate-600">Resort Contact Number</label>
-                    <Input
-                      placeholder="e.g. +63 912 345 6789"
-                      value={contactNumber}
-                      onChange={e => setContactNumber(e.target.value)}
-                    />
-                  </div>
-                  <div className="space-y-2">
+                  <div className="space-y-1.5">
                     <label className="text-sm font-bold text-slate-600">Resort Address</label>
-                    <Input
-                      placeholder="e.g. Balatasan, Bulalacao, Oriental Mindoro"
-                      value={resortAddress}
-                      onChange={e => setResortAddress(e.target.value)}
-                    />
+                    <Input placeholder="e.g. Balatasan, Bulalacao, Oriental Mindoro" value={resortAddress} onChange={e => setResortAddress(e.target.value)} />
                   </div>
-                  <Button onClick={handleSavePolicy} disabled={isSavingPolicy} className="w-full sm:w-auto">
-                    {isSavingPolicy && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
+                  <div className="space-y-1.5">
+                    <label className="text-sm font-bold text-slate-600">Resort Description</label>
+                    <Textarea placeholder="Brief description of the resort shown on the website..." value={resortDescription} onChange={e => setResortDescription(e.target.value)} className="min-h-[80px]" />
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-1.5">
+                      <label className="text-sm font-bold text-slate-600">Opening Time</label>
+                      <Input type="time" value={openingTime} onChange={e => setOpeningTime(e.target.value)} />
+                    </div>
+                    <div className="space-y-1.5">
+                      <label className="text-sm font-bold text-slate-600">Closing Time</label>
+                      <Input type="time" value={closingTime} onChange={e => setClosingTime(e.target.value)} />
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div className="space-y-1.5">
+                      <label className="text-sm font-bold text-slate-600">Facebook Page URL</label>
+                      <Input placeholder="https://facebook.com/..." value={facebookUrl} onChange={e => setFacebookUrl(e.target.value)} />
+                    </div>
+                    <div className="space-y-1.5">
+                      <label className="text-sm font-bold text-slate-600">Instagram URL</label>
+                      <Input placeholder="https://instagram.com/..." value={instagramUrl} onChange={e => setInstagramUrl(e.target.value)} />
+                    </div>
+                  </div>
+                  <Button onClick={handleSaveGeneral} disabled={isSavingGeneral} className="gap-2">
+                    {isSavingGeneral && <Loader2 className="h-4 w-4 animate-spin" />}
+                    Save General Settings
+                  </Button>
+                </CardContent>
+              </Card>
+
+              {/* Payment Settings */}
+              <Card className="border-none shadow-md rounded-2xl overflow-hidden bg-white">
+                <CardHeader className="p-6 border-b border-slate-50">
+                  <div className="flex items-center gap-3">
+                    <div className="bg-emerald-50 p-2.5 rounded-xl"><Wallet className="h-5 w-5 text-emerald-600" /></div>
+                    <div>
+                      <CardTitle className="text-lg font-headline font-bold text-slate-900">Payment Settings</CardTitle>
+                      <CardDescription className="text-slate-500 text-xs">GCash details shown to guests when paying.</CardDescription>
+                    </div>
+                  </div>
+                </CardHeader>
+                <CardContent className="p-6 space-y-4 max-w-2xl">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div className="space-y-1.5">
+                      <label className="text-sm font-bold text-slate-600">GCash Number</label>
+                      <Input placeholder="e.g. 0912-345-6789" value={gcashNumber} onChange={e => setGcashNumber(e.target.value)} />
+                      <p className="text-xs text-muted-foreground">Shown to guests on the payment screen.</p>
+                    </div>
+                    <div className="space-y-1.5">
+                      <label className="text-sm font-bold text-slate-600">GCash Account Name</label>
+                      <Input placeholder="e.g. Balatasan Resort" value={gcashName} onChange={e => setGcashName(e.target.value)} />
+                    </div>
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="text-sm font-bold text-slate-600">Booking Confirmation Message</label>
+                    <Textarea placeholder="Message sent to guests after booking is confirmed..." value={confirmationMessage} onChange={e => setConfirmationMessage(e.target.value)} className="min-h-[80px]" />
+                    <p className="text-xs text-muted-foreground">Optional custom message included in the confirmation notification.</p>
+                  </div>
+                  <Button onClick={handleSaveSettings} disabled={isSavingSettings} className="gap-2">
+                    {isSavingSettings && <Loader2 className="h-4 w-4 animate-spin" />}
+                    Save Payment Settings
+                  </Button>
+                </CardContent>
+              </Card>
+
+              {/* Resort Policy */}
+              <Card className="border-none shadow-md rounded-2xl overflow-hidden bg-white">
+                <CardHeader className="p-6 border-b border-slate-50">
+                  <div className="flex items-center gap-3">
+                    <div className="bg-amber-50 p-2.5 rounded-xl"><Clock className="h-5 w-5 text-amber-600" /></div>
+                    <div>
+                      <CardTitle className="text-lg font-headline font-bold text-slate-900">Resort Policy</CardTitle>
+                      <CardDescription className="text-slate-500 text-xs">Cancellation rules shown to guests during booking.</CardDescription>
+                    </div>
+                  </div>
+                </CardHeader>
+                <CardContent className="p-6 space-y-4 max-w-2xl">
+                  <div className="space-y-1.5">
+                    <label className="text-sm font-bold text-slate-600">Cancellation Policy (hours before check-in)</label>
+                    <Input type="number" placeholder="e.g. 24" value={cancellationHours} onChange={e => setCancellationHours(e.target.value)} className="max-w-xs" />
+                    <p className="text-xs text-muted-foreground">Guests can cancel for free up to this many hours before their check-in.</p>
+                  </div>
+                  <Button onClick={handleSavePolicy} disabled={isSavingPolicy} className="gap-2">
+                    {isSavingPolicy && <Loader2 className="h-4 w-4 animate-spin" />}
                     Save Policy Settings
                   </Button>
-                </div>
-              </CardContent>
-            </Card>
+                </CardContent>
+              </Card>
+
+            </div>
           )}
         </div>
         </div>{/* end container */}
