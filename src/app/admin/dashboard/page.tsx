@@ -10,7 +10,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import {
   Clock, TrendingUp, MoreVertical, Check, X, Loader2, ShieldAlert,
   MapPin, Wallet, Users as UsersIcon, ShoppingBag, Download,
-  Search, Eye, UserPlus, Image as ImageIcon, Settings, Star, MessageSquare, Bell,
+  Search, Eye, Image as ImageIcon, Settings, Star, MessageSquare, Bell,
   Trash2, EyeOff, Reply, Calendar, Sun
 } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -45,8 +45,6 @@ function AdminDashboardContent() {
   const [statusFilter, setStatusFilter] = useState("All");
   const [selectedBookingId, setSelectedBookingId] = useState<string | null>(null);
   const [bookingNote, setBookingNote] = useState("");
-  const [newAdminEmail, setNewAdminEmail] = useState("");
-  const [isAddingAdmin, setIsAddingAdmin] = useState(false);
   const [gcashNumber, setGcashNumber] = useState("");
   const [gcashName, setGcashName] = useState("");
   const [isSavingSettings, setIsSavingSettings] = useState(false);
@@ -80,11 +78,6 @@ function AdminDashboardContent() {
     return query(collectionGroup(firestore, "bookings"));
   }, [firestore, user, canLoadData]);
 
-  const adminsQuery = useMemoFirebase(() => {
-    if (!firestore || !user || !canLoadData) return null;
-    return collection(firestore, "roles_admin");
-  }, [firestore, user, canLoadData]);
-
   const settingsRef = useMemoFirebase(() => firestore ? doc(firestore, "settings", "payment") : null, [firestore]);
   const { data: paymentSettings } = useDoc(settingsRef);
 
@@ -95,7 +88,6 @@ function AdminDashboardContent() {
   const { data: generalSettings } = useDoc(generalRef);
 
   const { data: rawBookings, isLoading: isBookingsLoading } = useCollection(bookingsQuery);
-  const { data: adminsList, isLoading: isAdminsLoading } = useCollection(adminsQuery);
 
   // All reviews — no orderBy to avoid needing a Firestore index (sorted client-side)
   const allReviewsQuery = useMemoFirebase(() => {
@@ -284,19 +276,6 @@ function AdminDashboardContent() {
     ]);
     setCsvText([headers,...rows].map(r => r.map((v:any) => `"${String(v).replace(/"/g,'""')}"`).join(",")).join("\r\n"));
     setShowExport(true);
-  };
-
-  const handleAddAdmin = () => {
-    if (!firestore || !newAdminEmail.trim()) return;
-    setIsAddingAdmin(true);
-    addDocumentNonBlocking(collection(firestore, "pending_admins"), {
-      email: newAdminEmail.trim().toLowerCase(),
-      addedBy: user?.email,
-      addedAt: new Date().toISOString(),
-    });
-    toast({ title: "Admin Invited", description: `${newAdminEmail} must sign up and you must initialize their admin record manually.` });
-    setNewAdminEmail("");
-    setIsAddingAdmin(false);
   };
 
   const handleInitializeAdmin = () => {
