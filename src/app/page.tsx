@@ -104,7 +104,7 @@ export default function Home() {
         {/* ═══════════════════════════════════════
             HERO SECTION
         ═══════════════════════════════════════ */}
-        <section className="relative h-screen w-full flex items-center justify-center overflow-hidden">
+        <section className="relative h-screen w-full flex items-center justify-center overflow-hidden" style={{ minHeight: '100dvh' }}>
           {/* Decorative blobs behind text */}
           <div
             className="blob-deco blob-deco-1"
