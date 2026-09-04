@@ -13,10 +13,11 @@ export async function POST(req: NextRequest) {
     const result = await resortChatbot({ message, history });
     return NextResponse.json({ reply: result.reply });
   } catch (error) {
-    console.error('[Chat API error]', error);
+    const msg = error instanceof Error ? error.message : String(error);
+    console.error('[Chat API error]', msg);
     return NextResponse.json(
-      { reply: "Sorry, I'm having trouble right now. Please try again in a moment." },
-      { status: 200 } // Return 200 so client shows graceful message
+      { reply: `I'm having trouble right now. (${msg})` },
+      { status: 200 }
     );
   }
 }
