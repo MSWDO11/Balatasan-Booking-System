@@ -115,19 +115,29 @@ export default function Home() {
             style={{ bottom: "15%", right: "8%", opacity: 0.5 }}
           />
 
-          {heroImage && (
-            <div className="absolute inset-0 z-0">
-              <Image
-                src={heroImage.imageUrl}
-                alt={heroImage.description}
-                fill
-                className="object-cover brightness-90 transition-transform duration-[20000ms] hover:scale-110"
-                priority
-                data-ai-hint={heroImage.imageHint}
-              />
-              <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-transparent to-black/60" />
-            </div>
-          )}
+          {/* Background video */}
+          <div className="absolute inset-0 z-0">
+            <video
+              autoPlay
+              muted
+              loop
+              playsInline
+              className="absolute inset-0 w-full h-full object-cover brightness-90"
+            >
+              <source src="/videos/background.mp4" type="video/mp4" />
+              {/* Fallback to image if video fails */}
+              {heroImage && (
+                <Image
+                  src={heroImage.imageUrl}
+                  alt={heroImage.description}
+                  fill
+                  className="object-cover"
+                  priority
+                />
+              )}
+            </video>
+            <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-transparent to-black/60" />
+          </div>
 
           <div className="relative z-10 container mx-auto px-4 text-center text-white space-y-6">
             <div className="animate-in fade-in slide-in-from-bottom-8 duration-1000">
