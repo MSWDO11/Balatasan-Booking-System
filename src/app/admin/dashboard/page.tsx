@@ -670,7 +670,7 @@ function AdminDashboardContent() {
             <CardHeader className="pb-3 pt-6 px-6">
               <div className="flex items-center justify-between">
                 <CardTitle className="text-base font-headline font-bold text-slate-900">Recent Bookings</CardTitle>
-                <button onClick={() => router.push("/admin/dashboard?tab=bookings")} className="text-xs text-primary font-semibold hover:underline">View all →</button>
+                <button onClick={() => window.location.href="/admin/dashboard?tab=bookings"} className="text-xs text-primary font-semibold hover:underline">View all →</button>
               </div>
             </CardHeader>
             <CardContent className="px-4 pb-4">
