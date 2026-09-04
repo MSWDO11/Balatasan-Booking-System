@@ -104,7 +104,7 @@ export default function Home() {
         {/* ═══════════════════════════════════════
             HERO SECTION
         ═══════════════════════════════════════ */}
-        <section className="relative h-[90vh] w-full flex items-center justify-center overflow-hidden">
+        <section className="relative h-screen w-full flex items-center justify-center overflow-hidden">
           {/* Decorative blobs behind text */}
           <div
             className="blob-deco blob-deco-1"
@@ -122,7 +122,7 @@ export default function Home() {
               muted
               loop
               playsInline
-              className="absolute inset-0 w-full h-full object-cover brightness-90"
+              className="absolute inset-0 w-full h-full min-h-screen object-cover brightness-90"
             >
               <source src="/videos/background.mp4" type="video/mp4" />
               {/* Fallback to image if video fails */}
