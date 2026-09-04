@@ -60,6 +60,20 @@ function AdminDashboardContent() {
   const [instagramUrl, setInstagramUrl] = useState("");
   const [confirmationMessage, setConfirmationMessage] = useState("");
   const [isSavingGeneral, setIsSavingGeneral] = useState(false);
+  // New general fields
+  const [resortEmail, setResortEmail] = useState("");
+  const [whatsappNumber, setWhatsappNumber] = useState("");
+  const [checkInTime, setCheckInTime] = useState("");
+  const [checkOutTime, setCheckOutTime] = useState("");
+  // New payment fields
+  const [downPaymentPercent, setDownPaymentPercent] = useState("");
+  const [paymentDeadlineDays, setPaymentDeadlineDays] = useState("");
+  // New policy fields
+  const [minBookingNotice, setMinBookingNotice] = useState("");
+  const [extraGuestFee, setExtraGuestFee] = useState("");
+  const [noShowPolicy, setNoShowPolicy] = useState("");
+  const [smokingAllowed, setSmokingAllowed] = useState(false);
+  const [petsAllowed, setPetsAllowed] = useState(false);
   const [chartRange, setChartRange] = useState<"month" | "3months" | "all">("all");
   const searchParams = useSearchParams();
   const activeTab = searchParams.get("tab") ?? "home";
@@ -131,6 +145,8 @@ function AdminDashboardContent() {
       setGcashNumber(paymentSettings.gcashNumber || "");
       setGcashName(paymentSettings.gcashName || "");
       setConfirmationMessage(paymentSettings.confirmationMessage || "");
+      setDownPaymentPercent(paymentSettings.downPaymentPercent ?? "");
+      setPaymentDeadlineDays(paymentSettings.paymentDeadlineDays ?? "");
     }
   }, [paymentSettings]);
 
@@ -140,6 +156,11 @@ function AdminDashboardContent() {
       setCancellationHours(policySettings.cancellationHours ?? "");
       setContactNumber(policySettings.contactNumber || "");
       setResortAddress(policySettings.address || "");
+      setMinBookingNotice(policySettings.minBookingNotice ?? "");
+      setExtraGuestFee(policySettings.extraGuestFee ?? "");
+      setNoShowPolicy(policySettings.noShowPolicy || "");
+      setSmokingAllowed(policySettings.smokingAllowed ?? false);
+      setPetsAllowed(policySettings.petsAllowed ?? false);
     }
   }, [policySettings]);
 
@@ -152,6 +173,10 @@ function AdminDashboardContent() {
       setFacebookUrl(generalSettings.facebookUrl || "");
       setInstagramUrl(generalSettings.instagramUrl || "");
       setConfirmationMessage(generalSettings.confirmationMessage || "");
+      setResortEmail(generalSettings.email || "");
+      setWhatsappNumber(generalSettings.whatsappNumber || "");
+      setCheckInTime(generalSettings.checkInTime || "");
+      setCheckOutTime(generalSettings.checkOutTime || "");
     }
   }, [generalSettings]);
 
@@ -163,6 +188,12 @@ function AdminDashboardContent() {
       openingTime, closingTime,
       facebookUrl, instagramUrl,
       confirmationMessage,
+      email: resortEmail,
+      whatsappNumber,
+      checkInTime,
+      checkOutTime,
+      contactNumber,
+      address: resortAddress,
     }, { merge: true });
     toast({ title: "General settings saved" });
     setIsSavingGeneral(false);
@@ -171,7 +202,11 @@ function AdminDashboardContent() {
   const handleSaveSettings = () => {
     if (!firestore) return;
     setIsSavingSettings(true);
-    setDocumentNonBlocking(doc(firestore, "settings", "payment"), { gcashNumber, gcashName, confirmationMessage }, { merge: true });
+    setDocumentNonBlocking(doc(firestore, "settings", "payment"), {
+      gcashNumber, gcashName, confirmationMessage,
+      downPaymentPercent: downPaymentPercent === "" ? "" : Number(downPaymentPercent),
+      paymentDeadlineDays: paymentDeadlineDays === "" ? "" : Number(paymentDeadlineDays),
+    }, { merge: true });
     toast({ title: "Settings saved", description: "GCash details updated." });
     setIsSavingSettings(false);
   };
@@ -181,9 +216,11 @@ function AdminDashboardContent() {
     setIsSavingPolicy(true);
     setDocumentNonBlocking(doc(firestore, "settings", "policy"), {
       cancellationHours: cancellationHours === "" ? "" : Number(cancellationHours),
-    }, { merge: true });
-    // Also persist contact + address under general
-    setDocumentNonBlocking(doc(firestore, "settings", "general"), {
+      minBookingNotice: minBookingNotice === "" ? "" : Number(minBookingNotice),
+      extraGuestFee: extraGuestFee === "" ? "" : Number(extraGuestFee),
+      noShowPolicy,
+      smokingAllowed,
+      petsAllowed,
       contactNumber,
       address: resortAddress,
     }, { merge: true });
@@ -1075,6 +1112,16 @@ function AdminDashboardContent() {
                       <Input placeholder="e.g. +63 912 345 6789" value={contactNumber} onChange={e => setContactNumber(e.target.value)} />
                     </div>
                   </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div className="space-y-1.5">
+                      <label className="text-sm font-bold text-slate-600">Email Address</label>
+                      <Input type="email" placeholder="e.g. balatasan@gmail.com" value={resortEmail} onChange={e => setResortEmail(e.target.value)} />
+                    </div>
+                    <div className="space-y-1.5">
+                      <label className="text-sm font-bold text-slate-600">WhatsApp Number</label>
+                      <Input placeholder="e.g. +63 912 345 6789" value={whatsappNumber} onChange={e => setWhatsappNumber(e.target.value)} />
+                    </div>
+                  </div>
                   <div className="space-y-1.5">
                     <label className="text-sm font-bold text-slate-600">Resort Address</label>
                     <Input placeholder="e.g. Balatasan, Bulalacao, Oriental Mindoro" value={resortAddress} onChange={e => setResortAddress(e.target.value)} />
@@ -1091,6 +1138,18 @@ function AdminDashboardContent() {
                     <div className="space-y-1.5">
                       <label className="text-sm font-bold text-slate-600">Closing Time</label>
                       <Input type="time" value={closingTime} onChange={e => setClosingTime(e.target.value)} />
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-1.5">
+                      <label className="text-sm font-bold text-slate-600">Check-in Time</label>
+                      <Input type="time" value={checkInTime} onChange={e => setCheckInTime(e.target.value)} />
+                      <p className="text-xs text-muted-foreground">Earliest guests can arrive.</p>
+                    </div>
+                    <div className="space-y-1.5">
+                      <label className="text-sm font-bold text-slate-600">Check-out Time</label>
+                      <Input type="time" value={checkOutTime} onChange={e => setCheckOutTime(e.target.value)} />
+                      <p className="text-xs text-muted-foreground">Latest guests must leave.</p>
                     </div>
                   </div>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -1133,6 +1192,18 @@ function AdminDashboardContent() {
                       <Input placeholder="e.g. Balatasan Resort" value={gcashName} onChange={e => setGcashName(e.target.value)} />
                     </div>
                   </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div className="space-y-1.5">
+                      <label className="text-sm font-bold text-slate-600">Down Payment (%)</label>
+                      <Input type="number" min="0" max="100" placeholder="e.g. 50" value={downPaymentPercent} onChange={e => setDownPaymentPercent(e.target.value)} />
+                      <p className="text-xs text-muted-foreground">% of total required to confirm. Leave blank for full payment.</p>
+                    </div>
+                    <div className="space-y-1.5">
+                      <label className="text-sm font-bold text-slate-600">Payment Deadline (days before check-in)</label>
+                      <Input type="number" min="0" placeholder="e.g. 3" value={paymentDeadlineDays} onChange={e => setPaymentDeadlineDays(e.target.value)} />
+                      <p className="text-xs text-muted-foreground">Full payment must be received this many days before check-in.</p>
+                    </div>
+                  </div>
                   <div className="space-y-1.5">
                     <label className="text-sm font-bold text-slate-600">Booking Confirmation Message</label>
                     <Textarea placeholder="Message sent to guests after booking is confirmed..." value={confirmationMessage} onChange={e => setConfirmationMessage(e.target.value)} className="min-h-[80px]" />
@@ -1157,10 +1228,44 @@ function AdminDashboardContent() {
                   </div>
                 </CardHeader>
                 <CardContent className="p-6 space-y-4 max-w-2xl">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div className="space-y-1.5">
+                      <label className="text-sm font-bold text-slate-600">Cancellation Policy (hours before check-in)</label>
+                      <Input type="number" placeholder="e.g. 24" value={cancellationHours} onChange={e => setCancellationHours(e.target.value)} />
+                      <p className="text-xs text-muted-foreground">Free cancellation up to this many hours before check-in.</p>
+                    </div>
+                    <div className="space-y-1.5">
+                      <label className="text-sm font-bold text-slate-600">Minimum Booking Notice (hours)</label>
+                      <Input type="number" placeholder="e.g. 12" value={minBookingNotice} onChange={e => setMinBookingNotice(e.target.value)} />
+                      <p className="text-xs text-muted-foreground">How far in advance guests must book.</p>
+                    </div>
+                  </div>
                   <div className="space-y-1.5">
-                    <label className="text-sm font-bold text-slate-600">Cancellation Policy (hours before check-in)</label>
-                    <Input type="number" placeholder="e.g. 24" value={cancellationHours} onChange={e => setCancellationHours(e.target.value)} className="max-w-xs" />
-                    <p className="text-xs text-muted-foreground">Guests can cancel for free up to this many hours before their check-in.</p>
+                    <label className="text-sm font-bold text-slate-600">Extra Guest Fee (₱ per person over capacity)</label>
+                    <Input type="number" placeholder="e.g. 150" value={extraGuestFee} onChange={e => setExtraGuestFee(e.target.value)} className="max-w-xs" />
+                    <p className="text-xs text-muted-foreground">Additional charge per guest beyond standard capacity.</p>
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="text-sm font-bold text-slate-600">No-Show Policy</label>
+                    <Textarea placeholder="e.g. No refund for no-shows. Please contact us at least 24 hours in advance to cancel." value={noShowPolicy} onChange={e => setNoShowPolicy(e.target.value)} className="min-h-[70px]" />
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-1.5">
+                      <label className="text-sm font-bold text-slate-600">Smoking</label>
+                      <button type="button" onClick={() => setSmokingAllowed(v => !v)}
+                        className={`flex h-10 w-full items-center gap-2 rounded-md border px-3 text-sm font-medium transition-colors ${smokingAllowed ? "border-emerald-200 bg-emerald-50 text-emerald-700" : "border-input bg-background text-muted-foreground hover:bg-accent"}`}>
+                        <span className={`inline-block h-2.5 w-2.5 rounded-full ${smokingAllowed ? "bg-emerald-500" : "bg-slate-300"}`} />
+                        {smokingAllowed ? "Allowed in designated areas" : "No smoking"}
+                      </button>
+                    </div>
+                    <div className="space-y-1.5">
+                      <label className="text-sm font-bold text-slate-600">Pets</label>
+                      <button type="button" onClick={() => setPetsAllowed(v => !v)}
+                        className={`flex h-10 w-full items-center gap-2 rounded-md border px-3 text-sm font-medium transition-colors ${petsAllowed ? "border-emerald-200 bg-emerald-50 text-emerald-700" : "border-input bg-background text-muted-foreground hover:bg-accent"}`}>
+                        <span className={`inline-block h-2.5 w-2.5 rounded-full ${petsAllowed ? "bg-emerald-500" : "bg-slate-300"}`} />
+                        {petsAllowed ? "Pets welcome" : "No pets allowed"}
+                      </button>
+                    </div>
                   </div>
                   <Button onClick={handleSavePolicy} disabled={isSavingPolicy} className="gap-2">
                     {isSavingPolicy && <Loader2 className="h-4 w-4 animate-spin" />}
