@@ -71,7 +71,7 @@ function AdminDashboardContent() {
   const { data: adminRole, isLoading: isAdminRoleLoading } = useDoc(adminDocRef);
   const isMasterAdminEmail = user?.email?.toLowerCase() === "admin@gmail.com";
   const hasAdminRecord = !!adminRole;
-  const canLoadData = !isUserLoading && !isAdminRoleLoading && hasAdminRecord;
+  const canLoadData = !isUserLoading && !isAdminRoleLoading && (isMasterAdminEmail || hasAdminRecord);
 
   const bookingsQuery = useMemoFirebase(() => {
     if (!firestore || !user || !canLoadData) return null;
@@ -298,7 +298,7 @@ function AdminDashboardContent() {
     }
   };
 
-  if (isUserLoading || isAdminRoleLoading) return (
+  if ((isUserLoading || isAdminRoleLoading) && !isMasterAdminEmail) return (
     <div className="flex flex-col md:flex-row min-h-screen"><AdminSidebar />
       <main className="flex-grow flex items-center justify-center">
         <Spinner size="lg" />
