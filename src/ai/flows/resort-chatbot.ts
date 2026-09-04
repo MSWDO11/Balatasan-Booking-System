@@ -59,7 +59,7 @@ ${historyText ? `Conversation so far:\n${historyText}\n` : ''}Guest: ${message}
 Kira:`;
 
     const { text } = await ai.generate({
-      model: 'googleai/gemini-2.0-flash',
+      model: 'googleai/gemini-3.6-flash',
       prompt,
     });
 

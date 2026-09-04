@@ -39,7 +39,7 @@ export async function adminContentGenerator(input: AdminContentGeneratorInput): 
 // Genkit Prompt Definition
 const adminContentPrompt = ai.definePrompt({
   name: 'adminContentGeneratorPrompt',
-  model: 'googleai/gemini-2.0-flash',
+  model: 'googleai/gemini-3.6-flash',
   input: {schema: AdminContentGeneratorInputSchema},
   output: {schema: AdminContentGeneratorOutputSchema},
   prompt: `You are an expert marketing copywriter for Balatasan Beach Resort. 
