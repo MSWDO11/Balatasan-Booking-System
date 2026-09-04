@@ -30,7 +30,7 @@ const errorExplainerFlow = ai.defineFlow(
   },
   async ({ errorMessage, context }) => {
     const { text } = await ai.generate({
-      model: 'googleai/gemini-1.5-flash',
+      model: 'googleai/gemini-2.0-flash',
       prompt: `You are a helpful assistant for Balatasan Beach Resort's booking website.
 A user encountered a technical error. Translate it into a friendly, non-technical message.
 
