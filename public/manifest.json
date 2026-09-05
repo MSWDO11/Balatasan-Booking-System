@@ -1,0 +1,26 @@
+{
+  "name": "Balatasan Beach Resort",
+  "short_name": "Balatasan",
+  "description": "Book your eco-friendly tropical getaway at Balatasan Beach Resort in Bulalacao, Oriental Mindoro.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#12AFAB",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["travel", "lifestyle"],
+  "screenshots": []
+}

@@ -584,6 +584,46 @@ function AdminDashboardContent() {
                   <Button size="sm" onClick={() => { updateStatus(selectedBooking.userId, selectedBooking.id, "Confirmed", selectedBooking.itemName); setSelectedBookingId(null); }} className="flex-1">Confirm</Button>
                   <Button size="sm" variant="outline" onClick={() => { updateStatus(selectedBooking.userId, selectedBooking.id, "Cancelled", selectedBooking.itemName); setSelectedBookingId(null); }} className="flex-1 text-rose-600 border-rose-200 hover:bg-rose-50">Cancel</Button>
                 </div>
+                <Button size="sm" variant="outline" className="w-full gap-2 mt-1"
+                  onClick={() => {
+                    const b = selectedBooking;
+                    const win = window.open("", "_blank");
+                    if (!win) return;
+                    win.document.write(`
+                      <html><head><title>Booking Receipt</title>
+                      <style>
+                        body { font-family: sans-serif; padding: 32px; max-width: 480px; margin: 0 auto; color: #1e293b; }
+                        h1 { color: #12AFAB; font-size: 24px; margin-bottom: 4px; }
+                        .label { font-size: 11px; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.05em; }
+                        .value { font-size: 15px; font-weight: 600; margin-bottom: 12px; }
+                        .divider { border-top: 1px solid #e2e8f0; margin: 16px 0; }
+                        .badge { display: inline-block; padding: 2px 10px; border-radius: 999px; font-size: 12px; font-weight: 700; background: #d1fae5; color: #065f46; }
+                        .total { font-size: 22px; font-weight: 800; color: #12AFAB; }
+                        @media print { button { display: none; } }
+                      </style></head>
+                      <body>
+                        <h1>Balatasan Resort</h1>
+                        <p style="color:#64748b;font-size:13px">Official Booking Receipt</p>
+                        <div class="divider"></div>
+                        <div class="label">Ref ID</div><div class="value">${b.id?.slice(0,8).toUpperCase()}</div>
+                        <div class="label">Guest</div><div class="value">${b.guestName}</div>
+                        <div class="label">Contact</div><div class="value">${b.contactNumber || "Not provided"}</div>
+                        <div class="label">Item</div><div class="value">${b.itemName}</div>
+                        <div class="label">Dates</div><div class="value">${b.startDate}${b.endDate && b.endDate !== b.startDate ? " → " + b.endDate : ""}</div>
+                        <div class="label">Guests</div><div class="value">${b.guestCount}</div>
+                        <div class="label">Status</div><div class="value"><span class="badge">${b.status}</span></div>
+                        <div class="divider"></div>
+                        <div class="label">Total Amount</div>
+                        <div class="total">₱${b.totalPrice?.toLocaleString()}</div>
+                        <div class="divider"></div>
+                        <p style="font-size:12px;color:#94a3b8">Generated ${new Date().toLocaleString()} · Balatasan Beach Resort, Bulalacao, Oriental Mindoro</p>
+                        <button onclick="window.print()" style="margin-top:16px;padding:8px 20px;background:#12AFAB;color:white;border:none;border-radius:8px;cursor:pointer;font-weight:600">Print Receipt</button>
+                      </body></html>
+                    `);
+                    win.document.close();
+                  }}>
+                  <Download className="h-4 w-4" /> Print / Download Receipt
+                </Button>
               </div>
             )}
           </DialogContent>

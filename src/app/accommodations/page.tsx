@@ -34,8 +34,33 @@ export default function AccommodationsPage() {
     return (
       <div className="flex min-h-screen flex-col">
         <SmartNavbar />
-        <main className="flex-grow flex items-center justify-center">
-          <Spinner size="lg" />
+        <main className="flex-grow">
+          {/* Header skeleton */}
+          <section className="bg-primary/5 py-16">
+            <div className="container mx-auto px-4 text-center space-y-4">
+              <div className="h-10 w-64 rounded-xl bg-primary/10 animate-pulse mx-auto" />
+              <div className="h-4 w-96 rounded-lg bg-slate-200 animate-pulse mx-auto" />
+              <div className="h-4 w-72 rounded-lg bg-slate-100 animate-pulse mx-auto" />
+            </div>
+          </section>
+          {/* Cards skeleton */}
+          <section className="py-12">
+            <div className="container mx-auto px-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {[1,2,3,4,5,6].map(i => (
+                  <div key={i} className="rounded-2xl overflow-hidden border bg-white">
+                    <div className="h-48 w-full bg-slate-200 animate-pulse" />
+                    <div className="p-4 space-y-3">
+                      <div className="h-5 w-3/4 rounded-lg bg-slate-200 animate-pulse" />
+                      <div className="h-4 w-1/2 rounded-lg bg-slate-100 animate-pulse" />
+                      <div className="h-4 w-2/3 rounded-lg bg-slate-100 animate-pulse" />
+                      <div className="h-10 w-full rounded-xl bg-slate-200 animate-pulse mt-2" />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </section>
         </main>
         <Footer />
       </div>
@@ -74,8 +99,17 @@ export default function AccommodationsPage() {
         <section className="py-12">
           <div className="container mx-auto px-4">
             {isRoomsLoading ? (
-              <div className="flex justify-center py-20">
-                <Spinner size="lg" />
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {[1,2,3,4,5,6].map(i => (
+                  <div key={i} className="rounded-2xl overflow-hidden border bg-white">
+                    <div className="h-48 w-full bg-slate-200 animate-pulse" />
+                    <div className="p-4 space-y-3">
+                      <div className="h-5 w-3/4 rounded-lg bg-slate-200 animate-pulse" />
+                      <div className="h-4 w-1/2 rounded-lg bg-slate-100 animate-pulse" />
+                      <div className="h-10 w-full rounded-xl bg-slate-200 animate-pulse mt-2" />
+                    </div>
+                  </div>
+                ))}
               </div>
             ) : rooms && rooms.length > 0 ? (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">

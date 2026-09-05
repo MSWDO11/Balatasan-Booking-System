@@ -17,8 +17,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import Image from "next/image";
 import { useUser, useFirestore, useDoc, useMemoFirebase, addDocumentNonBlocking } from "@/firebase";
-import { doc, collection } from "firebase/firestore";
-import { useState, use } from "react";
+import { doc, collection, collectionGroup, query as fsQuery, where } from "firebase/firestore";
+import { useState, use, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { useToast } from "@/hooks/use-toast";
 import { format, addDays, differenceInDays } from "date-fns";
@@ -41,7 +41,33 @@ export default function RoomDetailsPage({ params }: { params: Promise<{ id: stri
   const roomRef = useMemoFirebase(() => firestore ? doc(firestore, "rooms", id) : null, [firestore, id]);
   const { data: room, isLoading: isRoomLoading } = useDoc(roomRef);
 
-  // Dynamic average rating
+  // Load confirmed bookings for this room to disable booked dates
+  const allBookingsQuery = useMemoFirebase(() => {
+    if (!firestore) return null;
+    try {
+      return fsQuery(
+        collectionGroup(firestore, "bookings"),
+        where("itemId", "==", id),
+        where("status", "in", ["Confirmed", "Pending Payment", "Payment Uploaded"])
+      );
+    } catch { return null; }
+  }, [firestore, id]);
+  const { data: existingBookings } = useCollection(allBookingsQuery);
+
+  // Build a Set of booked date strings "yyyy-MM-dd"
+  const bookedDates = useMemo(() => {
+    const dates = new Set<string>();
+    existingBookings?.forEach((b: any) => {
+      if (b.startDate && b.endDate) {
+        const start = new Date(b.startDate + "T00:00:00");
+        const end = new Date(b.endDate + "T00:00:00");
+        for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
+          dates.add(d.toISOString().slice(0, 10));
+        }
+      }
+    });
+    return dates;
+  }, [existingBookings]);
   const reviewsRef = useMemoFirebase(() => firestore ? collection(firestore, "reviews", `room_${id}`, "entries") : null, [firestore, id]);
   const reviewsQuery = useMemoFirebase(() => reviewsRef ? query(reviewsRef, orderBy("createdAt", "desc")) : null, [reviewsRef]);
   const { data: reviews } = useCollection(reviewsQuery);
@@ -102,7 +128,31 @@ export default function RoomDetailsPage({ params }: { params: Promise<{ id: stri
 
   if (isRoomLoading) return (
     <div className="flex min-h-screen flex-col"><SmartNavbar />
-      <main className="flex-grow flex items-center justify-center"><Spinner size="lg" /></main>
+      <main className="flex-grow py-10">
+        <div className="container mx-auto px-4">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-12">
+            <div className="lg:col-span-2 space-y-6">
+              <div className="h-[400px] rounded-3xl bg-slate-200 animate-pulse" />
+              <div className="space-y-3">
+                <div className="h-8 w-64 rounded-xl bg-slate-200 animate-pulse" />
+                <div className="h-4 w-48 rounded-lg bg-slate-100 animate-pulse" />
+                <div className="h-4 w-full rounded-lg bg-slate-100 animate-pulse" />
+                <div className="h-4 w-5/6 rounded-lg bg-slate-100 animate-pulse" />
+                <div className="h-4 w-4/6 rounded-lg bg-slate-100 animate-pulse" />
+              </div>
+            </div>
+            <div className="lg:col-span-1">
+              <div className="rounded-3xl border p-8 space-y-4">
+                <div className="h-10 w-32 rounded-xl bg-slate-200 animate-pulse" />
+                <div className="h-px bg-slate-100" />
+                <div className="h-10 w-full rounded-xl bg-slate-100 animate-pulse" />
+                <div className="h-10 w-full rounded-xl bg-slate-100 animate-pulse" />
+                <div className="h-12 w-full rounded-2xl bg-primary/20 animate-pulse" />
+              </div>
+            </div>
+          </div>
+        </div>
+      </main>
     <Footer /></div>
   );
 
@@ -243,7 +293,8 @@ export default function RoomDetailsPage({ params }: { params: Promise<{ id: stri
                           </button>
                         </PopoverTrigger>
                         <PopoverContent className="w-auto p-0" align="start">
-                          <Calendar mode="single" selected={checkIn} onSelect={setCheckIn} initialFocus disabled={(d) => d < new Date()} />
+                          <Calendar mode="single" selected={checkIn} onSelect={setCheckIn} initialFocus
+                            disabled={(d) => d < new Date() || bookedDates.has(d.toISOString().slice(0,10))} />
                         </PopoverContent>
                       </Popover>
                       <Popover>
@@ -254,7 +305,8 @@ export default function RoomDetailsPage({ params }: { params: Promise<{ id: stri
                           </button>
                         </PopoverTrigger>
                         <PopoverContent className="w-auto p-0" align="start">
-                          <Calendar mode="single" selected={checkOut} onSelect={setCheckOut} initialFocus disabled={(d) => (checkIn ? d <= checkIn : d < new Date())} />
+                          <Calendar mode="single" selected={checkOut} onSelect={setCheckOut} initialFocus
+                            disabled={(d) => (checkIn ? d <= checkIn : d < new Date()) || bookedDates.has(d.toISOString().slice(0,10))} />
                         </PopoverContent>
                       </Popover>
                     </div>

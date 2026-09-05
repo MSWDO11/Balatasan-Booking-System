@@ -3,6 +3,19 @@
 import { useState, useRef, useEffect } from "react";
 import { MessageCircle, X, Send, Loader2, Bot, User, Waves, Minimize2 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import Link from "next/link";
+
+// Render simple markdown links [text](url)
+function renderMessage(content: string) {
+  const parts = content.split(/(\[.*?\]\(.*?\))/g);
+  return parts.map((part, i) => {
+    const match = part.match(/\[(.*?)\]\((.*?)\)/);
+    if (match) {
+      return <Link key={i} href={match[2]} className="text-primary font-semibold underline underline-offset-2">{match[1]}</Link>;
+    }
+    return <span key={i}>{part}</span>;
+  });
+}
 
 interface Message {
   role: "user" | "assistant";
@@ -66,6 +79,18 @@ export function ChatWidget() {
       const data = await res.json();
       setMessages(prev => [...prev, { role: "assistant", content: data.reply }]);
       if (!open || minimized) setUnreadCount(c => c + 1);
+
+      // Booking intent detection — if reply mentions booking, show a CTA
+      const bookingKeywords = ["book", "reserve", "booking", "reservation", "accommodations", "cottages", "tours"];
+      const replyLower = (data.reply as string).toLowerCase();
+      if (bookingKeywords.some(k => replyLower.includes(k))) {
+        setTimeout(() => {
+          setMessages(prev => [...prev, {
+            role: "assistant",
+            content: "👉 Ready to book? [Browse Accommodations](/accommodations) or [View Tours](/accommodations#tours)",
+          }]);
+        }, 800);
+      }
     } catch {
       setMessages(prev => [...prev, {
         role: "assistant",
@@ -141,7 +166,7 @@ export function ChatWidget() {
                         ? "bg-white text-slate-800 rounded-bl-sm border border-slate-100"
                         : "bg-primary text-white rounded-br-sm"
                     )}>
-                      {msg.content}
+                      {renderMessage(msg.content)}
                       <p className={cn(
                         "text-[10px] mt-1 leading-none",
                         msg.role === "assistant" ? "text-slate-400" : "text-white/60"

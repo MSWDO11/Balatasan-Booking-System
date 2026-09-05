@@ -11,6 +11,7 @@ import { useUser, useAuth } from "@/firebase";
 import { signOut } from "firebase/auth";
 import { Suspense } from "react";
 import { NotificationBell } from "@/components/notification-bell";
+import { DarkModeToggle } from "@/components/dark-mode-toggle";
 
 const navLinks = [
   { name: "Home", href: "/" },
@@ -91,6 +92,7 @@ function NavbarInner() {
                 </Link>
                 {/* Notification bell — only for real users, not preview */}
                 {!isPreview && <NotificationBell />}
+                <DarkModeToggle />
                 {!isPreview && (
                   <Button variant="ghost" size="icon" onClick={handleSignOut} title="Sign Out" className="rounded-full h-9 w-9 text-slate-400 hover:text-rose-500 hover:bg-rose-50">
                     <LogOut className="h-4 w-4" />
