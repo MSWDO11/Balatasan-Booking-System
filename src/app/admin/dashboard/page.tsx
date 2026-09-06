@@ -315,7 +315,12 @@ function AdminDashboardContent() {
     setShowExport(true);
   };
 
-  const handleInitializeAdmin = () => {
+  // Auto-initialize admin record for master admin if it doesn't exist yet
+  useEffect(() => {
+    if (isMasterAdminEmail && !hasAdminRecord && !isAdminRoleLoading && firestore && user) {
+      handleInitializeAdmin();
+    }
+  }, [isMasterAdminEmail, hasAdminRecord, isAdminRoleLoading, firestore, user]);
     if (!firestore || !user) return;
     setIsInitializing(true);
     setDocumentNonBlocking(doc(firestore, "roles_admin", user.uid), {
@@ -358,24 +363,7 @@ function AdminDashboardContent() {
     </div>
   );
 
-  if (isMasterAdminEmail && !hasAdminRecord) return (
-    <div className="flex flex-col md:flex-row min-h-screen bg-slate-50"><AdminSidebar />
-      <main className="flex-grow flex items-center justify-center p-4">
-        <Card className="max-w-md text-center border-none shadow-2xl rounded-3xl overflow-hidden">
-          <CardHeader className="pt-10 pb-6">
-            <div className="mx-auto bg-primary/10 p-6 rounded-full w-fit mb-4"><ShieldAlert className="h-12 w-12 text-primary" /></div>
-            <CardTitle>Admin Setup Required</CardTitle>
-            <CardDescription>Welcome, {user?.email}. Initialize your admin record first.</CardDescription>
-          </CardHeader>
-          <CardContent className="pb-10 px-8">
-            <Button onClick={handleInitializeAdmin} disabled={isInitializing} className="w-full">
-              {isInitializing && <Loader2 className="h-4 w-4 animate-spin mr-2" />} Initialize Admin Record
-            </Button>
-          </CardContent>
-        </Card>
-      </main>
-    </div>
-  );
+  // Auto-initializes above — no manual screen needed
 
   // Revenue growth calculation (improvement 4)
   const now = new Date();
