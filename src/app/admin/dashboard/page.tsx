@@ -340,7 +340,10 @@ function AdminDashboardContent() {
     if (isMasterAdminEmail && !hasAdminRecord && !isAdminRoleLoading && firestore && user) {
       handleInitializeAdmin();
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isMasterAdminEmail, hasAdminRecord, isAdminRoleLoading, firestore, user]);
+
+  const handleInitializeAdmin = () => {
     if (!firestore || !user) return;
     setIsInitializing(true);
     setDocumentNonBlocking(doc(firestore, "roles_admin", user.uid), {
