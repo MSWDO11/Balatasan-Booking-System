@@ -114,6 +114,7 @@ export default function RoomDetailsPage({ params }: { params: Promise<{ id: stri
       originalPrice: pricing.basePrice,
       guestCount,
       guestName: user.displayName || user.email?.split('@')[0] || "Guest",
+      guestEmail: user.email || "",
       contactNumber: contactNumber.trim() || "Not provided",
       seasonApplied: null,
       groupDiscountApplied: pricing.groupDiscountInfo?.label || null,

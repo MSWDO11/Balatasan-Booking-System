@@ -290,6 +290,26 @@ function AdminDashboardContent() {
       createdAt: new Date().toISOString(),
     });
 
+    // Send Gmail notification if booking is Confirmed or Cancelled
+    const booking = bookings.find(b => b.id === bookingId);
+    if (booking?.guestEmail && (status === "Confirmed" || status === "Cancelled")) {
+      fetch("/api/send-email", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          to: booking.guestEmail,
+          guestName: booking.guestName,
+          itemName: booking.itemName,
+          startDate: booking.startDate,
+          endDate: booking.endDate,
+          guestCount: booking.guestCount,
+          totalPrice: booking.totalPrice,
+          refId: booking.id?.slice(0, 8).toUpperCase(),
+          status,
+        }),
+      }).catch(err => console.error("Email send failed:", err));
+    }
+
     toast({ title: `Booking ${status}`, description: `Status updated to ${status}.` });
     if (selectedBooking?.id === bookingId) setSelectedBookingId((prev) => prev);
   };
@@ -577,35 +597,74 @@ function AdminDashboardContent() {
                     const b = selectedBooking;
                     const win = window.open("", "_blank");
                     if (!win) return;
+                    const statusColor = b.status === "Confirmed" ? "#065f46" : b.status === "Cancelled" ? "#991b1b" : "#92400e";
+                    const statusBg = b.status === "Confirmed" ? "#d1fae5" : b.status === "Cancelled" ? "#fee2e2" : "#fef3c7";
                     win.document.write(`
-                      <html><head><title>Booking Receipt</title>
+                      <!DOCTYPE html>
+                      <html><head><title>Booking Receipt · Balatasan Resort</title>
+                      <meta charset="utf-8"/>
                       <style>
-                        body { font-family: sans-serif; padding: 32px; max-width: 480px; margin: 0 auto; color: #1e293b; }
-                        h1 { color: #12AFAB; font-size: 24px; margin-bottom: 4px; }
-                        .label { font-size: 11px; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.05em; }
-                        .value { font-size: 15px; font-weight: 600; margin-bottom: 12px; }
-                        .divider { border-top: 1px solid #e2e8f0; margin: 16px 0; }
-                        .badge { display: inline-block; padding: 2px 10px; border-radius: 999px; font-size: 12px; font-weight: 700; background: #d1fae5; color: #065f46; }
-                        .total { font-size: 22px; font-weight: 800; color: #12AFAB; }
-                        @media print { button { display: none; } }
+                        * { box-sizing: border-box; margin: 0; padding: 0; }
+                        body { font-family: 'Segoe UI', Arial, sans-serif; background: #f1f5f9; display: flex; justify-content: center; align-items: flex-start; min-height: 100vh; padding: 32px 16px; }
+                        .card { background: #fff; border-radius: 20px; box-shadow: 0 20px 60px rgba(0,0,0,0.12); max-width: 480px; width: 100%; overflow: hidden; }
+                        .header { background: linear-gradient(135deg, #12AFAB 0%, #0e8f8b 100%); padding: 32px 32px 24px; text-align: center; position: relative; }
+                        .header::after { content: ''; position: absolute; bottom: -1px; left: 0; right: 0; height: 24px; background: #fff; border-radius: 20px 20px 0 0; }
+                        .logo-wrap { width: 64px; height: 64px; border-radius: 50%; border: 3px solid rgba(255,255,255,0.4); overflow: hidden; margin: 0 auto 12px; background: white; }
+                        .logo-wrap img { width: 100%; height: 100%; object-fit: cover; }
+                        .header h1 { color: #fff; font-size: 22px; font-weight: 800; letter-spacing: -0.5px; }
+                        .header p { color: rgba(255,255,255,0.8); font-size: 12px; margin-top: 4px; letter-spacing: 0.05em; text-transform: uppercase; }
+                        .ref-band { background: #f8fafc; border-bottom: 1px solid #e2e8f0; padding: 14px 32px; display: flex; align-items: center; justify-content: space-between; }
+                        .ref-band .ref-label { font-size: 10px; color: #94a3b8; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; }
+                        .ref-band .ref-value { font-size: 18px; font-weight: 800; color: #0f172a; letter-spacing: 0.08em; font-family: monospace; }
+                        .status-chip { display: inline-flex; align-items: center; gap: 6px; padding: 4px 12px; border-radius: 999px; font-size: 12px; font-weight: 700; background: ${statusBg}; color: ${statusColor}; }
+                        .status-dot { width: 7px; height: 7px; border-radius: 50%; background: ${statusColor}; }
+                        .body { padding: 24px 32px; }
+                        .row { display: flex; justify-content: space-between; align-items: flex-start; padding: 10px 0; border-bottom: 1px dashed #f1f5f9; }
+                        .row:last-of-type { border-bottom: none; }
+                        .row-label { font-size: 11px; color: #94a3b8; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; padding-top: 2px; }
+                        .row-value { font-size: 14px; font-weight: 600; color: #1e293b; text-align: right; max-width: 60%; }
+                        .total-band { background: linear-gradient(135deg, #f0fdf9 0%, #f0fdfa 100%); border: 1px solid #99f6e4; border-radius: 14px; padding: 20px 24px; margin: 20px 0; display: flex; align-items: center; justify-content: space-between; }
+                        .total-band .total-label { font-size: 12px; color: #0f766e; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; }
+                        .total-band .total-amount { font-size: 30px; font-weight: 900; color: #12AFAB; letter-spacing: -1px; }
+                        .footer { background: #f8fafc; border-top: 1px solid #e2e8f0; padding: 16px 32px; text-align: center; }
+                        .footer p { font-size: 11px; color: #94a3b8; line-height: 1.6; }
+                        .print-btn { display: block; width: calc(100% - 64px); margin: 0 auto 24px; padding: 14px; background: #12AFAB; color: white; border: none; border-radius: 12px; font-size: 14px; font-weight: 700; cursor: pointer; letter-spacing: 0.04em; transition: opacity 0.2s; }
+                        .print-btn:hover { opacity: 0.9; }
+                        @media print {
+                          body { background: white; padding: 0; }
+                          .card { box-shadow: none; max-width: 100%; }
+                          .print-btn { display: none; }
+                        }
                       </style></head>
                       <body>
-                        <h1>Balatasan Resort</h1>
-                        <p style="color:#64748b;font-size:13px">Official Booking Receipt</p>
-                        <div class="divider"></div>
-                        <div class="label">Ref ID</div><div class="value">${b.id?.slice(0,8).toUpperCase()}</div>
-                        <div class="label">Guest</div><div class="value">${b.guestName}</div>
-                        <div class="label">Contact</div><div class="value">${b.contactNumber || "Not provided"}</div>
-                        <div class="label">Item</div><div class="value">${b.itemName}</div>
-                        <div class="label">Dates</div><div class="value">${b.startDate}${b.endDate && b.endDate !== b.startDate ? " → " + b.endDate : ""}</div>
-                        <div class="label">Guests</div><div class="value">${b.guestCount}</div>
-                        <div class="label">Status</div><div class="value"><span class="badge">${b.status}</span></div>
-                        <div class="divider"></div>
-                        <div class="label">Total Amount</div>
-                        <div class="total">₱${b.totalPrice?.toLocaleString()}</div>
-                        <div class="divider"></div>
-                        <p style="font-size:12px;color:#94a3b8">Generated ${new Date().toLocaleString()} · Balatasan Beach Resort, Bulalacao, Oriental Mindoro</p>
-                        <button onclick="window.print()" style="margin-top:16px;padding:8px 20px;background:#12AFAB;color:white;border:none;border-radius:8px;cursor:pointer;font-weight:600">Print Receipt</button>
+                        <div class="card">
+                          <div class="header">
+                            <div class="logo-wrap"><img src="${window.location.origin}/logo.png" alt="Logo"/></div>
+                            <h1>Balatasan Resort</h1>
+                            <p>Official Booking Receipt</p>
+                          </div>
+                          <div class="ref-band">
+                            <div><div class="ref-label">Reference ID</div><div class="ref-value">${b.id?.slice(0,8).toUpperCase()}</div></div>
+                            <div class="status-chip"><span class="status-dot"></span>${b.status}</div>
+                          </div>
+                          <div class="body">
+                            <div class="row"><span class="row-label">Guest Name</span><span class="row-value">${b.guestName}</span></div>
+                            <div class="row"><span class="row-label">Contact</span><span class="row-value">${b.contactNumber || "Not provided"}</span></div>
+                            <div class="row"><span class="row-label">Booking</span><span class="row-value">${b.itemName}</span></div>
+                            <div class="row"><span class="row-label">Check-in</span><span class="row-value">${b.startDate}</span></div>
+                            ${b.endDate && b.endDate !== b.startDate ? `<div class="row"><span class="row-label">Check-out</span><span class="row-value">${b.endDate}</span></div>` : ""}
+                            <div class="row"><span class="row-label">Guests</span><span class="row-value">${b.guestCount} person${b.guestCount > 1 ? "s" : ""}</span></div>
+                            <div class="total-band">
+                              <div class="total-label">Total Amount</div>
+                              <div class="total-amount">₱${b.totalPrice?.toLocaleString()}</div>
+                            </div>
+                          </div>
+                          <button class="print-btn" onclick="window.print()">🖨️ Print Receipt</button>
+                          <div class="footer">
+                            <p>Generated on ${new Date().toLocaleString("en-PH", { dateStyle: "long", timeStyle: "short" })}</p>
+                            <p>Balatasan Beach Resort · Bulalacao, Oriental Mindoro, Philippines</p>
+                          </div>
+                        </div>
                       </body></html>
                     `);
                     win.document.close();

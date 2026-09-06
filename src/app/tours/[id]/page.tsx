@@ -100,6 +100,7 @@ export default function TourDetailsPage({ params }: { params: Promise<{ id: stri
       guestCount: guestCount,
       duration: isJetSki ? `${minutes} Minutes` : (tour.duration || "Custom"),
       guestName: user.displayName || user.email?.split('@')[0] || "Guest",
+      guestEmail: user.email || "",
       contactNumber: contactNumber.trim() || "Not provided",
       seasonApplied: null,
       groupDiscountApplied: pricing.groupDiscountInfo?.label || null,
