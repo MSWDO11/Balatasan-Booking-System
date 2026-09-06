@@ -335,14 +335,6 @@ function AdminDashboardContent() {
     setShowExport(true);
   };
 
-  // Auto-initialize admin record for master admin if it doesn't exist yet
-  useEffect(() => {
-    if (isMasterAdminEmail && !hasAdminRecord && !isAdminRoleLoading && firestore && user) {
-      handleInitializeAdmin();
-    }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isMasterAdminEmail, hasAdminRecord, isAdminRoleLoading, firestore, user]);
-
   const handleInitializeAdmin = () => {
     if (!firestore || !user) return;
     setIsInitializing(true);
@@ -352,6 +344,14 @@ function AdminDashboardContent() {
     toast({ title: "Admin Initialized", description: "You now have full admin rights." });
     setIsInitializing(false);
   };
+
+  // Auto-initialize admin record for master admin if it doesn't exist yet
+  useEffect(() => {
+    if (isMasterAdminEmail && !hasAdminRecord && !isAdminRoleLoading && firestore && user) {
+      handleInitializeAdmin();
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isMasterAdminEmail, hasAdminRecord, isAdminRoleLoading, firestore, user]);
 
   const getStatusColor = (status: string) => {
     switch (status) {
