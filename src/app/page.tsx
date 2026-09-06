@@ -59,32 +59,7 @@ export default function Home() {
   const isAdmin = isMasterAdmin || !!adminRole;
   const router = useRouter();
 
-  // Redirect admin to dashboard immediately
-  useEffect(() => {
-    if (!user) return;
-    if (isMasterAdmin) { router.replace("/admin/dashboard"); return; }
-    if (!isAdminLoading && isAdmin) router.replace("/admin/dashboard");
-  }, [user, isAdmin, isAdminLoading, isMasterAdmin, router]);
-
-  // Show nothing while checking if user is admin — prevents flash of home page
-  if (isUserLoading || (user && (isMasterAdmin || isAdminLoading))) {
-    return (
-      <div className="flex min-h-screen items-center justify-center bg-background">
-        <div className="flex flex-col items-center gap-4">
-          <div className="h-14 w-14 rounded-full overflow-hidden border-2 border-primary/20 shadow-md">
-            <img src="/logo.png" alt="Balatasan" className="w-full h-full object-cover" />
-          </div>
-          <div className="flex gap-1">
-            {[0,1,2].map(i => (
-              <span key={i} className="h-2 w-2 rounded-full bg-primary/40 animate-bounce"
-                style={{ animationDelay: `${i * 0.18}s` }} />
-            ))}
-          </div>
-        </div>
-      </div>
-    );
-  }
-
+  // Move ALL hooks before any early returns — Rules of Hooks
   const featuredRoomsQuery = useMemoFirebase(() => {
     if (!firestore) return null;
     return query(collection(firestore, "rooms"), limit(2));
@@ -108,12 +83,35 @@ export default function Home() {
     );
   }, [firestore]);
 
-  const { data: featuredRooms, isLoading: roomsLoading } =
-    useCollection(featuredRoomsQuery);
-  const { data: islandHopping, isLoading: islandLoading } =
-    useCollection(islandHoppingQuery);
-  const { data: waterActivities, isLoading: waterLoading } =
-    useCollection(waterActivitiesQuery);
+  const { data: featuredRooms, isLoading: roomsLoading } = useCollection(featuredRoomsQuery);
+  const { data: islandHopping, isLoading: islandLoading } = useCollection(islandHoppingQuery);
+  const { data: waterActivities, isLoading: waterLoading } = useCollection(waterActivitiesQuery);
+
+  // Redirect admin to dashboard immediately
+  useEffect(() => {
+    if (!user) return;
+    if (isMasterAdmin) { router.replace("/admin/dashboard"); return; }
+    if (!isAdminLoading && isAdmin) router.replace("/admin/dashboard");
+  }, [user, isAdmin, isAdminLoading, isMasterAdmin, router]);
+
+  // Show loading screen while checking if user is admin — prevents flash of home page
+  if (isUserLoading || (user && (isMasterAdmin || isAdminLoading))) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-background">
+        <div className="flex flex-col items-center gap-4">
+          <div className="h-14 w-14 rounded-full overflow-hidden border-2 border-primary/20 shadow-md">
+            <img src="/logo.png" alt="Balatasan" className="w-full h-full object-cover" />
+          </div>
+          <div className="flex gap-1">
+            {[0,1,2].map(i => (
+              <span key={i} className="h-2 w-2 rounded-full bg-primary/40 animate-bounce"
+                style={{ animationDelay: `${i * 0.18}s` }} />
+            ))}
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex min-h-screen flex-col">
