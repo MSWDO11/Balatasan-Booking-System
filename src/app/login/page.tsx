@@ -8,7 +8,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
-import { Waves, Mail, Lock, Loader2, UserPlus, LogIn, Eye, EyeOff, KeyRound } from "lucide-react";
+import { Mail, Lock, Loader2, UserPlus, LogIn, Eye, EyeOff, KeyRound } from "lucide-react";
+import Image from "next/image";
 import { useAuth, useFirestore, useDoc, useMemoFirebase } from "@/firebase";
 import { createUserWithEmailAndPassword, signInWithEmailAndPassword, sendPasswordResetEmail } from "firebase/auth";
 import { useRouter } from "next/navigation";
@@ -97,8 +98,8 @@ export default function LoginPage() {
       <main className="flex-grow flex items-center justify-center py-12 px-4">
         <Card className="w-full max-w-md border-none shadow-2xl">
           <CardHeader className="text-center space-y-2">
-            <div className="mx-auto bg-primary/10 p-3 rounded-2xl w-fit mb-2">
-              <Waves className="h-8 w-8 text-primary" />
+            <div className="mx-auto w-16 h-16 rounded-full overflow-hidden border-2 border-primary/20 shadow-md mb-2">
+              <Image src="/logo.png" alt="Balatasan Logo" width={64} height={64} className="object-cover w-full h-full" />
             </div>
             <CardTitle className="text-3xl font-headline font-bold">
               {isSignUp ? "Create Account" : "Welcome Back"}

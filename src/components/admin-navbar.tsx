@@ -3,7 +3,8 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useRouter } from "next/navigation";
-import { Waves, LayoutDashboard, Database, LogOut, Eye, Bell } from "lucide-react";
+import { LayoutDashboard, Database, LogOut, Eye, Bell } from "lucide-react";
+import Image from "next/image";
 import { cn } from "@/lib/utils";
 import { useAuth, useFirestoreNullable, useCollection, useMemoFirebase } from "@/firebase";
 import { signOut } from "firebase/auth";
@@ -64,8 +65,8 @@ export function AdminNavbar() {
 
         {/* Logo */}
         <Link href="/admin/dashboard" className="flex items-center gap-2 group">
-          <div className="bg-primary/10 p-1.5 rounded-lg transition-colors group-hover:bg-primary/20">
-            <Waves className="h-6 w-6 text-primary" />
+          <div className="rounded-full overflow-hidden h-8 w-8 shrink-0 border border-primary/20">
+            <Image src="/logo.png" alt="Balatasan Logo" width={32} height={32} className="object-cover w-full h-full" />
           </div>
           <span className="font-headline text-xl font-bold tracking-tight text-primary">
             Balatasan <span className="text-slate-500 text-sm font-medium">Admin</span>

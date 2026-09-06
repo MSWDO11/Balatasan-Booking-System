@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { Waves, MapPin, Phone, Mail, Facebook, Instagram, Heart } from "lucide-react";
+import { MapPin, Phone, Mail, Facebook, Instagram, Heart } from "lucide-react";
+import Image from "next/image";
 
 export function Footer() {
   return (
@@ -11,7 +12,9 @@ export function Footer() {
           {/* Brand */}
           <div className="space-y-4 lg:col-span-1">
             <Link href="/" className="flex items-center gap-2 group w-fit">
-              <div className="bg-primary/20 p-1.5 rounded-lg"><Waves className="h-5 w-5 text-primary" /></div>
+              <div className="rounded-full overflow-hidden h-8 w-8 shrink-0 border border-primary/30">
+                <Image src="/logo.png" alt="Balatasan Logo" width={32} height={32} className="object-cover w-full h-full" />
+              </div>
               <span className="font-headline text-lg font-bold text-white">Balatasan <span className="text-primary">Stay</span></span>
             </Link>
             <p className="text-sm leading-relaxed text-slate-400">
