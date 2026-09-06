@@ -1,4 +1,4 @@
-import type {Metadata} from 'next';
+import type { Metadata, Viewport } from 'next';
 import './globals.css';
 import { Toaster } from "@/components/ui/toaster";
 import { FirebaseClientProvider } from '@/firebase/client-provider';
@@ -10,17 +10,18 @@ export const metadata: Metadata = {
   title: 'Balatasan Stay | Eco-Resort Booking',
   description: 'Book your eco-friendly tropical getaway at Balatasan Beach Resort.',
   manifest: '/manifest.json',
-  themeColor: '#12AFAB',
   appleWebApp: {
     capable: true,
     statusBarStyle: 'default',
     title: 'Balatasan',
   },
-  viewport: {
-    width: 'device-width',
-    initialScale: 1,
-    maximumScale: 1,
-  },
+};
+
+export const viewport: Viewport = {
+  themeColor: '#12AFAB',
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 1,
 };
 
 export default function RootLayout({
