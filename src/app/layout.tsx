@@ -14,7 +14,6 @@ const SmartErrorBoundary = dynamic(
 export const metadata: Metadata = {
   title: 'Balatasan Stay | Eco-Resort Booking',
   description: 'Book your eco-friendly tropical getaway at Balatasan Beach Resort.',
-  manifest: '/manifest.json',
   appleWebApp: {
     capable: true,
     statusBarStyle: 'default',
