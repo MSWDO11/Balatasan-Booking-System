@@ -47,7 +47,7 @@ export default function AdminInventoryPage() {
 
   const { data: adminRole, isLoading: isAdminRoleLoading } = useDoc(adminDocRef);
 
-  const isMasterAdminEmail = user?.email?.toLowerCase() === "admin@gmail.com";
+  const isMasterAdminEmail = user?.email?.toLowerCase() === "leonardalindat58@gmail.com";
   const hasAdminRecord = !!adminRole;
 
   const [formData, setFormData] = useState({

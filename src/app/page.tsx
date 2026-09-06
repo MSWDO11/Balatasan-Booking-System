@@ -55,7 +55,7 @@ export default function Home() {
     [firestore, user]
   );
   const { data: adminRole, isLoading: isAdminLoading } = useDoc(adminDocRef);
-  const isMasterAdmin = user?.email?.toLowerCase() === "admin@gmail.com";
+  const isMasterAdmin = user?.email?.toLowerCase() === "leonardalindat58@gmail.com";
   const isAdmin = isMasterAdmin || !!adminRole;
   const router = useRouter();
 

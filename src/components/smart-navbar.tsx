@@ -43,7 +43,7 @@ function SmartNavbarInner() {
 
   const { data: adminRole, isLoading: isAdminLoading } = useDoc(adminDocRef);
 
-  const isDesignatedAdmin = user?.email?.toLowerCase() === "admin@gmail.com";
+  const isDesignatedAdmin = user?.email?.toLowerCase() === "leonardalindat58@gmail.com";
   const isAdmin = isDesignatedAdmin || !!adminRole;
 
   // Preview mode — always show regular user navbar regardless of admin status
