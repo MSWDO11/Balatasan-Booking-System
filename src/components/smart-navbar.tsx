@@ -52,6 +52,9 @@ function SmartNavbarInner() {
   // On admin pages the sidebar handles all navigation — hide the top navbar
   if (pathname.startsWith("/admin")) return null;
 
+  // On login page, never show admin navbar
+  if (pathname.startsWith("/login")) return <Navbar />;
+
   // Show skeleton while auth resolves instead of null (prevents black-screen)
   if (isUserLoading) return <NavbarSkeleton />;
   if (user && isAdmin) return <AdminNavbar />;
