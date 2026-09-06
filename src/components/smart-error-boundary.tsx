@@ -38,9 +38,15 @@ export class SmartErrorBoundary extends Component<Props, State> {
   }
 
   componentDidCatch(error: Error) {
-    this.setState({ isExplaining: true });
+    const msg = error?.message ?? String(error);
+    // Immediately set a visible error message so we can diagnose
+    this.setState({
+      friendlyMessage: `Error: ${msg}`,
+      suggestion: "Please take a screenshot of this message and report it.",
+      isExplaining: false,
+    });
 
-    // Call AI explainer API
+    // Also try AI explanation
     fetch("/api/explain-error", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -68,6 +74,15 @@ export class SmartErrorBoundary extends Component<Props, State> {
 
   render() {
     if (!this.state.hasError) return this.props.children;
+
+    // Show real error in development
+    if (process.env.NODE_ENV === 'development') {
+      return (
+        <div style={{ padding: 32, fontFamily: 'monospace', whiteSpace: 'pre-wrap' }}>
+          <h2>Error: {this.state.errorMessage}</h2>
+        </div>
+      );
+    }
 
     return (
       <div className="min-h-screen bg-gradient-to-br from-teal-50 to-slate-50 flex items-center justify-center p-6">
