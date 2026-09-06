@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
-import { Menu, X, Waves, ShoppingBag, LogOut, Bell } from "lucide-react";
+import { Menu, X, ShoppingBag, LogOut, Bell } from "lucide-react";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
 import { useUser, useAuth } from "@/firebase";
@@ -12,6 +12,7 @@ import { signOut } from "firebase/auth";
 import { Suspense } from "react";
 import { NotificationBell } from "@/components/notification-bell";
 import { DarkModeToggle } from "@/components/dark-mode-toggle";
+import Image from "next/image";
 
 const navLinks = [
   { name: "Home", href: "/" },
@@ -44,8 +45,8 @@ function NavbarInner() {
       <nav className="sticky top-0 z-50 w-full border-b bg-white/80 backdrop-blur-md">
       <div className="container mx-auto flex h-16 items-center justify-between px-4">
         <Link href={withPreview("/")} className="flex items-center gap-2 group">
-          <div className="bg-primary/10 p-1.5 rounded-lg transition-colors group-hover:bg-primary/20">
-            <Waves className="h-6 w-6 text-primary" />
+          <div className="rounded-full overflow-hidden h-9 w-9 shrink-0 border border-primary/20 shadow-sm">
+            <Image src="/logo.png" alt="Balatasan Logo" width={36} height={36} className="object-cover w-full h-full" />
           </div>
           <span className="font-headline text-xl font-bold tracking-tight text-primary">
             Balatasan <span className="text-accent-foreground">Stay</span>

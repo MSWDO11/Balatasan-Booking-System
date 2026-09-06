@@ -2,7 +2,8 @@
 
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { Waves, LayoutDashboard, Database, LogOut, Eye, Bell, Menu, X, ShoppingBag, Star, Users, Settings } from "lucide-react";
+import { LayoutDashboard, Database, LogOut, Eye, Bell, Menu, X, ShoppingBag, Star, Users, Settings } from "lucide-react";
+import Image from "next/image";
 import { cn } from "@/lib/utils";
 import { useAuth, useFirestoreNullable, useCollection, useMemoFirebase } from "@/firebase";
 import { signOut } from "firebase/auth";
@@ -92,8 +93,8 @@ function AdminSidebarInner() {
       <div className="px-6 py-6 border-b border-slate-100">
         <button onClick={() => { onNav(); setTimeout(() => router.push("/admin/dashboard?tab=home"), 150); }}
           className="flex items-center gap-2.5 group text-left">
-          <div className="bg-primary/10 p-2 rounded-xl transition-colors group-hover:bg-primary/20">
-            <Waves className="h-5 w-5 text-primary" />
+          <div className="rounded-full overflow-hidden h-9 w-9 shrink-0 border border-primary/20 shadow-sm">
+            <Image src="/logo.png" alt="Balatasan Logo" width={36} height={36} className="object-cover w-full h-full" />
           </div>
           <div>
             <p className="font-headline text-base font-bold text-primary leading-tight">Balatasan</p>
@@ -236,7 +237,9 @@ function AdminSidebarInner() {
       {/* ── Mobile top bar ── */}
       <div className="md:hidden sticky top-0 z-50 flex items-center justify-between px-4 h-14 bg-white border-b border-slate-100 shadow-sm">
         <Link href="/admin/dashboard" className="flex items-center gap-2">
-          <div className="bg-primary/10 p-1.5 rounded-lg"><Waves className="h-5 w-5 text-primary" /></div>
+          <div className="rounded-full overflow-hidden h-8 w-8 shrink-0 border border-primary/20">
+            <Image src="/logo.png" alt="Balatasan Logo" width={32} height={32} className="object-cover w-full h-full" />
+          </div>
           <span className="font-headline text-base font-bold text-primary">
             Balatasan <span className="text-slate-400 text-xs font-medium">Admin</span>
           </span>
@@ -292,7 +295,9 @@ function AdminSidebarInner() {
           <aside className="relative flex flex-col w-72 bg-white h-full shadow-2xl overflow-y-auto">
             <div className="flex items-center justify-between px-4 py-4 border-b border-slate-100">
               <Link href="/admin/dashboard" className="flex items-center gap-2" onClick={() => setMobileOpen(false)}>
-                <div className="bg-primary/10 p-1.5 rounded-lg"><Waves className="h-5 w-5 text-primary" /></div>
+                <div className="rounded-full overflow-hidden h-8 w-8 shrink-0 border border-primary/20">
+                  <Image src="/logo.png" alt="Balatasan Logo" width={32} height={32} className="object-cover w-full h-full" />
+                </div>
                 <span className="font-headline text-base font-bold text-primary">Balatasan <span className="text-slate-400 text-xs font-medium">Admin</span></span>
               </Link>
               <button onClick={() => setMobileOpen(false)} className="p-1.5 rounded-lg text-slate-400 hover:bg-slate-100">
@@ -346,7 +351,9 @@ export function AdminSidebar() {
       <aside className="hidden md:flex flex-col w-56 shrink-0 bg-white border-r border-slate-100 min-h-screen sticky top-0 h-screen shadow-sm z-40">
         <div className="px-6 py-6 border-b border-slate-100">
           <div className="flex items-center gap-2.5">
-            <div className="bg-primary/10 p-2 rounded-xl"><Waves className="h-5 w-5 text-primary" /></div>
+            <div className="rounded-full overflow-hidden h-9 w-9 shrink-0 border border-primary/20">
+              <Image src="/logo.png" alt="Balatasan Logo" width={36} height={36} className="object-cover w-full h-full" />
+            </div>
             <div>
               <div className="h-4 w-20 bg-primary/10 rounded animate-pulse" />
               <div className="h-2.5 w-16 bg-slate-100 rounded animate-pulse mt-1" />
